@@ -1,0 +1,31 @@
+# data — never commit; lives outside git, outside OneDrive
+data/raw/
+data/interim/
+data/processed/
+*.osm.bz2
+*.osh.pbf
+*.parquet
+*.duckdb
+
+# labels ARE tracked (small, and they define the benchmark)
+!data/labels/
+!data/labels/*.tsv
+
+# models
+checkpoints/
+*.keras
+*.h5
+*.weights
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# editors / os
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

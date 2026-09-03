@@ -1,0 +1,124 @@
+{
+  "generated": "2026-09-04T01:44:34",
+  "osm_api_probes": [
+    {
+      "changeset": 19739784,
+      "status": 200,
+      "seconds": 1.2,
+      "bytes": 2202,
+      "ops": {
+        "create": 1,
+        "modify": 2,
+        "delete": 0
+      },
+      "n_node": 1,
+      "n_way": 2,
+      "n_relation": 0,
+      "has_lat_lon": true,
+      "max_version": 5,
+      "has_v_gt_1": true
+    },
+    {
+      "changeset": 52850166,
+      "status": 200,
+      "seconds": 1.17,
+      "bytes": 1425,
+      "ops": {
+        "create": 5,
+        "modify": 0,
+        "delete": 0
+      },
+      "n_node": 4,
+      "n_way": 1,
+      "n_relation": 0,
+      "has_lat_lon": true,
+      "max_version": 1,
+      "has_v_gt_1": false
+    },
+    {
+      "changeset": 78800618,
+      "status": 200,
+      "seconds": 1.26,
+      "bytes": 2885,
+      "ops": {
+        "create": 10,
+        "modify": 0,
+        "delete": 0
+      },
+      "n_node": 9,
+      "n_way": 1,
+      "n_relation": 0,
+      "has_lat_lon": true,
+      "max_version": 1,
+      "has_v_gt_1": false
+    }
+  ],
+  "bucket_ladder": [
+    {
+      "id_millions": 80,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 90,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 100,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 110,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 120,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 130,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 140,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 145,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 150,
+      "hits": 3,
+      "n": 5,
+      "rate": 0.6
+    },
+    {
+      "id_millions": 160,
+      "hits": 5,
+      "n": 5,
+      "rate": 1.0
+    },
+    {
+      "id_millions": 170,
+      "hits": 0,
+      "n": 5,
+      "rate": 0.0
+    }
+  ]
+}

@@ -1,0 +1,933 @@
+{
+  "generated": "2026-09-04T01:41:35",
+  "bucket": "https://real-changesets.s3.us-west-2.amazonaws.com",
+  "labels_total": 18276,
+  "changeset_range": [
+    19739784,
+    79067468
+  ],
+  "sampled": 140,
+  "hit_rate": 0.0,
+  "hit_rate_vandalism": 0.0,
+  "hit_rate_clean": 0.0,
+  "status_codes": {
+    "404": 140
+  },
+  "strata": [
+    {
+      "from": 19739784,
+      "to": 26264610,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 26766789,
+      "to": 33057653,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 34139319,
+      "to": 39770920,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 40684854,
+      "to": 45587938,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 45859295,
+      "to": 50466403,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 51030692,
+      "to": 54613095,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 55123535,
+      "to": 58267530,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 58744144,
+      "to": 64256485,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 64786025,
+      "to": 69822613,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    },
+    {
+      "from": 70585049,
+      "to": 77858897,
+      "hits": 0,
+      "n": 14,
+      "rate": 0.0
+    }
+  ],
+  "projected_usable_labels": 0,
+  "verdict": "FAIL",
+  "action": "Switch to Fallback B: OSM API changeset download.",
+  "probes": [
+    {
+      "changeset": 19739784,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 20647329,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 22661800,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 24874984,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 25063647,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 25663638,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 26264610,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 19750807,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 20925642,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 21963303,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 22811487,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 23843284,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 24862134,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 25792262,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 26768877,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 27931664,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 28666897,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 29411368,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 29971337,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 31109214,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 32636337,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 26766789,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 27715865,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 29063923,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 30195254,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 31071004,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 32098957,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 33057653,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 34232722,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 35566963,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 37314880,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 37821983,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 37911236,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 38142716,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 38939183,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 34139319,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 35025427,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 35915242,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 36833590,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 37778105,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 38894100,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 39770920,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 40684854,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 42364570,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 43052894,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 44496682,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 45182886,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 45519063,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 45587938,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 40687752,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 41499720,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 42224107,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 42970943,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 43665790,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 44377823,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 45055460,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 45859295,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 46412239,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 46813068,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 47598316,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 49235217,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 49811976,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 50466403,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 45881258,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 46569325,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 47310390,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 48092936,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 48918791,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 49558007,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 50248063,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 51030810,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 51642414,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 52654892,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 53751109,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 54244764,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 54399902,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 54613095,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 51030692,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 51563098,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 52127822,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 52688580,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 53223965,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 53712829,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 54340916,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 55123535,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 55733016,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 55797144,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 55985325,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 56207004,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 56909970,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 57867412,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 55126962,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 55619558,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 56110695,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 56664363,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 57253774,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 57737212,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 58267530,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 58757785,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 60190686,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 60883629,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 61636404,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 62600884,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 63283353,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 64256485,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 58744144,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 59691404,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 60549824,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 61419654,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 62284854,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 63135196,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 63918423,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 64791907,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 66100688,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 66549615,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 66783265,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 68471638,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 69623038,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 69627348,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 64786025,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 65638061,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 66451418,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 67317526,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 68159661,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 69012706,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 69822613,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 70585049,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 71747499,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 73426994,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 74765823,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 75245041,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 75930152,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 77011654,
+      "vandalism": true,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 70585775,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 71789356,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 72973693,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 74285540,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 75492568,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 76682839,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    },
+    {
+      "changeset": 77858897,
+      "vandalism": false,
+      "status": 404,
+      "bytes": null
+    }
+  ]
+}

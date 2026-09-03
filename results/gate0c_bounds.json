@@ -1,0 +1,78 @@
+{
+  "generated": "2026-09-04T01:47:02",
+  "current_changeset": {
+    "status": 200,
+    "max_id": 188495159,
+    "newest_created_at": "2026-09-03T20:15:27Z"
+  },
+  "bucket_upper_ladder": [
+    {
+      "id_millions": 168,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 173,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 178,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 182,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 185,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 187,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    },
+    {
+      "id_millions": 188,
+      "hits": 0,
+      "n": 6,
+      "rate": 0.0
+    }
+  ],
+  "previous_version_probes": [
+    {
+      "type": "way",
+      "id": "254588427",
+      "version_new": 2,
+      "version_prev": 1,
+      "status": 200,
+      "seconds": 1.78,
+      "bytes": 612,
+      "has_lat_lon": false,
+      "has_nd_refs": true,
+      "n_tags": 2
+    },
+    {
+      "type": "way",
+      "id": "202342236",
+      "version_new": 5,
+      "version_prev": 4,
+      "status": 200,
+      "seconds": 1.8,
+      "bytes": 1143,
+      "has_lat_lon": false,
+      "has_nd_refs": true,
+      "n_tags": 2
+    }
+  ]
+}

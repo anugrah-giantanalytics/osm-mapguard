@@ -1,0 +1,25 @@
+# MapGuard — pinned loosely; exact pins go in requirements.lock once P1 stabilises.
+# NOTE: TensorFlow/Keras does not support Python 3.14. Use a 3.12 venv locally.
+
+# data
+requests>=2.32
+polars>=1.0
+duckdb>=1.1
+pyarrow>=17.0
+pandas>=2.2
+lxml>=5.0
+
+# geometry
+shapely>=2.0
+pyproj>=3.6
+
+# modelling
+tensorflow>=2.18          # provides Keras 3
+scikit-learn>=1.5
+xgboost>=2.1
+
+# tracking + viz
+wandb>=0.18
+matplotlib>=3.9
+seaborn>=0.13
+folium>=0.17
