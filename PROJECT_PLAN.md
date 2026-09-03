@@ -237,7 +237,8 @@ Every unit genuinely used. Nothing name-dropped.
 | Item | Detail | Status |
 |---|---|---|
 | `ovid_labels.tsv` | 18,276 rows, 9,138 pos / 9,138 neg, changeset IDs 19,739,784–79,067,468 | ✅ **downloaded and inspected** |
-| Changeset **contents** | `https://real-changesets.s3.us-west-2.amazonaws.com/<id>.json` | ⚠️ **Gate 0** — see §8 |
+| Changeset **contents** | ~~`real-changesets` S3~~ → **OSM API** `/api/0.6/changeset/<id>/download` | ✅ **verified 3/3** (Gate 0 killed the S3 route for this era — see §8) |
+| Previous object versions | OSM API `/api/0.6/<type>/<id>/<version-1>` | ✅ verified 2/2; ways return `<nd>` refs without coordinates |
 | User histories | OSM changeset dump, 8.1 GB bz2, streamed | ✅ public, no login |
 
 **Verified `real-changesets` record schema** — each element carries an `old` block:
@@ -254,44 +255,88 @@ Every unit genuinely used. Nothing name-dropped.
 }]}
 ```
 
-Before **and** after tags, plus before/after node coordinates. This is the geometry branch handed to us directly — **no history PBF, no ohsome-planet, no geometry reconstruction, no login.** It removes the single most expensive item from the original scope (~50 person-hours).
+Before **and** after tags, plus before/after node coordinates — the geometry branch handed to us directly, with no history PBF and no geometry reconstruction.
 
-### Tier B — Latest OSM (2026)
+**But only inside the bucket's window.** Gate 0 pinned that window to **~147M–164M (Feb 2024 – Mar 2025)**; the 2014–2019 label range returns 404 for every probe. So this shortcut serves Corpus B, not Corpus A. See §8.3.
 
-Requested explicitly, and it earns its place:
+### Corpus B — Modern (Feb 2024 – Mar 2025)
 
-- `real-changesets` is **minutely updated** → pull recent 2026 changesets
-- OSMCha API (free token via OSM login) → recent human `harmful` labels
-- **Uses:** (i) **temporal generalisation test** — train on 2014–19, evaluate on 2026. Closes **G6**; nobody has published this. (ii) live demo for phase-2 eval.
+The bucket's usable window, ~17M changesets:
 
-Expect a measurable performance drop. That drop *is* the finding — OSM's editor mix, tag conventions and vandalism styles have all shifted since 2019.
+- **Full before/after tags and geometry**, free and in bulk — the only place branch **B1** can run at full strength
+- Labels to be built: OSMCha `harmful` (human-reviewed, needs a free token) + revert mining from the changeset dump
+- **Uses:** (i) the geometry branch; (ii) **cross-corpus generalisation** — train on Corpus A, evaluate on Corpus B, closing **G6**; (iii) demo for phase-2 eval
 
-### Tier C — Unlabelled (pretraining)
+Expect a measurable drop across corpora. That drop *is* the finding — OSM's editor mix, tag conventions and vandalism styles have all shifted since 2019.
 
-Bulk `real-changesets` JSONs, any IDs, no labels. Target ~500k–2M edits. Free and effectively unlimited.
+> **Note on "latest OSM data".** The bucket stops at ~Mar 2025 despite the AWS registry advertising minutely updates. Genuinely current data (to changeset 188,495,159, 2026-09-03) is reachable only through the OSM API or Overpass, one changeset at a time. Fine for a live demo; not for bulk training.
+
+### Corpus C — Unlabelled (pretraining)
+
+Bulk `real-changesets` JSONs from the same window, no labels. Target ~500k–2M edits. Free and effectively unlimited within Feb 2024 – Mar 2025.
 
 ---
 
-## 8. Gate 0 — run this before anything else
+## 8. Gate 0 — RESULT: FAILED, and what it changed
 
-**The one unverified assumption.** `real-changesets` is populated by OSMCha's pipeline; the listing we sampled began at 2024 IDs. Ovid's labels are 2014–2019. Coverage of that older range is **unconfirmed**.
+Run 2026-09-04. Scripts and raw output are in the repo: `scripts/gate0_coverage.py`, `gate0b_fallback.py`, `gate0c_bounds.py` → `results/*.json`.
 
-**Test:** sample ~50 IDs spread across `ovid_labels.tsv`, issue HTTP HEAD to the bucket, measure hit rate.
+### 8.1 Gate 0a — bucket coverage of Ovid labels: **FAIL**
 
-| Hit rate | Decision |
+Probed 140 labelled changeset IDs, stratified across the full 19.7M–79.1M range and both classes.
+
+```
+ 19,739,784 .. 26,264,610    0/14   0.0%
+ 26,766,789 .. 33,057,653    0/14   0.0%
+ ... every stratum ...       0/14   0.0%
+ 70,585,049 .. 77,858,897    0/14   0.0%
+--------------------------------------------
+ overall                    0/140   0.0%     status codes: {404: 140}
+```
+
+Not a partial cutoff — **zero coverage, uniform across every stratum.** `real-changesets` simply does not hold 2014–2019 changesets.
+
+### 8.2 Gate 0b/0c — the replacement, verified
+
+| Question | Result |
 |---|---|
-| **> 80%** | Proceed as designed. Best case |
-| **30–80%** | Proceed on the covered subset; document reduced N. Still viable (>5k labelled changesets) |
-| **< 30%** | **Fallback B** — fetch contents from the OSM API instead |
+| Does `GET /api/0.6/changeset/<id>/download` work on old changesets? | ✅ **3/3**, HTTP 200, 1.4–2.9 KB, **~0.2 s** each. Contains full tag diffs, operations, object versions, and inline `lat`/`lon` for nodes |
+| Does `GET /api/0.6/<type>/<id>/<version-1>` return the previous state? | ✅ **2/2**, HTTP 200, ~0.8 s. Returns tags — **but ways return `<nd>` refs with no coordinates** |
+| Where does the bucket actually cover? | **~147M – 164M**, i.e. **Feb 2024 → ~Mar 2025**. Sharp cutoff between 164M and 165M |
+| Current max changeset ID | **188,495,159** (2026-09-03) |
 
-**Fallback B (fully specified, so a bad Gate 0 does not stall us):**
-- `GET /api/0.6/changeset/<id>/download` → osmChange XML (verified live; the endpoint removed in Dec 2019 was `expand_bbox`, not this one)
-- previous versions via `GET /api/0.6/<type>/<id>/<version>`
-- ~18k changesets at ~1 req/s ≈ 5 h wall clock, cached and resumable, split across 4 machines
-- Throttle signal is HTTP 509 "Bandwidth Limit Exceeded" — back off and resume
-- Cost: ~20 extra person-hours. Not fatal.
+Two consequences that change the plan:
 
-**Nothing else in this plan depends on an unverified assumption.**
+1. **The AWS registry's "minutely updated" claim is stale.** The bucket stopped being fed around early 2025. "Latest OSM data" via the bucket means up to ~March 2025, not today.
+2. **Historical way geometry is expensive via the API.** A way's previous version gives node *references*, not coordinates; resolving them costs one extra call per node. For nodes, `lat`/`lon` are inline and free.
+
+### 8.3 What this forces — and why the result is better than the plan it replaced
+
+The geometry branch cannot run at full strength on the Ovid-era labels, and the bucket cannot serve those labels at all. So the corpus splits in two, and each half does the job it is actually good at:
+
+| | **Corpus A — Ovid-era** | **Corpus B — Modern** |
+|---|---|---|
+| Period | 2014–2019 | Feb 2024 – Mar 2025 |
+| Source | OSM API, per changeset | `real-changesets` S3, bulk |
+| Labels | ✅ 18,276, published, **downloaded** | ⚠️ to be built — OSMCha `harmful` + revert mining |
+| Tags, ops, versions | ✅ full | ✅ full |
+| Node geometry | ✅ inline | ✅ inline |
+| **Way/relation geometry** | ✗ expensive (N calls/way) | ✅ **free, before + after** |
+| Cost | ~5 h fetch, cached, resumable | bulk download |
+| **Role** | comparability with published SOTA; branches **B2, B3, B4, B5** | the **B1 geometry branch** at full strength; **G6** temporal test |
+
+This is a stronger design than the single-corpus plan. The temporal contribution (**G6**) sharpens from "test on later data" into a genuine cross-corpus generalisation study, and **building a modern labelled benchmark becomes a contribution in its own right** — precisely the "inconsistent benchmarking practices" gap named by arXiv 2407.03365.
+
+**Cost of the failure: ~20 person-hours**, as budgeted in the original fallback. Nothing is blocked.
+
+### 8.4 Remaining open item
+
+Corpus B needs labels. Two independent routes, either sufficient:
+
+- **OSMCha `harmful` flag** — human-reviewed, cleanest. Needs a free token from your OSMCha user page after OSM login. **Action on you.**
+- **Revert mining** — parse the 8.1 GB changeset dump for revert comments in the 2024–25 window. No account needed; runs on Colab.
+
+Do both; use OSMCha as the high-precision set and revert mining for volume.
 
 ---
 
@@ -435,8 +480,10 @@ Plus a **per-vandalism-type breakdown** — geometric vs semantic vs destructive
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Gate 0 fails — old changesets absent from S3 | **High** | Fallback B fully specified in §8. +20 person-hours, not fatal |
-| OneDrive syncs GBs of data | **High** | Hard rule: data in `C:\osm-data\`, never in the project folder |
+| ~~Gate 0 fails~~ | ~~High~~ | ✅ **Resolved — it did fail.** Two-corpus design adopted, +20 person-hours, §8 |
+| Corpus B labels unobtainable | **Medium** | Two independent routes (OSMCha, revert mining); either alone suffices. If both fail, Corpus B still serves pretraining (C) and the geometry branch degrades to Corpus A node-only |
+| ~~OneDrive syncs GBs of data~~ | ~~High~~ | ✅ **Resolved** — project moved to `C:\AyushGarg\projects\personal\osm_mapguard`, outside OneDrive |
+| OSM API throttling during the 18k fetch | Medium | 1 req/s, resumable disk cache, back off on HTTP 509, split across 4 machines |
 | Laptop RAM exhaustion | **High** | DuckDB + Polars + streaming; heavy work on Colab/Kaggle |
 | Label noise — a revert ≠ always vandalism | Medium | Inherited from Ovid; identical protocol keeps comparison fair. Wikimedia's production model uses the same trace-based labelling. Limitations paragraph |
 | Colab session death mid-run | Medium | Checkpoint to Drive every epoch; all runs resumable |
@@ -490,17 +537,28 @@ Positioned as: *the Stripe/Wikimedia production pattern (self-supervised sequenc
 
 ---
 
-## 15. Open decisions
+## 15. Decisions
 
-| # | Decision | Recommendation |
+| # | Decision | Status |
 |---|---|---|
-| 1 | **Gate 0 result** | run first; everything keys off it |
-| 2 | Keras 3 vs PyTorch | **Keras 3** — course-aligned, multi-input functional API is sufficient |
-| 3 | Timeline: staged to wk 7/14, or compressed 3 weeks | **staged** — full scope fits comfortably and loses nothing |
-| 4 | OSM account + OSMCha token | needed for Tier B; free and instant |
-| 5 | Region scope | **global** — Ovid's labels are worldwide, and the S3 route removes the regional-extract constraint entirely |
+| 1 | Gate 0 | ✅ **run — FAILED.** Two-corpus design adopted, §8 |
+| 2 | Keras 3 vs PyTorch | ✅ **Keras 3 on TensorFlow.** Course-aligned; multi-input functional API suffices |
+| 3 | Timeline | ✅ **Staged** — P1 → week 7, P2 → week 14, per §13 |
+| 4 | Region scope | ✅ **Global.** Both corpora are keyed by changeset ID, not geography. The per-region label-scarcity risk never applies |
+| 5 | OSM account + OSMCha token | ⏳ **on you** — free, instant. Gates Corpus B labels only |
+| 6 | Corpus B label route | ⏳ OSMCha `harmful` **and** revert mining; use both |
 
-Decision 5 is a genuine improvement over the earlier draft: because `real-changesets` is keyed by changeset ID rather than by region, there is no longer any reason to restrict to one country. The label-scarcity-per-region risk is gone.
+### ⚠️ Environment note — local Python is 3.14
+
+The machine has Python 3.14.4. **TensorFlow does not support 3.14.** Local work therefore needs a separate 3.12 virtual environment:
+
+```
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+If 3.12 is not installed, install it — or skip local model work entirely and use Colab/Kaggle, which ship supported versions. Local Python is only needed for baselines and figures; nothing on the critical path depends on it.
 
 ---
 

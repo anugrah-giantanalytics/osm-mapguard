@@ -1,0 +1,72 @@
+# MapGuard
+
+Self-supervised, geometry-aware detection of damaging edits in OpenStreetMap.
+
+Deep Learning (702AI0C008) mini project · team of 4 · staged to week 7 / week 14.
+
+Full architecture, evidence and phasing: **[PROJECT_PLAN.md](PROJECT_PLAN.md)**
+
+---
+
+## Where things stand
+
+| | |
+|---|---|
+| **Gate 0a** | ❌ FAILED — `real-changesets` S3 has **zero** coverage of the 2014–2019 labels (0/140 probes) |
+| **Gate 0b** | ✅ OSM API fallback verified (3/3 changesets, 2/2 previous versions) |
+| **Gate 0c** | ✅ Bucket window pinned to **~147M–164M** (Feb 2024 – Mar 2025) |
+| **Design** | Two corpora — Ovid-era via API for comparability, modern bucket window for full geometry |
+| **Next** | Corpus A fetcher (WS1) · OSMCha token (Ayush) · baselines against mock Parquet (WS2–4) |
+
+Raw gate output: [`results/`](results/)
+
+## Layout
+
+```
+data/labels/      ovid_labels.tsv — 18,276 changesets, 9,138 vandalism (tracked)
+data/raw/         fetched changeset contents (gitignored)
+data/interim/     featurised Parquet (gitignored)
+scripts/          one-shot investigations; gate0*.py are the data-availability gates
+src/mapguard/     library code
+notebooks/        thin Colab/Kaggle notebooks — git pull, import, run
+results/          gate output and experiment metrics (tracked)
+```
+
+## Setup
+
+**TensorFlow does not support Python 3.14.** Use 3.12:
+
+```bash
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Local Python is only needed for baselines and figures. Model training runs on Colab (iteration) and Kaggle (pretraining, ablation grid) — see PROJECT_PLAN.md §9.
+
+## Rules
+
+- **No data in this repo, and none in OneDrive.** Bulk data goes in `C:\osm-data\`.
+- Notebooks stay thin: `git pull`, `pip install -r requirements.txt`, import from `src/`. No long cells.
+- Checkpoint to Drive every epoch — Colab kills sessions at 12 h and after 90 min idle.
+- Metrics go to `results/*.json`, not stdout.
+- Be polite to the OSM API: 1 req/s, cache to disk, resume on restart, back off on HTTP 509.
+
+## Reproducing the gates
+
+```bash
+python scripts/gate0_coverage.py --sample 150   # bucket coverage of Ovid labels
+python scripts/gate0b_fallback.py               # API fallback + coverage ladder
+python scripts/gate0c_bounds.py                 # exact window + previous-version endpoint
+```
+
+## Workstreams
+
+| | Owner | Scope |
+|---|---|---|
+| WS1 | | data pipeline — fetchers, Parquet, DuckDB feature store, user histories |
+| WS2 | | baselines + R1–R4 evaluation harness, calibration |
+| WS3 | | Stage 2 branches B1–B5, attention fusion, training loop |
+| WS4 | | Stage 1 pretext tasks, corruption generator, demo, figures |
+
+WS1 gates the others, so WS2–4 build against a small mock Parquet in week 1 rather than waiting.
