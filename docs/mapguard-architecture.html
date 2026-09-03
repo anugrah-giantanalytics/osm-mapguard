@@ -1,0 +1,871 @@
+<title>MapGuard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+:root{
+  --paper:#F2F4F1;
+  --surface:#FBFCFA;
+  --sunk:#E8ECE7;
+  --ink:#141A17;
+  --muted:#5C6B62;
+  --faint:#84968B;
+  --rule:#C9D2CB;
+  --accent:#2F6B4F;
+  --accent-soft:#DCEAE1;
+  --alert:#B4462E;
+  --alert-soft:#F5E3DD;
+  --font-display:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --font-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1512;
+    --surface:#18211C;
+    --sunk:#131B17;
+    --ink:#E4EAE5;
+    --muted:#9DAFA4;
+    --faint:#6E8177;
+    --rule:#2A3830;
+    --accent:#6FBF93;
+    --accent-soft:#1C3227;
+    --alert:#E08163;
+    --alert-soft:#33201A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1512;
+  --surface:#18211C;
+  --sunk:#131B17;
+  --ink:#E4EAE5;
+  --muted:#9DAFA4;
+  --faint:#6E8177;
+  --rule:#2A3830;
+  --accent:#6FBF93;
+  --accent-soft:#1C3227;
+  --alert:#E08163;
+  --alert-soft:#33201A;
+}
+
+*{box-sizing:border-box;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1060px;margin-inline:auto;padding:0 28px 96px;}
+.prose{max-width:68ch;}
+
+/* ---------- masthead ---------- */
+header.mast{
+  border-bottom:2px solid var(--ink);
+  padding:56px 0 22px;
+  margin-bottom:12px;
+}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 18px;
+}
+h1{
+  font-family:var(--font-display);
+  font-weight:600;
+  font-size:clamp(38px,6.2vw,60px);
+  line-height:1.02;
+  letter-spacing:-.02em;
+  margin:0 0 14px;
+  text-wrap:balance;
+}
+.deck{
+  font-size:clamp(17px,2.1vw,20px);
+  line-height:1.45;
+  color:var(--muted);
+  max-width:52ch;
+  margin:0 0 30px;
+  text-wrap:balance;
+}
+.metastrip{
+  display:flex;flex-wrap:wrap;gap:0;
+  border-top:1px solid var(--rule);
+  padding-top:16px;
+}
+.metastrip div{
+  flex:1 1 150px;
+  padding-right:20px;
+  border-right:1px solid var(--rule);
+  margin-right:20px;
+}
+.metastrip div:last-child{border-right:none;margin-right:0;padding-right:0;}
+.metastrip dt{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);margin:0 0 3px;
+}
+.metastrip dd{margin:0;font-size:14px;font-weight:500;}
+
+/* ---------- sections ---------- */
+section{padding-top:52px;}
+.snum{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.14em;
+  color:var(--accent);display:block;margin-bottom:8px;
+}
+h2{
+  font-family:var(--font-display);font-weight:600;
+  font-size:clamp(24px,3.4vw,31px);line-height:1.15;letter-spacing:-.015em;
+  margin:0 0 16px;text-wrap:balance;
+}
+h3{
+  font-family:var(--font-body);font-weight:600;font-size:16.5px;
+  letter-spacing:.005em;margin:34px 0 10px;
+}
+p{margin:0 0 15px;}
+.prose ul{margin:0 0 16px;padding-left:20px;}
+.prose li{margin-bottom:7px;}
+strong{font-weight:600;}
+code{
+  font-family:var(--font-mono);font-size:.875em;
+  background:var(--sunk);border:1px solid var(--rule);
+  padding:1px 5px;border-radius:3px;
+}
+a{color:var(--accent);text-underline-offset:2px;}
+a:focus-visible,summary:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px;border-radius:2px;
+}
+
+/* ---------- tables ---------- */
+.tscroll{overflow-x:auto;margin:0 0 20px;border-block:1px solid var(--rule);}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px;}
+th{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint);font-weight:400;
+  text-align:left;padding:11px 14px 9px 0;vertical-align:bottom;
+  border-bottom:1px solid var(--rule);
+}
+td{
+  padding:11px 14px 11px 0;vertical-align:top;
+  border-bottom:1px solid var(--rule);
+  font-variant-numeric:tabular-nums;
+}
+tr:last-child td{border-bottom:none;}
+th:last-child,td:last-child{padding-right:0;}
+td.num{text-align:right;}
+tbody tr.hi td{background:var(--accent-soft);}
+
+/* ---------- figures ---------- */
+figure{margin:34px 0 30px;}
+figure svg{
+  display:block;width:100%;height:auto;
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-radius:2px;
+  color:var(--ink);
+}
+figcaption{
+  font-size:13px;color:var(--muted);margin-top:11px;
+  max-width:66ch;line-height:1.5;
+}
+figcaption b{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);font-weight:400;margin-right:8px;}
+
+/* ---------- callouts ---------- */
+.note{
+  border-left:3px solid var(--accent);
+  background:var(--surface);
+  padding:16px 18px;margin:24px 0;
+  max-width:68ch;
+}
+.note.warn{border-left-color:var(--alert);}
+.note .lbl{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px;
+}
+.note.warn .lbl{color:var(--alert);}
+.note p:last-child{margin-bottom:0;}
+.note p{font-size:14.5px;}
+
+/* ---------- chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px;padding:0;list-style:none;}
+.chip{
+  font-family:var(--font-mono);font-size:11.5px;
+  border:1px solid var(--rule);background:var(--surface);
+  padding:4px 9px;border-radius:2px;color:var(--muted);
+}
+.chip.ok{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+.chip.bad{border-color:var(--alert);color:var(--alert);background:var(--alert-soft);}
+
+/* ---------- specimen ---------- */
+.spec{
+  font-family:var(--font-mono);font-size:12.5px;line-height:1.7;
+  background:var(--sunk);border:1px solid var(--rule);
+  padding:14px 16px;overflow-x:auto;margin:0 0 20px;
+  white-space:pre;color:var(--muted);
+}
+.spec b{color:var(--accent);font-weight:500;}
+
+/* ---------- gap list ---------- */
+.gaps{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:0;}
+.gaps li{
+  display:grid;grid-template-columns:52px 1fr;gap:16px;
+  padding:14px 0;border-bottom:1px solid var(--rule);
+}
+.gaps li:first-child{border-top:1px solid var(--rule);}
+.gaps .gid{
+  font-family:var(--font-mono);font-size:12px;color:var(--alert);
+  font-weight:500;padding-top:1px;
+}
+.gaps .gt{font-weight:600;font-size:15px;display:block;margin-bottom:2px;}
+.gaps .gd{font-size:14px;color:var(--muted);line-height:1.5;}
+
+hr.rule{border:none;border-top:1px solid var(--rule);margin:0;}
+
+@media (max-width:640px){
+  .wrap{padding:0 18px 64px;}
+  .metastrip div{border-right:none;margin-right:0;flex-basis:50%;padding-bottom:10px;}
+  .gaps li{grid-template-columns:44px 1fr;gap:12px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Deep Learning 702AI0C008 · Mini Project</p>
+  <h1>MapGuard</h1>
+  <p class="deck">Self-supervised, geometry-aware detection of damaging edits in OpenStreetMap.</p>
+  <dl class="metastrip">
+    <div><dt>Team</dt><dd>4 · one owner per workstream</dd></div>
+    <div><dt>Status</dt><dd>Gate 0 run — design adapted</dd></div>
+    <div><dt>Open</dt><dd>Corpus B labels (§6)</dd></div>
+    <div><dt>Updated</dt><dd>4 Sep 2026</dd></div>
+  </dl>
+</header>
+
+<section id="problem">
+  <div class="prose">
+    <span class="snum">01 — Problem</span>
+    <h2>Anyone can edit the map. Nobody checks first.</h2>
+    <p>OpenStreetMap accepts roughly <strong>50,000 changesets per day</strong> with no pre-approval. Its data feeds Apple Maps, Meta, Amazon Logistics, every open routing engine, and humanitarian mapping for disaster response. A bad edit becomes a broken route.</p>
+    <p>The damage arrives in distinct forms, and each leaves a different fingerprint:</p>
+  </div>
+
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Class</th><th>Example</th><th>Detectable by</th></tr></thead>
+      <tbody>
+        <tr><td>Geometry vandalism</td><td>Fake town drawn in open ocean; a road node dragged 400&nbsp;km</td><td>shape, displacement</td></tr>
+        <tr><td>Semantic vandalism</td><td>Offensive or gibberish text written into a <code>name</code> tag</td><td>text content</td></tr>
+        <tr><td>Destructive edits</td><td>Large fraction of a city deleted</td><td>scale, operation mix</td></tr>
+        <tr><td>Careless newbie damage</td><td>One node dragged; a road stretches across a country</td><td>geometry, user history</td></tr>
+        <tr><td>Broken imports</td><td>10,000 duplicate buildings</td><td>changeset size, repetition</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>The current defence is largely manual: volunteers reading changesets by hand in OSMCha, assisted by rule-based flags with poor precision.</p>
+  </div>
+</section>
+
+<section id="industry">
+  <div class="prose">
+    <span class="snum">02 — Prior art</span>
+    <h2>What production systems actually do</h2>
+    <p>This shapes the architecture, so it is worth being precise. All of it is publicly documented.</p>
+  </div>
+
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Who</th><th>System</th><th>Approach</th><th>What we take</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Meta</strong></td><td>Daylight<br><span style="color:var(--faint);font-size:12.5px">2020 – Nov 2024</span></td>
+          <td>word2vec skip-gram over user edit sequences → 32-d embeddings for 1.6M users. Shipped to production. Released the first OSM vandalism corpus. <span style="color:var(--faint)">CIKM&nbsp;'21</span></td>
+          <td>Users are the strongest single signal</td>
+        </tr>
+        <tr>
+          <td><strong>Overture</strong></td><td>Daylight's successor</td>
+          <td>Monthly planet snapshot → coastline, broken-relation and vandalism checks → <strong>~4 weeks to remediate</strong></td>
+          <td>Production today is monthly batch. Real-time is open</td>
+        </tr>
+        <tr>
+          <td><strong>Wikimedia</strong></td><td>Revert Risk<br><span style="color:var(--faint);font-size:12.5px">replaced ORES</span></td>
+          <td>Trained <em>solely on historical trace data</em> — revert history as ground truth, no hand labels. Their LLM variant is too slow (~1&nbsp;s median) for production</td>
+          <td>Validates our label strategy <em>and</em> our no-LLM design</td>
+        </tr>
+        <tr>
+          <td><strong>Uber</strong></td><td>CatchME</td>
+          <td>GPS-trace-derived map error detection; separate NLP model over support tickets</td>
+          <td>Multi-signal fusion; errors inferred, not reported</td>
+        </tr>
+        <tr class="hi">
+          <td><strong>Stripe</strong></td><td>Payments Foundation Model<br><span style="color:var(--faint);font-size:12.5px">2025</span></td>
+          <td>Transformer <strong>self-supervised</strong> on tens of billions of transactions → dense per-event embeddings → fine-tuned heads. Card-testing fraud recall <strong>59% → 97%</strong>, no FP increase</td>
+          <td>The closest analogue. Pretrain on unlabelled events, fine-tune on scarce labels</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>The modern pattern for abuse detection is a <strong>self-supervised foundation encoder over event sequences, fine-tuned per task, with entity embeddings as a first-class input</strong>. Nobody has applied it to OSM. That is this project.</p>
+    <h3>Academic state of the art</h3>
+  </div>
+
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Work</th><th class="num">Year</th><th>Method</th><th class="num">F1</th></tr></thead>
+      <tbody>
+        <tr><td>OSMPatrol</td><td class="num">2012</td><td>hand-tuned rules</td><td class="num">69.15</td></tr>
+        <tr><td>WDVD</td><td class="num">2016</td><td>random forest, text features</td><td class="num">72.20</td></tr>
+        <tr><td>OSMWatchman</td><td class="num">2020</td><td>random forest — <em>buildings only</em></td><td class="num">74.01</td></tr>
+        <tr><td>GloVe + CNN</td><td class="num">—</td><td>text embeddings + CNN</td><td class="num">76.96</td></tr>
+        <tr class="hi"><td><strong>Ovid</strong> <span style="color:var(--faint)">— SOTA</span></td><td class="num">2021/22</td><td>multi-head attention over edits</td><td class="num"><strong>81.66</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">
+    <span class="lbl">Read the fine print</span>
+    <p>Every F1 above is measured on a <strong>50/50 balanced test set</strong>. Real prevalence is far below 1%. None of these numbers describe operational performance — and that gap is one of our contributions.</p>
+  </div>
+</section>
+
+<section id="gaps">
+  <div class="prose">
+    <span class="snum">03 — Gaps</span>
+    <h2>What the state of the art throws away</h2>
+    <p>Read from Ovid's feature tables directly, not its abstract. Its inputs are: changeset counts and a bounding box; aggregate user statistics; and per-edit metadata in which the entire content of a name change is compressed to <code>name_changed ∈ {0,1}</code>.</p>
+  </div>
+
+  <ul class="gaps">
+    <li><span class="gid">G1</span><span><span class="gt">No real geometry</span><span class="gd">A bounding box only — no shape, no displacement, no area change, no topology. Ovid itself notes the one geometry-aware prior work is <em>"limited to the building domain."</em></span></span></li>
+    <li><span class="gid">G2</span><span><span class="gt">No tag content</span><span class="gd">What the vandal actually typed is never read. Their own GloVe+CNN baseline shows text carries signal they discard.</span></span></li>
+    <li><span class="gid">G3</span><span><span class="gt">User history is aggregates, not a sequence</span><span class="gd">Counts and dates. No temporal order — despite Meta shipping user-sequence embeddings to production in 2021.</span></span></li>
+    <li><span class="gid">G4</span><span><span class="gt">Large changesets are gutted</span><span class="gd">Above a threshold the edit vector is <strong>zeroed</strong> and the model falls back to metadata. Mass vandalism and broken imports <em>are</em> large changesets.</span></span></li>
+    <li><span class="gid">G5</span><span><span class="gt">Balanced-set evaluation</span><span class="gd">Negatives randomly downsampled to match positives, so reported F1 says little about a real review queue.</span></span></li>
+    <li><span class="gid">G6</span><span><span class="gt">No temporal generalisation test</span><span class="gd">Trained and tested on 2014–2019, never evaluated on later data. OSM's editor mix and tag conventions have shifted since.</span></span></li>
+  </ul>
+
+  <figure>
+    <svg viewBox="0 0 900 396" role="img" aria-label="The same changeset read two ways: Ovid collapses geometry to a four-number bounding box, tag text to a single boolean, and user history to a count, while MapGuard reads the before and after polygons, the character sequence of the tag value, and the ordered sequence of the user's past changesets.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+        <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <!-- source -->
+      <rect x="20" y="96" width="176" height="206" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <text x="34" y="122" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="currentColor" opacity=".55">ONE CHANGESET</text>
+      <text x="34" y="140" font-family="var(--font-mono)" font-size="11" fill="currentColor" opacity=".8">#79067468</text>
+
+      <text x="34" y="170" font-size="12" fill="currentColor">geometry</text>
+      <polyline points="120,176 136,163 152,170 168,159 182,166" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/>
+      <polyline points="120,176 136,163 152,170 176,196 182,166" fill="none" stroke="var(--alert)" stroke-width="1.6"/>
+
+      <text x="34" y="216" font-size="12" fill="currentColor">tag value</text>
+      <text x="120" y="216" font-family="var(--font-mono)" font-size="11" fill="var(--alert)">"aSdKjHaSd"</text>
+
+      <text x="34" y="258" font-size="12" fill="currentColor">user history</text>
+      <g fill="currentColor" opacity=".5">
+        <circle cx="122" cy="254" r="3"/><circle cx="138" cy="254" r="3"/><circle cx="154" cy="254" r="3"/><circle cx="170" cy="254" r="3"/>
+      </g>
+      <circle cx="186" cy="254" r="3.4" fill="var(--alert)"/>
+
+      <!-- arrows -->
+      <line x1="200" y1="150" x2="252" y2="106" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)" opacity=".6"/>
+      <line x1="200" y1="250" x2="252" y2="292" stroke="var(--accent)" stroke-width="1.4" marker-end="url(#arA)"/>
+      <text x="204" y="128" font-size="10.5" fill="currentColor" opacity=".55">collapses to</text>
+      <text x="204" y="286" font-size="10.5" fill="var(--accent)">reads</text>
+
+      <!-- OVID lane -->
+      <rect x="258" y="26" width="620" height="150" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".45" stroke-dasharray="4 3"/>
+      <text x="276" y="50" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="currentColor" opacity=".6">OVID — SOTA 2022</text>
+
+      <rect x="276" y="66" width="176" height="88" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/>
+      <text x="290" y="86" font-size="11.5" fill="currentColor" opacity=".75">bounding box</text>
+      <rect x="290" y="96" width="60" height="40" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/>
+      <text x="362" y="120" font-family="var(--font-mono)" font-size="11" fill="currentColor" opacity=".6">4 numbers</text>
+
+      <rect x="466" y="66" width="176" height="88" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/>
+      <text x="480" y="86" font-size="11.5" fill="currentColor" opacity=".75">name changed</text>
+      <text x="480" y="126" font-family="var(--font-mono)" font-size="26" fill="currentColor" opacity=".55">1</text>
+      <text x="512" y="126" font-family="var(--font-mono)" font-size="11" fill="currentColor" opacity=".5">one bit</text>
+
+      <rect x="656" y="66" width="206" height="88" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/>
+      <text x="670" y="86" font-size="11.5" fill="currentColor" opacity=".75">past contributions</text>
+      <text x="670" y="126" font-family="var(--font-mono)" font-size="20" fill="currentColor" opacity=".55">812</text>
+      <text x="722" y="126" font-family="var(--font-mono)" font-size="11" fill="currentColor" opacity=".5">a count</text>
+
+      <!-- MAPGUARD lane -->
+      <rect x="258" y="220" width="620" height="152" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="276" y="244" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="var(--accent)">MAPGUARD</text>
+
+      <rect x="276" y="258" width="176" height="94" rx="2" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".7"/>
+      <text x="290" y="278" font-size="11.5" fill="currentColor">before / after shape</text>
+      <polyline points="292,318 310,300 328,308 346,296 362,304" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".45"/>
+      <polyline points="292,318 310,300 328,308 352,338 362,304" fill="none" stroke="var(--alert)" stroke-width="1.6"/>
+      <text x="290" y="346" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">Δ 412 km</text>
+
+      <rect x="466" y="258" width="176" height="94" rx="2" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".7"/>
+      <text x="480" y="278" font-size="11.5" fill="currentColor">character sequence</text>
+      <g font-family="var(--font-mono)" font-size="12" fill="var(--alert)">
+        <text x="480" y="308">a S d K j H a S d</text>
+      </g>
+      <text x="480" y="332" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">no wordlist · no LLM</text>
+
+      <rect x="656" y="258" width="206" height="94" rx="2" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".7"/>
+      <text x="670" y="278" font-size="11.5" fill="currentColor">ordered history</text>
+      <polyline points="672,314 696,308 720,316 744,302 768,318 792,296 816,322" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".5"/>
+      <circle cx="840" cy="330" r="4" fill="var(--alert)"/>
+      <text x="670" y="344" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">200 steps, in order</text>
+    </svg>
+    <figcaption><b>Fig 1</b> The same changeset, read two ways. Ovid compresses geometry to four numbers, the vandal's typed string to a single bit, and the author's whole history to a count. MapGuard reads the before/after shape, the characters themselves, and the ordered sequence — the three signals that gaps G1–G3 name.</figcaption>
+  </figure>
+
+  <div class="note">
+    <span class="lbl">Independent confirmation</span>
+    <p>The 2024 survey <em>ML Updates for OpenStreetMap: Analysis of Research Gaps and Future Directions</em> (arXiv 2407.03365) independently names as open gaps: <strong>pretraining on unlabelled OSM data</strong> "despite its abundance"; <strong>geometry beyond point/polygon classification</strong>; and <strong>inconsistent benchmarking practices</strong>. Our three contributions are three of the gaps a survey explicitly asked for.</p>
+  </div>
+</section>
+
+<section id="idea">
+  <div class="prose">
+    <span class="snum">04 — Approach</span>
+    <h2>Learn normal for free, then fine-tune for damage</h2>
+    <p>Teach a network what normal map editing looks like from millions of unlabelled edits, then fine-tune it on the 18,276 labelled changesets — and give it the signal every prior model discards.</p>
+    <p>Two stages, following the Stripe pattern. <strong>Stage 1</strong> learns a 128-d representation of "a normal OSM edit" with no labels. <strong>Stage 2</strong> loads those weights, adds the geometry, text, sequence and user branches, and fine-tunes.</p>
+    <p>Why fusing beats either alone: masked tag modelling on its own is a solved, unremarkable task. As <em>pretraining</em> it answers the field's stated blocker — Ovid's own abstract names <em>"the lack of annotated data"</em> as the core difficulty.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 900 560" role="img" aria-label="Two-stage architecture. Stage one pretrains a shared edit encoder on unlabelled edits using three pretext tasks: masked tag modelling, geometry reconstruction and corruption contrast. Its weights initialise stage two, a changeset classifier with five branches feeding multi-head attention pooling and three outputs.">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+        <marker id="a2A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <!-- STAGE 1 -->
+      <rect x="20" y="22" width="860" height="176" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".4" stroke-dasharray="4 3"/>
+      <text x="38" y="46" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.3" fill="var(--accent)">STAGE 1 · SELF-SUPERVISED · NO LABELS</text>
+
+      <rect x="38" y="62" width="150" height="60" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      <text x="52" y="88" font-size="12.5" fill="currentColor">Unlabelled edits</text>
+      <text x="52" y="106" font-family="var(--font-mono)" font-size="10.5" fill="currentColor" opacity=".6">~2M · free</text>
+
+      <line x1="192" y1="92" x2="240" y2="92" stroke="currentColor" stroke-width="1.2" marker-end="url(#a2)"/>
+
+      <rect x="244" y="56" width="152" height="72" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="258" y="80" font-size="12.5" font-weight="600" fill="currentColor">Edit Encoder</text>
+      <text x="258" y="98" font-family="var(--font-mono)" font-size="10.5" fill="currentColor" opacity=".7">shared weights</text>
+      <text x="258" y="114" font-family="var(--font-mono)" font-size="10.5" fill="var(--accent)">z ∈ R¹²⁸</text>
+
+      <line x1="400" y1="92" x2="446" y2="92" stroke="currentColor" stroke-width="1.2" marker-end="url(#a2)"/>
+
+      <rect x="450" y="52" width="196" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/>
+      <text x="462" y="74" font-size="11.5" fill="currentColor">A · Masked tag modelling</text>
+      <rect x="450" y="92" width="196" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/>
+      <text x="462" y="114" font-size="11.5" fill="currentColor">B · Geometry reconstruction</text>
+      <rect x="450" y="132" width="196" height="34" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".7"/>
+      <text x="462" y="154" font-size="11.5" fill="currentColor">C · Corruption contrast</text>
+
+      <text x="664" y="74" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">tag co-occurrence</text>
+      <text x="664" y="114" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">shape priors</text>
+      <text x="664" y="154" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">synthetic damage</text>
+
+      <!-- transfer arrow -->
+      <line x1="320" y1="200" x2="320" y2="246" stroke="var(--accent)" stroke-width="2" marker-end="url(#a2A)"/>
+      <text x="334" y="228" font-family="var(--font-mono)" font-size="11" fill="var(--accent)">pretrained weights → transfer learning</text>
+
+      <!-- STAGE 2 -->
+      <rect x="20" y="252" width="860" height="292" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.2"/>
+      <text x="38" y="276" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.3" fill="var(--accent)">STAGE 2 · SUPERVISED FINE-TUNE · 18,276 LABELS</text>
+
+      <rect x="38" y="292" width="130" height="52" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      <text x="52" y="314" font-size="12.5" fill="currentColor">Changeset</text>
+      <text x="52" y="331" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">set of N edits</text>
+
+      <!-- branches -->
+      <g font-size="11.5">
+        <rect x="204" y="290" width="182" height="36" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="216" y="308" fill="currentColor">B1 Geometry</text><text x="330" y="308" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">CNN</text>
+        <text x="216" y="320" font-family="var(--font-mono)" font-size="9.5" fill="var(--alert)">closes G1</text>
+
+        <rect x="204" y="334" width="182" height="36" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="216" y="352" fill="currentColor">B2 Tag text</text><text x="316" y="352" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">char-CNN</text>
+        <text x="216" y="364" font-family="var(--font-mono)" font-size="9.5" fill="var(--alert)">closes G2</text>
+
+        <rect x="204" y="378" width="182" height="36" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="216" y="396" fill="currentColor">B3 Edit sequence</text><text x="336" y="396" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">BiLSTM</text>
+        <text x="216" y="408" font-family="var(--font-mono)" font-size="9.5" fill="var(--alert)">closes G4</text>
+
+        <rect x="204" y="422" width="182" height="36" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+        <text x="216" y="440" fill="currentColor">B4 User history</text><text x="344" y="440" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">GRU</text>
+        <text x="216" y="452" font-family="var(--font-mono)" font-size="9.5" fill="var(--alert)">closes G3</text>
+
+        <rect x="204" y="466" width="182" height="36" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/>
+        <text x="216" y="484" fill="currentColor" opacity=".75">B5 Tabular</text><text x="348" y="484" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">MLP</text>
+        <text x="216" y="496" font-family="var(--font-mono)" font-size="9.5" fill="currentColor" opacity=".5">Ovid parity</text>
+      </g>
+
+      <line x1="172" y1="318" x2="200" y2="308" stroke="currentColor" stroke-width="1" marker-end="url(#a2)" opacity=".6"/>
+      <line x1="172" y1="318" x2="200" y2="352" stroke="currentColor" stroke-width="1" marker-end="url(#a2)" opacity=".6"/>
+      <line x1="172" y1="318" x2="200" y2="396" stroke="currentColor" stroke-width="1" marker-end="url(#a2)" opacity=".6"/>
+      <line x1="172" y1="318" x2="200" y2="440" stroke="currentColor" stroke-width="1" marker-end="url(#a2)" opacity=".6"/>
+      <line x1="172" y1="318" x2="200" y2="484" stroke="currentColor" stroke-width="1" marker-end="url(#a2)" opacity=".6"/>
+
+      <g stroke="currentColor" stroke-width="1" opacity=".6">
+        <line x1="390" y1="308" x2="446" y2="380" marker-end="url(#a2)"/>
+        <line x1="390" y1="352" x2="446" y2="384" marker-end="url(#a2)"/>
+        <line x1="390" y1="396" x2="446" y2="392" marker-end="url(#a2)"/>
+        <line x1="390" y1="440" x2="446" y2="400" marker-end="url(#a2)"/>
+        <line x1="390" y1="484" x2="446" y2="406" marker-end="url(#a2)"/>
+      </g>
+
+      <rect x="450" y="352" width="150" height="80" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="464" y="378" font-size="12.5" font-weight="600" fill="currentColor">Multi-head</text>
+      <text x="464" y="394" font-size="12.5" font-weight="600" fill="currentColor">attention pooling</text>
+      <text x="464" y="414" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".7">over N edits</text>
+
+      <line x1="604" y1="392" x2="650" y2="392" stroke="currentColor" stroke-width="1.2" marker-end="url(#a2)"/>
+
+      <g font-size="11.5">
+        <rect x="654" y="330" width="212" height="36" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text x="666" y="353" fill="currentColor">p(damaging) — calibrated</text>
+        <rect x="654" y="374" width="212" height="36" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text x="666" y="397" fill="currentColor">which edit is suspicious</text>
+        <rect x="654" y="418" width="212" height="36" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <text x="666" y="441" fill="currentColor">which signal fired</text>
+      </g>
+      <text x="654" y="478" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">Ovid emits only the first.</text>
+      <text x="654" y="494" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">A reviewer needs all three.</text>
+    </svg>
+    <figcaption><b>Fig 2</b> Stage 1 trains one shared encoder against three pretext tasks on unlabelled edits; its weights initialise Stage 2. Four of the five branches exist specifically to close a named gap — B5 is there only to reach parity with Ovid's feature set, so the ablation can isolate what the new signals add.</figcaption>
+  </figure>
+</section>
+
+<section id="syllabus">
+  <div class="prose">
+    <span class="snum">05 — Coverage</span>
+    <h2>Every course unit, genuinely used</h2>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Unit</th><th>Concept</th><th>Where it lands</th></tr></thead>
+      <tbody>
+        <tr><td>U2</td><td>Perceptron → MLP → feedforward</td><td>B5 tabular branch</td></tr>
+        <tr><td>U2</td><td>Backpropagation, BPTT</td><td>end-to-end; BPTT through B3 / B4</td></tr>
+        <tr><td>U2</td><td>Activation functions</td><td>ReLU trunk, sigmoid output, tanh in LSTM gates — ablated</td></tr>
+        <tr><td>U2</td><td>Loss functions</td><td>BCE → <strong>focal loss</strong> for imbalance</td></tr>
+        <tr><td>U3</td><td>SGD, momentum, Nesterov, AdaGrad, RMSProp, Adam</td><td>reuses the <strong>lab expt 6</strong> protocol as a real results table</td></tr>
+        <tr><td>U3</td><td>L1/L2, dropout, early stopping</td><td>early stopping on val <strong>PR-AUC</strong>, not accuracy</td></tr>
+        <tr><td>U4</td><td>Convolution, pooling, striding, param counting</td><td>B1 (2-D) and B2 (1-D)</td></tr>
+        <tr><td>U4</td><td>Inception / ResNet ideas</td><td>parallel multi-width kernels in B2; residual connections when stacking</td></tr>
+        <tr class="hi"><td>U4</td><td><strong>Transfer learning</strong></td><td><strong>lab expt 8's exact procedure, applied off-image</strong>: pretrain → freeze → fine-tune</td></tr>
+        <tr><td>U5</td><td>Vanilla RNN, vanishing gradients</td><td>we train one <em>deliberately</em> and plot gradient-norm collapse over 200-step histories, then justify LSTM</td></tr>
+        <tr><td>U5</td><td><strong>LSTM / GRU</strong></td><td>B3 and B4; LSTM vs GRU vs BiLSTM compared</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>Beyond classroom:</strong> multi-head attention · self-supervised pretraining · embedding layers · multimodal fusion · focal loss · PR-AUC and precision@k · model calibration.</p>
+  </div>
+</section>
+
+<section id="data">
+  <div class="prose">
+    <span class="snum">06 — Data</span>
+    <h2>Three tiers, one verified shortcut</h2>
+    <p>The labels are downloaded and inspected: <strong>18,276 changesets</strong>, exactly 9,138 damaging and 9,138 clean, IDs spanning <code>19,739,784</code>–<code>79,067,468</code> (2014–2019).</p>
+    <p>Changeset <em>contents</em> come from the public <code>real-changesets</code> bucket on AWS Open Data — no account, no signing, minutely updated. Each element carries an <code>old</code> block:</p>
+  </div>
+
+  <div class="spec">{"elements": [{
+  "id": "494555506", "version": "6", "changeset": "147186571",
+  "uid": "15324596", "user": "dmfr",
+  <b>"old"</b>: {
+    "version": "5", "action": "modify", "type": "way",
+    <b>"tags"</b>: {"landuse": "landfill", "name": "Tratolixo — Ecoparque"},
+    <b>"nodes"</b>: [{"ref": "4863084239", "lat": "38.9390456", "lon": "-9.2914563"}, …]
+  }
+}]}</div>
+
+  <div class="prose">
+    <p>Before <em>and</em> after tags, plus before/after node coordinates — the geometry branch handed to us directly, with no history file and no geometry reconstruction. <strong>But only inside the bucket's window,</strong> and Gate 0 established that the window does not reach the labels.</p>
+  </div>
+
+  <div class="note warn">
+    <span class="lbl">Gate 0 — result: failed</span>
+    <p>Probed 140 labelled changeset IDs, stratified across the full 19.7M–79.1M range and both classes. <strong>0 hits. All 404. Uniform across every stratum</strong> — not a partial cutoff, but zero coverage. <code>real-changesets</code> does not hold 2014–2019 changesets at all.</p>
+    <p>Caught on day one rather than in week six. Cost of the failure: ~20 person-hours, exactly as budgeted in the fallback.</p>
+  </div>
+
+  <div class="prose">
+    <p>Two follow-up gates established the replacement:</p>
+  </div>
+
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Question</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Does <code>/api/0.6/changeset/&lt;id&gt;/download</code> work on old changesets?</td><td>✅ <strong>3/3</strong> · HTTP 200 · ~0.2 s each · full tag diffs, operations, versions, inline <code>lat</code>/<code>lon</code> for nodes</td></tr>
+        <tr><td>Does <code>/api/0.6/&lt;type&gt;/&lt;id&gt;/&lt;version-1&gt;</code> return the previous state?</td><td>✅ <strong>2/2</strong> · but ways return <code>&lt;nd&gt;</code> refs <em>without</em> coordinates</td></tr>
+        <tr><td>Where does the bucket actually cover?</td><td><strong>~147M – 164M</strong> · Feb 2024 – Mar 2025 · sharp cutoff between 164M and 165M</td></tr>
+        <tr><td>Current maximum changeset ID</td><td><strong>188,495,159</strong> (2026-09-03)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>Two consequences. The registry's <em>"minutely updated"</em> claim is <strong>stale</strong> — the bucket stopped being fed around early 2025. And historical <em>way</em> geometry is expensive through the API, since a previous version yields node references rather than coordinates.</p>
+    <h3>What this forces — and why it's better than the plan it replaced</h3>
+    <p>The corpus splits in two, each half doing the job it is actually good at:</p>
+  </div>
+
+  <div class="tscroll">
+    <table>
+      <thead><tr><th></th><th>Corpus A — Ovid-era</th><th>Corpus B — Modern</th></tr></thead>
+      <tbody>
+        <tr><td>Period</td><td>2014–2019</td><td>Feb 2024 – Mar 2025</td></tr>
+        <tr><td>Source</td><td>OSM API, per changeset</td><td><code>real-changesets</code> S3, bulk</td></tr>
+        <tr><td>Labels</td><td>✅ 18,276 published — <strong>downloaded</strong></td><td>⚠️ to be built — OSMCha + revert mining</td></tr>
+        <tr><td>Tags, ops, versions</td><td>✅ full</td><td>✅ full</td></tr>
+        <tr><td>Node geometry</td><td>✅ inline</td><td>✅ inline</td></tr>
+        <tr class="hi"><td><strong>Way geometry</strong></td><td>✗ expensive — N calls per way</td><td>✅ <strong>free, before + after</strong></td></tr>
+        <tr><td>Role</td><td>comparability with published SOTA · branches B2–B5</td><td><strong>B1 geometry at full strength</strong> · G6 temporal test</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>This is stronger than the single-corpus plan it replaces. The temporal contribution <strong>G6</strong> sharpens from "test on later data" into a genuine cross-corpus generalisation study, and <strong>building a modern labelled benchmark becomes a contribution in its own right</strong> — precisely the "inconsistent benchmarking practices" gap the 2024 survey named.</p>
+  </div>
+
+  <div class="note">
+    <span class="lbl">One open item</span>
+    <p>Corpus B needs labels. Two independent routes, either sufficient: the <strong>OSMCha <code>harmful</code> flag</strong> (human-reviewed, cleanest — needs a free token) and <strong>revert mining</strong> from the 8.1 GB changeset dump (no account, runs on Colab). Do both — OSMCha for precision, revert mining for volume.</p>
+  </div>
+</section>
+
+<section id="compute">
+  <div class="prose">
+    <span class="snum">07 — Compute</span>
+    <h2>Sized to the hardware we actually have</h2>
+  </div>
+
+  <ul class="chips">
+    <li class="chip">i5-8265U · 4C/8T @ 1.6 GHz</li>
+    <li class="chip bad">7.82 GB RAM · 0.77 GB free</li>
+    <li class="chip bad">integrated GPU · no CUDA</li>
+    <li class="chip">C: 72 GB free</li>
+  </ul>
+
+  <div class="note">
+    <span class="lbl">Resolved — repo moved out of OneDrive</span>
+    <p>The original folder sat inside OneDrive, where writing gigabytes would have made OneDrive sync all of it and wedge the machine. The project now lives at <code>C:\AyushGarg\projects\personal\osm_mapguard</code>.</p>
+    <p><strong>Rule still stands: bulk data goes in <code>C:\osm-data\</code>, never in the repo.</strong> Only code, labels, figures and documents are tracked.</p>
+  </div>
+
+  <div class="note warn">
+    <span class="lbl">Environment — local Python is 3.14</span>
+    <p><strong>TensorFlow does not support Python 3.14.</strong> Local work needs a 3.12 virtual environment. Nothing on the critical path depends on it — local Python is only for baselines and figures, and Colab and Kaggle both ship supported versions.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 900 380" role="img" aria-label="Compute placement. The laptop writes and debugs code, runs classical baselines and produces figures and the paper, but cannot train on GPU. Code moves to Colab and Kaggle via GitHub; featurised Parquet and checkpoints live on Google Drive; only a small results file returns to the laptop.">
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+        <marker id="a3A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <!-- laptop -->
+      <rect x="24" y="90" width="212" height="200" rx="2" fill="none" stroke="var(--alert)" stroke-width="1.3"/>
+      <text x="40" y="116" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="var(--alert)">LAPTOP · CONSTRAINED</text>
+      <g font-size="12" fill="currentColor">
+        <text x="40" y="146">write + debug code</text>
+        <text x="40" y="170">baselines · LogReg, XGBoost</text>
+        <text x="40" y="194">DuckDB over Parquet</text>
+        <text x="40" y="218">figures · maps · paper</text>
+      </g>
+      <line x1="40" y1="238" x2="220" y2="238" stroke="var(--rule)" stroke-width="1"/>
+      <text x="40" y="258" font-family="var(--font-mono)" font-size="10" fill="var(--alert)">✕ no GPU training</text>
+      <text x="40" y="274" font-family="var(--font-mono)" font-size="10" fill="var(--alert)">✕ no bulk data work</text>
+
+      <!-- github -->
+      <rect x="288" y="36" width="150" height="52" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      <text x="302" y="60" font-size="12.5" fill="currentColor">GitHub</text>
+      <text x="302" y="77" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">thin notebooks</text>
+
+      <line x1="240" y1="140" x2="300" y2="96" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)"/>
+      <text x="238" y="112" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">push</text>
+
+      <!-- colab -->
+      <rect x="288" y="112" width="230" height="122" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="304" y="136" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="var(--accent)">COLAB · T4 · 12.7 GB</text>
+      <g font-size="12" fill="currentColor">
+        <text x="304" y="162">fetch 18k changeset JSONs</text>
+        <text x="304" y="184">parse → Parquet features</text>
+        <text x="304" y="206">Stage 2 training · iterate</text>
+      </g>
+      <text x="304" y="224" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">idle-kill 90 min · 12 h cap</text>
+
+      <!-- kaggle -->
+      <rect x="288" y="250" width="230" height="106" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+      <text x="304" y="274" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="var(--accent)">KAGGLE · P100 · 29 GB</text>
+      <g font-size="12" fill="currentColor">
+        <text x="304" y="300">Stage 1 pretraining</text>
+        <text x="304" y="322">ablation grid · ~40 runs</text>
+      </g>
+      <text x="304" y="342" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".55">30 GPU-h/wk, explicit quota</text>
+
+      <line x1="362" y1="92" x2="362" y2="108" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)"/>
+      <line x1="430" y1="92" x2="470" y2="246" stroke="currentColor" stroke-width="1" marker-end="url(#a3)" opacity=".6"/>
+      <text x="444" y="164" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">git pull</text>
+
+      <!-- drive -->
+      <rect x="570" y="112" width="196" height="122" rx="2" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="586" y="136" font-family="var(--font-mono)" font-size="10.5" letter-spacing="1.2" fill="var(--accent)">GOOGLE DRIVE</text>
+      <g font-size="12" fill="currentColor">
+        <text x="586" y="164">featurised Parquet</text>
+        <text x="586" y="186">checkpoints, every epoch</text>
+      </g>
+      <text x="586" y="212" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".7">uploaded once · never re-fetched</text>
+
+      <line x1="522" y1="164" x2="566" y2="164" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#a3A)"/>
+      <line x1="566" y1="196" x2="522" y2="196" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#a3A)"/>
+      <line x1="522" y1="290" x2="620" y2="240" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#a3A)"/>
+
+      <!-- results back -->
+      <rect x="570" y="272" width="196" height="60" rx="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      <text x="586" y="296" font-size="12.5" fill="currentColor">results.json</text>
+      <text x="586" y="315" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">one small file back</text>
+
+      <path d="M568 302 C 420 380, 180 350, 130 296" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)" opacity=".7"/>
+      <text x="300" y="374" font-family="var(--font-mono)" font-size="10" fill="currentColor" opacity=".6">not screenfuls of stdout</text>
+    </svg>
+    <figcaption><b>Fig 3</b> Everything that can run locally runs locally, so it can be written and debugged without a human in the loop. Only Stage 1 pretraining and the ablation grid require the round trip — and each returns one small file, not a wall of output.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>Tooling</h3>
+    <p><strong>DuckDB</strong> is the key choice for an 8 GB machine — it queries Parquet larger than RAM. Paired with <strong>Polars</strong> over pandas for the same reason. <strong>Keras 3 on TensorFlow</strong> for the model, since the course labs are TF/Keras and its functional API handles multi-input cleanly; PyTorch is the alternative if the team prefers it, but decide once, in week 1. Shapely and GeoPandas for geometry features, scikit-learn and XGBoost for baselines, Weights &amp; Biases for the ablation grid, LaTeX on Overleaf for the paper.</p>
+    <p><strong>No paid APIs. No LLM anywhere in the pipeline</strong> — matching Wikimedia's own finding that LLM-based revert risk is too slow to serve.</p>
+  </div>
+</section>
+
+<section id="eval">
+  <div class="prose">
+    <span class="snum">08 — Evaluation</span>
+    <h2>Four regimes, and the figure that decides it</h2>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th></th><th>Regime</th><th>Setup</th><th>Purpose</th><th>Closes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>R1</strong></td><td>Balanced</td><td>9,138 / 9,138, user-disjoint 70/10/20</td><td>apples-to-apples with Ovid's 81.66</td><td>—</td></tr>
+        <tr><td><strong>R2</strong></td><td>Realistic prevalence</td><td>negatives upsampled to 1:100, 1:1000</td><td>operational truth — <strong>PR-AUC and precision@k, not F1</strong></td><td>G5</td></tr>
+        <tr><td><strong>R3</strong></td><td>Temporal holdout</td><td>train ≤2019, test on 2026</td><td>drift under real deployment</td><td>G6</td></tr>
+        <tr class="hi"><td><strong>R4</strong></td><td>Label efficiency</td><td>fine-tune on 10 / 25 / 50 / 100% of labels</td><td><strong>does pretraining actually help?</strong></td><td>core claim</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>R4 produces the single most convincing figure in the paper: pretrained against from-scratch across label budgets. If the pretrained curve sits above the scratch curve — especially at 10% — the whole thesis is demonstrated in one plot.</p>
+    <h3>Expected results, stated in advance</h3>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Regime</th><th>Expectation</th><th>Confidence</th></tr></thead>
+      <tbody>
+        <tr><td>R1 balanced</td><td>+2 to +6 F1 over 81.66</td><td>medium — could be +1</td></tr>
+        <tr><td>R2 realistic</td><td>F1 collapses for <em>everyone</em> to ~0.2–0.4; PR-AUC becomes the real metric</td><td>high that it collapses; the number is the finding</td></tr>
+        <tr><td>R3 temporal</td><td>measurable drop on 2026 data</td><td>high</td></tr>
+        <tr><td>R4 label efficiency</td><td>pretrained above scratch, gap widest at 10%</td><td>medium-high</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="lbl">Neither failure mode sinks the project</span>
+    <p><strong>If geometry adds little</strong> — plausible if most vandalism is tag-only — the finding becomes <em>"geometry helps only the geometric subclass,"</em> supported by a per-vandalism-type breakdown nobody has published. <strong>If pretraining doesn't help</strong>, that means 18k labels is already sufficient, which contradicts the field's stated assumption including Ovid's own abstract. Both are publishable. That is deliberate.</p>
+  </div>
+</section>
+
+<section id="plan">
+  <div class="prose">
+    <span class="snum">09 — Execution</span>
+    <h2>Phasing and ownership</h2>
+    <p>Aligned to the course calendar: topic approval end of week 3, phase-1 evaluation week 7, phase-2 evaluation week 14/15.</p>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Phase</th><th class="num">Weeks</th><th>Deliverable</th></tr></thead>
+      <tbody>
+        <tr><td><strong>P0</strong> Setup</td><td class="num">1</td><td>Gate 0 result, repo, OSM + OSMCha accounts, framework decision, data dirs outside OneDrive</td></tr>
+        <tr><td><strong>P1</strong> Baseline</td><td class="num">2–7</td><td>Tier A pipeline, Ovid reproduction, B2 + B4 + B5, R1 + R2 results → <strong>phase-1 eval</strong></td></tr>
+        <tr><td><strong>P2</strong> Full system</td><td class="num">8–14</td><td>Stage 1 pretraining, B1 geometry, Tier B temporal test, ablation grid, demo → <strong>phase-2 eval</strong></td></tr>
+        <tr><td><strong>P3</strong> Paper</td><td class="num">12–15</td><td>Draft, figures, plagiarism check, submission</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th>Owner</th><th>Workstream</th><th>Artefacts</th></tr></thead>
+      <tbody>
+        <tr><td><strong>WS1</strong></td><td>Data pipeline</td><td>Gate 0, S3 fetcher, JSON → Parquet, DuckDB feature store, user histories</td></tr>
+        <tr><td><strong>WS2</strong></td><td>Baselines + eval harness</td><td>LogReg / XGBoost, Ovid reproduction, R1–R4 harness, calibration</td></tr>
+        <tr><td><strong>WS3</strong></td><td>Model — Stage 2</td><td>B1–B5, attention fusion, training loop, W&amp;B tracking</td></tr>
+        <tr><td><strong>WS4</strong></td><td>Model — Stage 1 + demo</td><td>pretext tasks, corruption generator, pretraining runs, Folium demo, figures</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>All four co-author the paper. WS1 gates everyone, so WS2–4 build against a small mock Parquet in week 1 rather than waiting.</p>
+    <p><strong>Compressed 3-week variant,</strong> if the whole project must ship rather than stage: drop B1 geometry rasters and keep node-displacement features only; run one pretext task instead of three; static figures instead of an interactive demo. G2, G3, G4 and G5 survive intact; G1 becomes partial. Still a real paper, just narrower.</p>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="prose">
+    <span class="snum">10 — Open</span>
+    <h2>Decisions still to make</h2>
+  </div>
+  <div class="tscroll">
+    <table>
+      <thead><tr><th></th><th>Decision</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Gate 0</td><td>✅ <strong>run — failed.</strong> Two-corpus design adopted</td></tr>
+        <tr><td>2</td><td>Keras 3 vs PyTorch</td><td>✅ <strong>Keras 3 on TensorFlow</strong> — course-aligned, multi-input functional API suffices</td></tr>
+        <tr><td>3</td><td>Timeline</td><td>✅ <strong>staged</strong> — P1 to week 7, P2 to week 14</td></tr>
+        <tr><td>4</td><td>Region scope</td><td>✅ <strong>global</strong> — both corpora key on changeset ID, not geography</td></tr>
+        <tr><td>5</td><td>OSM account + OSMCha token</td><td>⏳ <strong>on Ayush</strong> — free, instant; gates Corpus B labels only</td></tr>
+        <tr><td>6</td><td>Corpus B label route</td><td>⏳ OSMCha <code>harmful</code> <em>and</em> revert mining — use both</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p style="color:var(--muted);font-size:14.5px;border-top:1px solid var(--rule);padding-top:20px;margin-top:8px;">Key references — Tempelmeier &amp; Demidova, <em>Ovid</em> (SIGSPATIAL 2021, arXiv:2203.11087) and <em>Attention-Based Vandalism Detection</em> (WWW 2022, arXiv:2201.10406) · Li, Anderson &amp; Niu, <em>Vandalism Detection in OSM via User Embeddings</em> (CIKM 2021) · <em>ML Updates for OpenStreetMap</em> (arXiv:2407.03365, 2024) · Neis, Goetz &amp; Zipf (ISPRS 2012) · Truong, Touya &amp; de Runz, <em>OSMWatchman</em> (ISPRS 2020) · Heindorf et&nbsp;al., <em>Vandalism Detection in Wikidata</em> (CIKM 2016) · Vaswani et&nbsp;al. (NIPS 2017) · Stripe Payments Foundation Model (2025) · Wikimedia language-agnostic Revert Risk · Overture Maps validation docs · AWS Registry of Open Data, <code>real-changesets</code>.</p>
+  </div>
+</section>
+
+</div>
