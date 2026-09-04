@@ -1,0 +1,16 @@
+{
+  "generated": "2026-09-04T11:26:43",
+  "gate": "1d",
+  "question": "does Keras 3 handle five inputs plus masked attention over a variable-length edit set?",
+  "keras_version": "3.15.1",
+  "backend": "tensorflow",
+  "params": 20181,
+  "built": true,
+  "trained": true,
+  "loss": 0.9213493466377258,
+  "padding_perturbation_max_delta": 0.0,
+  "masking_holds": true,
+  "seconds": 15.3,
+  "verdict": "PASS",
+  "decision": "Keras 3 confirmed (plan Decision 2)"
+}

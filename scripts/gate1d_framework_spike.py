@@ -176,7 +176,7 @@ def main() -> int:
     pad = (1.0 - mask2)[:, :, None]
     x3 = {k: v.copy() for k, v in x2.items()}
     x3["edit_features"] = x2["edit_features"] + pad * rng.normal(size=x2["edit_features"].shape) * 50
-    x3["geometry"] = x2["geometry"] + pad[:, :, :, None] * rng.normal(size=x2["geometry"].shape) * 50
+    x3["geometry"] = x2["geometry"] + pad[:, :, :, None, None] * rng.normal(size=x2["geometry"].shape) * 50
     p_after = model.predict(x3, verbose=0)
 
     drift = float(np.max(np.abs(p_before - p_after)))
