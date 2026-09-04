@@ -122,7 +122,7 @@ with the label.
         code("!python scripts/fetch_user_histories.py --rate 3 --workers 3"),
         md("## Corpus D - live 2026\n\nThe temporal test set. State the exact window; it goes in the paper."),
         code("!python scripts/harvest_corpus_d.py --minutes 1440"),
-        code("!python scripts/fetch_osmcha_labels.py --since 2026-01-01 --max-pages 400"),
+        code("!python scripts/fetch_osmcha_labels.py --since 2026-01-01 --window-days 7"),
         md("## Build the feature store\n\nThree Parquet tables. Schema frozen end of week 1."),
         code("!python -m mapguard.features.build_store"),
         code("""
