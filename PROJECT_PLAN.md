@@ -2,7 +2,8 @@
 
 **Course:** Deep Learning (702AI0C008) — Mini Project
 **Team size:** 4
-**Status:** v2 — architecture locked, Gate 0 run and its consequences corrected by the plan review (`docs/PLAN_REVIEW.md`)
+**Status:** v3 — four-week scope (§13). Gate 1a passed; OSMCha label route live.
+**Timeline:** 2026-09-04 to 2026-10-02
 **Last updated:** 2026-09-04
 
 ---
@@ -113,9 +114,9 @@ flowchart TB
         A6["OSMCha API<br/>human harmful labels<br/>token = free OSM login"]
     end
 
-    subgraph TIER["Four corpora"]
+    subgraph TIER["Three corpora"]
         T1["Corpus A — Ovid-era labelled<br/>2014-2019 · TRAIN + R1"]
-        T2["Corpus B — Modern bulk<br/>Feb 2024-Mar 2025 · R3a"]
+        T2["Corpus B — DROPPED<br/>bucket kept for Corpus C only"]
         T3["Corpus C — Unlabelled<br/>PRETRAIN · disjoint from B/D"]
         T4["Corpus D — Live 2026<br/>R3b TEMPORAL TEST + DEMO"]
     end
@@ -260,7 +261,7 @@ Every unit genuinely used. Nothing name-dropped.
 
 ---
 
-## 7. Data plan — four corpora
+## 7. Data plan — three corpora
 
 Gate 0 killed the original single-corpus plan; the plan review (`docs/PLAN_REVIEW.md`)
 then killed the *replacement's* central assumption, that historical geometry is out of
@@ -291,23 +292,30 @@ alongside `adiff` — put the bbox on each statement. And a changeset with a glo
 missing bbox must fall back to versioned multi-fetch rather than asking Overpass for the
 planet.
 
-### Corpus B — Modern bulk, Feb 2024 – Mar 2025
+### Corpus B — evaluation role dropped (2026-09-04)
 
-The `real-changesets` bucket window, re-verified: **82% density** (59/72 probes across
-147M–164M), no systematic hole, ~14M usable changesets. The 18% of 404s matches the
-normal rate of empty changesets in OSM.
+The `real-changesets` bucket window (Feb 2024 – Mar 2025, re-verified at **82% density**,
+59/72 probes, ~14M usable changesets) was to be a second labelled corpus for a
+five-year-drift test.
 
-- full before/after tags and geometry, in bulk, free
-- **labels to be built** — OSMCha `harmful` (token required, confirmed 401 without one)
-  plus revert mining
-- role: the modern half of the temporal study, and the bulk source for Corpus C
+**Dropped, because Corpus D supersedes it.** Once the OSMCha token arrived, live 2026 data
+turned out to have *human-reviewed* labels and full `adiff` geometry — everything Corpus B
+was for, on more recent data, with a stronger label source. Building a second labelled
+corpus to test drift to 2025 when we can test drift to *today* is work with no reader.
+
+What this costs: regime **R3a** only. **R3b** survives and is the better experiment.
+
+**The bucket itself stays** — as the source for Corpus C. It is still the cheapest bulk
+before/after geometry available, which is exactly what the pretext tasks want, and no
+labelling effort is needed for that role.
+
 
 ### Corpus C — Unlabelled pretraining
 
 Bulk `real-changesets` JSONs from the same window. Target 500k–2M edits.
 
 > **Disjointness rule (non-negotiable).** Corpus C excludes every changeset id **and every
-> uid** that appears in any Corpus B or Corpus D evaluation split. Pretraining on the test
+> uid** that appears in the Corpus D evaluation split. Pretraining on the test
 > set would make R4 — the single most important figure in the paper — meaningless.
 
 ### Corpus D — Live 2026 (the real temporal test)
@@ -378,8 +386,8 @@ Raw output: `results/gate0d_review_probes.json`.
 | P8 | Is OSMCha readable without a token? | **No** — HTTP 401. Decision 5 is a real blocker |
 | P9 | How big are the bulk artefacts? | changesets dump **8.72 GB**; planet 94.6 GB; full-history 162 GB |
 
-**Consequence:** branch B1 runs on Corpus A. Corpus B stops being "the only place geometry
-works" and becomes the modern half of the temporal study. Corpus D becomes possible at all.
+**Consequence:** branch B1 runs on Corpus A, and Corpus D becomes possible at all. Corpus B
+lost its reason to exist as a separate labelled corpus — see §7.
 
 ### 8.4 Gate 1 — must pass before any modelling (week 1)
 
@@ -389,19 +397,33 @@ works" and becomes the modern half of the temporal study. Corpus D becomes possi
 | **1b** | Is the public Overpass instance enough for 18k queries? | measure sustained throughput and 429/504 rate over 30 min. If it will not carry 18k, pick a mirror or a subset before committing | WS1 |
 | **1c** | Does the leakage tripwire stay quiet? | baseline **B0** (comment length + editor string + account age only) scores **F1 < 0.70** on R1b. If it reaches ~0.8 the labels leak and everything downstream is void | WS2 |
 | **1d** | Does Keras 3 handle the real model shape? | toy model: 5 heterogeneous inputs, ragged set of edits, masked multi-head attention, trains one epoch without fighting. Pass → Keras. Fail → PyTorch, **decided by day 5** | WS3 |
-| **1e** | What is Stage-1 throughput? | measured edits/sec on one Kaggle P100 at the real batch size. The pretraining budget is then derived, not guessed. 30 GPU-h/week is a ceiling | WS4 |
+| **1e** | What is Stage-1 throughput? | measured edits/sec on one Kaggle P100 at the real batch size. **Only run if Stage 1 survives the week-4 decision (§13)** | WS4 |
 
-### 8.5 Open item — Corpus B/D labels
+### 8.5 Corpus D labels — RESOLVED 2026-09-04
 
-Confirmed still open (P8 returned 401). Two independent routes, either sufficient:
+The token arrived and the route works. Measured against the live OSMCha API:
 
-- **OSMCha `harmful`** — human-reviewed, highest precision. Needs a free token from the
-  OSMCha user page after OSM login. **Action on Ayush.**
-- **Revert mining** — parse changeset comments for revert patterns. For 2024–2026 windows
-  this now runs off the **changeset replication stream** (~125 MB gz/month) rather than
-  the 8.72 GB dump. No account needed.
+| Window | `harmful=True` | `checked=True, harmful=False` |
+|---|---|---|
+| 2026-08-25 → 2026-09-04 (10 days) | 252 | 566 |
+| 2026-01-01 → 2026-09-04 (harvesting) | 3,200+ and counting | — |
 
-Do both: OSMCha as the high-precision set, revert mining for volume.
+69 distinct reviewers in the ten-day sample. Top harmful reasons: `New mapper`,
+`Mapbox: Fictional mapping`, `mass modification`, `User has multiple blocks`,
+`suspect_word`, `possible import`.
+
+**Note the distribution differs from the Ovid labels by construction.** Ovid positives are
+"someone reverted this"; these are "a human read it and called it damaging". Where the two
+disagree is itself worth a paragraph in the paper.
+
+**Reviewed negatives, not assumed ones.** The clean class is fetched as
+`checked=True, harmful=False` — a reviewer looked and said it was fine. Using unreviewed
+changesets as negatives would encode reviewer *attention* into the class: reviewers look
+at suspicious things, so anything unexamined is clean by construction.
+
+The query must be date-bounded; an unfiltered `harmful=True` request times out because the
+endpoint scans. Revert mining off the replication stream remains available as a volume
+fallback, but is no longer needed on the critical path.
 
 ---
 
@@ -433,7 +455,7 @@ The OneDrive trap is resolved: the project now lives at
 | Corpus A contents | 18,276 changesets | 1.2 s/call, 4 concurrent | **~1.5 h** |
 | Corpus A `adiff` enrichment | ~18k Overpass queries | 3–4 s/query, 2 slots | **~10 h**, Gate 1b decides whether to subset |
 | R2 presumed-negative pool | 50,000 changesets | 1.2 s/call, 4 concurrent | **~4.2 h** |
-| Corpus B/C bulk | ~100k–500k bucket JSONs | S3, parallel | hours, bandwidth-bound |
+| Corpus C bulk (pretraining) | ~100k bucket JSONs | S3, parallel | hours, bandwidth-bound, **week 4 only** |
 | Corpus D changeset metadata | 1 month of replication | ~125 MB gz | minutes |
 
 Split across 4 machines where it helps. Be polite: 1 req/s per worker, real User-Agent,
@@ -501,16 +523,16 @@ LLM-based revert-risk is too slow for production.
 
 ## 11. Evaluation protocol
 
-The methodological contribution. Six regimes.
+The methodological contribution. Five regimes; **R3a was dropped with Corpus B** (§7).
 
 | Regime | Setup | Purpose | Closes |
 |---|---|---|---|
 | **R1a Balanced, Ovid protocol** | 9,138 / 9,138, **random** 70/10/20 | apples-to-apples with the Ovid F1 of 81.66. **Flagged as user-leaky** | — |
 | **R1b Balanced, user-disjoint** | same data, **no uid crosses splits** | the honest number. The R1a–R1b gap is itself a result | — |
-| **R2 Realistic prevalence** | prevalence-corrected PR curves at 1% and 0.1%, plus a **sampled** 1:100 set of ~50k presumed-negatives | operational truth. **PR-AUC and precision@k, never F1** | **G5** |
-| **R3a Temporal — 2024/25** | train Corpus A, test Corpus B | drift over five years | **G6** |
-| **R3b Temporal — live 2026** | train Corpus A, test Corpus D | drift to today. Nobody has published this | **G6** |
-| **R4 Label efficiency** | fine-tune on 10/25/50/100% of labels, pretrained vs scratch | does pretraining actually help? | core claim |
+| **R2 Realistic prevalence** | prevalence-corrected PR curves at 1% and 0.1%; the sampled 1:100 set is a stretch goal | operational truth. **PR-AUC and precision@k, never F1** | **G5** |
+| **R3b Temporal — live 2026** | train Corpus A, test Corpus D, OSMCha-labelled | drift to today. Nobody has published this | **G6** |
+| **R4 Label efficiency** | 10/25/50/100% of labels, pretrained vs scratch | does pretraining help? **Conditional on Stage 1 surviving the timeline (§13)** | core claim |
+
 
 ### R2, stated precisely
 
@@ -550,6 +572,8 @@ cannot upsample your way to a lower positive rate.** So:
 | Full, scratch | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | **Full, pretrained** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
+Six rows, **2 seeds each** at this timeline (§13); the original grid was ~40 runs.
+
 Plus a **per-vandalism-type breakdown** — geometric vs semantic vs destructive. If geometry
 only helps the geometric subclass, that is a precise finding, not a null result.
 
@@ -560,8 +584,8 @@ only helps the geometric subclass, that is a precise finding, not a null result.
 | R1a balanced, Ovid protocol | +2 to +6 F1 over 81.66 | medium |
 | R1b user-disjoint | **below R1a**, possibly well below | high — that gap is the point |
 | R2 realistic | F1 collapses for everyone to roughly 0.2–0.4; PR-AUC becomes the real metric | high that it collapses; the number is the finding |
-| R3a / R3b temporal | measurable drop, larger on 2026 than on 2024/25 | high |
-| R4 label efficiency | pretrained above scratch, gap widest at 10% | medium-high — standard SSL result |
+| R3b temporal, live 2026 | measurable drop, and a label-source shift on top of it — OSMCha review is not revert history | high that it drops; disentangling the two effects is the interesting part |
+| R4 label efficiency | pretrained above scratch, gap widest at 10% | medium-high, **if Stage 1 runs at all** |
 
 ### Failure modes — and why neither sinks the project
 
@@ -584,7 +608,7 @@ only helps the geometric subclass, that is a precise finding, not a null result.
 | ~~Latest OSM data unreachable in bulk~~ | ~~Medium~~ | **Resolved — false.** Replication streams live; Corpus D added |
 | ~~OneDrive syncs GBs~~ | ~~High~~ | **Resolved** — project outside OneDrive |
 | Overpass cannot carry 18k adiff queries | **Medium** | Gate 1b measures it first. Fallbacks: mirror instance, geometry subset, versioned multi-fetch |
-| Corpus B/D labels unobtainable | **Medium** | Two independent routes. If both fail, Corpus B still serves pretraining and R3 degrades to metadata-only drift analysis |
+| ~~Corpus D labels unobtainable~~ | ~~Medium~~ | **Resolved 2026-09-04** — OSMCha token verified, 3,200+ harmful labels harvested for 2026, §8.5 |
 | Label leakage (revert text in the record) | **High** | Gate 1c B0 tripwire before any DL work |
 | Future leakage via user features | **High** | Point-in-time rule plus unit test, §5.4 Rule 2 |
 | Pretraining contaminates the test set | **High** | Corpus C disjointness rule, §7 |
@@ -596,44 +620,86 @@ only helps the geometric subclass, that is a precise finding, not a null result.
 | Label noise — a revert is not always vandalism | Medium | Identical protocol to Ovid keeps the comparison fair; measured by the 100-changeset audit |
 | Colab session death mid-run | Medium | Checkpoint to Drive every epoch |
 | Class imbalance | Medium | It *is* the contribution — focal loss, PR-AUC, threshold analysis |
+| **Four weeks, not fifteen** | **High** | Scope cut in §13 with a stated drop order. G1, G2, G3, G5, G6 survive even the three-week version |
+| Paper written in the last three days | **High** | Drafting starts in W3 in parallel with modelling, not after it |
+| WS1 stalls the other three | **High** | `data/mock/` exists in the real schema today; schema frozen end of W1 |
 | Scope creep from two fused ideas | Medium | Stage 1 is **ablatable**. If it fails, Stage 2 stands alone |
 | Four-way coordination | Medium | Workstream split in §13; one owner per branch |
 
 ---
 
-## 13. Phasing and workstreams
+## 13. Phasing — the four-week plan
 
-Course calendar: topic approval end of week 3, phase-1 eval week 7, phase-2 eval week 14/15.
-Week 1 starts **2026-09-04**.
+**The 15-week plan is gone.** As of 2026-09-04 the project has three to four weeks, not a
+semester. That is not a matter of working faster: roughly two thirds of the original scope
+has to go, and this section is the record of which two thirds and why.
 
-| Phase | Weeks | Dates | Deliverable |
+Budget: 4 people, ~20 h/week, 4 weeks ≈ **320 person-hours**. The original scope was over
+700. What follows fits.
+
+### What was cut, and what it costs
+
+| Cut | Saves | Costs |
+|---|---|---|
+| **Corpus B as a labelled corpus** (§7) | ~2 weeks of labelling and bulk download | regime R3a only; R3b is the better test |
+| **Stage 1 down to one pretext task** — corruption contrast, the highest-value one | ~1 week | the λ ablation; masked-tag and reconstruction pretexts become future work |
+| **Stage 1 itself is week-4-if-time** | up to 1 week | R4 becomes conditional. Stage 2 was always designed to stand alone |
+| **Geometry enrichment subset** if Gate 1b says the full 18,276 will not fit | ~8 h wall clock | wider confidence intervals, not a broken result. Sample by changeset id, never by size or user |
+| **Ablation grid: 6 core rows, 2 seeds** instead of ~40 runs | ~1 week of GPU and babysitting | per-config error bars get wider; the contribution table survives intact |
+| **Interactive demo becomes a scripted walkthrough** | ~3 days | a recording instead of a live service |
+
+### What was not cut, and why
+
+- **Gate 1c**, the leakage tripwire. If the labels leak, every number after it is void.
+  Two hours of work that protects the whole project.
+- **Gate 1d**, the framework spike. Finding out in week 3 that Keras fights ragged masked
+  attention is fatal at this timeline.
+- **R2**, prevalence correction. It is cheap, and it is a headline contribution.
+- **The point-in-time rule and the user-disjoint split.** These are correctness, not scope.
+
+### Week by week
+
+Week 1 begins **2026-09-04**.
+
+| Week | Dates | Goal | Owner focus |
 |---|---|---|---|
-| **P0 Setup** | 1 | Sep 4 – Sep 10 | Gates 1a–1e all passed, repo hygiene, accounts, framework decision |
-| **P1 Baseline** | 2–7 | Sep 11 – Oct 22 | Corpus A pipeline including geometry, B0 and Ovid reproduction, B2+B4+B5, R1 and R2 → **phase-1 eval** |
-| **P2 Full system** | 8–14 | Oct 23 – Dec 10 | Stage 1 pretraining, B1, Corpus B and D, R3 and R4, full ablation grid, demo → **phase-2 eval** |
-| **P3 Paper** | 12–15 | Nov 26 – Dec 24 | Draft, figures, plagiarism check, submission |
+| **W1** | Sep 4 – Sep 10 | Gates 1b/1c/1d green. Corpus A metadata, contents and geometry collected. Feature store emitting Parquet. Everyone else building against `data/mock/` | WS1 leads; WS2–4 on mock |
+| **W2** | Sep 11 – Sep 17 | Baselines B0/LogReg/XGBoost, Ovid reproduction, R1a+R1b harness. Branches B5 and B2 training end to end | WS2 + WS3 |
+| **W3** | Sep 18 – Sep 24 | B1 geometry, B3 edit-sequence, B4 user-history, attention fusion. Full model trains. R1 and R2 results. Corpus D featurised. **Paper drafting starts in parallel** | WS3 + WS4; WS2 on evaluation |
+| **W4** | Sep 25 – Oct 2 | R3b on live 2026. Stage 1 **if the week-3 model is stable**. 6-row ablation, 2 seeds. Figures, walkthrough, paper complete | all four |
 
-Dates assume a week-1 start of 2026-09-04 and no reading weeks; adjust once the official
-calendar is in hand.
+### If it compresses to three weeks
 
-### Compressed 3-week variant
+Drop in this order, and stop when it fits:
 
-If the whole thing must ship in three weeks (~145 person-hours): keep `adiff` geometry but
-**node-and-way displacement features only, no rasters**; run **one** pretext task instead
-of three; static figures instead of an interactive demo; R3b only, skipping Corpus B.
-Contributions **G2, G3, G4, G5, G6** survive intact; **G1** becomes partial.
+1. Stage 1 entirely — R4 goes, the paper becomes a supervised-fusion contribution
+2. The B3 edit-sequence branch — B4 already carries the sequence argument for U5
+3. R2 sampled 1:100 — keep the weight-corrected version only
+4. The per-vandalism-type breakdown
+
+**G1, G2, G3, G5 and G6 all survive even the three-week version.** Only G4 and the
+self-supervision claim are at risk, and both are explicitly ablatable.
+
+### Hard dependencies
+
+WS1 gates everyone. Two rules keep that from stalling three people for a week:
+
+- `data/mock/` exists today, in the real schema. WS2–4 build against it from day one.
+- The feature-store schema is frozen at the end of W1. After that it is a versioned
+  change, not an edit.
 
 ### Workstream split (4 people, one owner each)
 
-| Owner | Workstream | Artefacts |
+| Owner | Workstream | Four-week scope |
 |---|---|---|
-| **WS1** | Data pipeline | Gates 1a and 1b, Corpus A fetch plus `adiff` enrichment, Corpus B/C/D, Parquet, DuckDB store, point-in-time user histories |
-| **WS2** | Baselines and eval harness | Gate 1c, B0 tripwire, LogReg/XGBoost, Ovid reproduction, R1–R4 harness, calibration, label audit |
-| **WS3** | Model — Stage 2 | Gate 1d, B1–B5, hierarchical encoder, attention fusion, training loop, W&B |
-| **WS4** | Model — Stage 1 and demo | Gate 1e, pretext tasks, corruption generator plus transfer check, pretraining runs, Folium demo, figures |
+| **WS1** | Data pipeline | Gates 1a/1b, Corpus A fetch and `adiff` enrichment, Corpus D, feature store, point-in-time user histories |
+| **WS2** | Baselines and evaluation | Gate 1c, B0 tripwire, LogReg/XGBoost, Ovid reproduction, R1/R2/R3b harness, calibration |
+| **WS3** | Model — Stage 2 | Gate 1d, B1–B5, hierarchical encoder, attention fusion, training loop |
+| **WS4** | Stage 1, figures, demo | Corruption generator and the single pretext task (W4, conditional), figures, walkthrough |
 
-All four co-author the paper. WS1 gates the others, so WS2–4 build against a small mock
-Parquet in week 1 rather than waiting.
+All four co-author the paper. Drafting starts in W3, not W4 — a paper written in the last
+three days is the most common way a finished project scores badly.
+
 
 ---
 
@@ -664,13 +730,16 @@ still run monthly batch checks.*
 |---|---|---|
 | 1 | Gate 0 | **run — FAILED.** Multi-corpus design adopted, §8 |
 | 2 | Keras 3 vs PyTorch | **Keras 3 on TensorFlow, pending Gate 1d.** Decide by day 5 |
-| 3 | Timeline | **Staged** — P1 to week 7, P2 to week 14, §13 |
+| 3 | Timeline | **Four weeks, 2026-09-04 to 2026-10-02.** Scope cut accordingly, §13 |
 | 4 | Region scope | **Global.** Every corpus is keyed by changeset id, not geography |
-| 5 | OSM account and OSMCha token | **on Ayush** — free, instant. Confirmed blocking (HTTP 401); gates Corpus B/D labels |
-| 6 | Corpus B/D label route | OSMCha `harmful` **and** revert mining; use both |
+| 5 | OSM account and OSMCha token | **done 2026-09-04.** Token verified against the live API |
+| 6 | Label route | **OSMCha `harmful` primary** — human-reviewed, and it works. Revert mining is the volume fallback if needed |
 | 7 | Corpus A geometry route | **Overpass `adiff` primary, versioned multi-fetch fallback.** Verified, §8.3 |
 | 8 | Latest-data route | **Changeset and minute replication streams.** Verified live 2026-09-04 |
 | 9 | Relations | **Out of scope as a modelled object.** Counted in features, not geometrically encoded |
+| 10 | Corpus B | **Dropped as a labelled corpus**, §7. The bucket survives as the Corpus C pretraining source |
+| 11 | Stage 1 | **One pretext task, week 4, conditional.** Ablatable by design; Stage 2 stands alone |
+
 
 ### Environment note — local Python is 3.14
 

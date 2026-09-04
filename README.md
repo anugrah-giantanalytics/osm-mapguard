@@ -12,16 +12,19 @@ Step-by-step build list: **[CHECKLIST.md](CHECKLIST.md)**
 
 ## Where things stand
 
+**Four-week build: 2026-09-04 to 2026-10-02.** Scope cut from the original 15-week plan;
+what went and why is in [PROJECT_PLAN.md](PROJECT_PLAN.md) section 13.
+
 | | |
 |---|---|
-| **Gate 0a** | FAILED - `real-changesets` S3 has zero coverage of the 2014-2019 labels (0/140 probes) |
-| **Gate 0b** | PASSED - OSM API fallback verified (3/3 changesets), at **1.2 s/call** |
-| **Gate 0c** | PASSED - bucket window pinned to **~147M-164M** (Feb 2024 - Mar 2025) |
-| **Gate 0d** | PASSED - plan review probes. Overturned two v1 conclusions, see below |
-| **Design** | Four corpora: A Ovid-era labelled, B modern bulk, C unlabelled pretrain, D live 2026 |
-| **Next** | Gate 1a-1e (week 1), then Corpus A pipeline. See [CHECKLIST.md](CHECKLIST.md) |
+| **Gate 0** | bucket has zero coverage of the 2014-2019 labels; OSM API fallback verified |
+| **Gate 0d** | plan review probes - overturned two v1 conclusions |
+| **Gate 1a** | **PASS** - 93/100 geometry yield, 2,109/2,109 ways with coordinates |
+| **Labels** | OSMCha token live; 3,200+ human-reviewed harmful changesets for 2026 |
+| **Corpora** | A (Ovid-era labelled) - C (unlabelled pretrain) - D (live 2026). B dropped |
+| **Next** | Gates 1b/1c/1d, then the feature store. See [CHECKLIST.md](CHECKLIST.md) |
 
-Two things the v1 plan had wrong, both measured on 2026-09-04:
+Two things the original plan had wrong, both measured on 2026-09-04:
 
 - **Corpus A geometry is not out of reach.** Overpass `adiff` returns before/after way
   geometry with resolved coordinates back to 2012, and `/api/0.6/ways?ways=<id>v<ver>`
@@ -31,7 +34,7 @@ Two things the v1 plan had wrong, both measured on 2026-09-04:
   live to the current minute, free and account-free - so the temporal test is a real 2026
   evaluation rather than a demo.
 
-Raw gate output: [`results/`](results/)
+Raw evidence: [`results/`](results/)
 
 ## Layout
 
