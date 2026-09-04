@@ -1,0 +1,39 @@
+{
+  "generated": "2026-09-04T10:34:20",
+  "source": "osmcha.org/api/v1/changesets",
+  "window": {
+    "since": "2026-08-25",
+    "until": null
+  },
+  "available_in_window": {
+    "harmful": 252,
+    "clean": 566
+  },
+  "stored_this_run": {
+    "harmful": 252,
+    "clean": 300
+  },
+  "store_totals": {
+    "total": 552,
+    "by_label": {
+      "clean": 300,
+      "harmful": 252
+    }
+  },
+  "distinct_reviewers": 69,
+  "top_harmful_reasons": {
+    "New mapper": 119,
+    "New mapper,Review requested": 17,
+    "New mapper,Mapbox: Fictional mapping": 14,
+    "mass modification": 11,
+    "User has multiple blocks": 8,
+    "suspect_word,New mapper": 5,
+    "possible import,New mapper": 3,
+    "New mapper,Crossing ways": 3,
+    "suspect_word": 2,
+    "possible import": 2
+  },
+  "seconds": 23.3,
+  "database": "C:\\osm-data\\raw\\osmcha_labels.sqlite",
+  "note": "harmful=True is a human calling a changeset damaging. harmful=False is sent with checked=True so negatives are reviewed, not merely unexamined - otherwise the negative class encodes reviewer attention."
+}

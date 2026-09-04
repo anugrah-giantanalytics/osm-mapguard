@@ -54,6 +54,29 @@ SCHEMA = {
             fetched        TEXT DEFAULT (datetime('now'))
         )
     """,
+    # human-reviewed labels from OSMCha, one row per reviewed changeset
+    "labels": """
+        CREATE TABLE IF NOT EXISTS labels (
+            cid               INTEGER PRIMARY KEY,
+            harmful           INTEGER,          -- 1 damaging, 0 reviewed-and-fine, NULL unknown
+            checked           INTEGER NOT NULL,
+            check_user        TEXT,
+            check_date        TEXT,
+            date              TEXT,
+            uid               INTEGER,
+            user              TEXT,
+            editor            TEXT,
+            comment           TEXT,
+            n_create          INTEGER,
+            n_modify          INTEGER,
+            n_delete          INTEGER,
+            is_suspect        INTEGER,
+            reasons           TEXT,
+            reviewed_features INTEGER,
+            source            TEXT NOT NULL,    -- osmcha | revert_mining
+            fetched           TEXT DEFAULT (datetime('now'))
+        )
+    """,
     # before/after geometry from Overpass adiff, one row per changeset
     "geometry": """
         CREATE TABLE IF NOT EXISTS geometry (
@@ -110,6 +133,12 @@ def counts(conn: sqlite3.Connection, table: str) -> dict:
         ).fetchall()
         out["by_status"] = {str(s): n for s, n in rows}
         out["ok"] = out["by_status"].get("200", 0)
+    if table == "labels":
+        rows = conn.execute(
+            "SELECT harmful, COUNT(*) FROM labels GROUP BY harmful"
+        ).fetchall()
+        out["by_label"] = {("harmful" if h == 1 else "clean" if h == 0 else "unknown"): n
+                           for h, n in rows}
     if table == "geometry":
         rows = conn.execute(
             "SELECT route, COUNT(*) FROM geometry GROUP BY route ORDER BY 2 DESC"
