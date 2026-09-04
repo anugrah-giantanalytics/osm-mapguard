@@ -29,12 +29,37 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from mapguard.config import DEFAULT_RATE, LABELS, OVERPASS_RATE, RESULTS
+from mapguard.config import CORPUS_A_META_DB, OVERPASS_RATE, RESULTS, data_path
 from mapguard.data.http import PoliteSession
-from mapguard.data.osm_api import fetch_changeset_meta
 from mapguard.data.overpass import fetch_geometry, should_use_adiff
 
 CORPUS_SIZE = 18_276
+
+
+def load_metas(path: Path) -> list:
+    """Changeset metadata already fetched, as ChangesetMeta objects."""
+    import json
+    import sqlite3
+
+    from mapguard.data.osm_api import ChangesetMeta
+
+    if not path.exists():
+        raise SystemExit(f"no metadata store at {path}")
+    conn = sqlite3.connect(path)
+    rows = conn.execute(
+        "SELECT cid, created_at, closed_at, uid, user, num_changes,"
+        " min_lat, min_lon, max_lat, max_lon, comments_count, tags_json"
+        " FROM meta WHERE status = 200"
+    ).fetchall()
+    conn.close()
+    return [
+        ChangesetMeta(
+            cid=r[0], created_at=r[1], closed_at=r[2], uid=r[3], user=r[4], num_changes=r[5],
+            min_lat=r[6], min_lon=r[7], max_lat=r[8], max_lon=r[9], comments_count=r[10],
+            tags=json.loads(r[11]) if r[11] else {},
+        )
+        for r in rows
+    ]
 
 
 def main() -> int:
@@ -44,14 +69,15 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=20260904)
     args = ap.parse_args()
 
-    ids = []
-    with LABELS.open(encoding="utf-8") as fh:
-        next(fh)
-        for line in fh:
-            ids.append(int(line.split("\t")[0]))
-    random.Random(args.seed).shuffle(ids)
-
-    api = PoliteSession(DEFAULT_RATE)
+    # Read metadata from the store rather than the API. This gate is about Overpass,
+    # and adding OSM API traffic on top of a running corpus fetch would measure our own
+    # contention instead of the service.
+    metas = load_metas(data_path(*CORPUS_A_META_DB.split("/")))
+    if len(metas) < 200:
+        raise SystemExit(
+            f"only {len(metas)} in the metadata store - let the corpus fetch get further"
+        )
+    random.Random(args.seed).shuffle(metas)
     ovp = PoliteSession(args.rate, max_retries=2)
 
     deadline = time.monotonic() + args.minutes * 60
@@ -60,13 +86,9 @@ def main() -> int:
     attempted = 0
     notes: Counter = Counter()
 
-    for cid in ids:
+    for meta in metas:
         if time.monotonic() > deadline:
             break
-        meta, _ = fetch_changeset_meta(api, cid)
-        if meta is None:
-            statuses["meta_fail"] += 1
-            continue
         ok, why = should_use_adiff(meta)
         if not ok:
             notes[why.split("(")[0].strip()] += 1

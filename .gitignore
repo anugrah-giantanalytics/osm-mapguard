@@ -20,8 +20,9 @@ checkpoints/
 # python
 __pycache__/
 *.py[cod]
-.venv/
+.venv*/
 venv/
+data/interim_test/
 .ipynb_checkpoints/
 
 # agent / editor local state - never tracked, and never a worktree root
