@@ -30,7 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from mapguard.config import RESULTS, data_path
-from mapguard.data.osmcha import count_for, iter_labels, session
+from mapguard.data.osmcha import count_for, iter_labels_windowed, session
 from mapguard.data.store import counts, store
 
 LABELS_DB = "raw/osmcha_labels.sqlite"
@@ -47,7 +47,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--since", default="2026-08-01", help="date__gte, YYYY-MM-DD")
     ap.add_argument("--until", default=None, help="date__lte, YYYY-MM-DD")
-    ap.add_argument("--max-pages", type=int, default=40, help="100 labels per page")
+    ap.add_argument("--window-days", type=int, default=7,
+                    help="date slice width. Offset pagination on this endpoint dies "
+                         "around page 30, so we walk dates instead")
     ap.add_argument("--stats", action="store_true")
     args = ap.parse_args()
 
@@ -67,13 +69,14 @@ def main() -> int:
 
         sess = session()
         started = time.monotonic()
+        until = args.until or datetime.now().strftime("%Y-%m-%d")
 
         totals = {}
         for harmful in (True, False):
             totals["harmful" if harmful else "clean"] = count_for(
-                sess, harmful=harmful, date_gte=args.since, date_lte=args.until
+                sess, harmful=harmful, date_gte=args.since, date_lte=until
             )
-        print(f"window {args.since} .. {args.until or 'now'}")
+        print(f"window {args.since} .. {until}  (slices of {args.window_days} days)")
         print(f"available: {totals}")
 
         stored = {"harmful": 0, "clean": 0}
@@ -81,12 +84,12 @@ def main() -> int:
             key = "harmful" if harmful else "clean"
             print(f"\nfetching {key}...")
             for n, lab in enumerate(
-                iter_labels(
+                iter_labels_windowed(
                     sess,
                     harmful=harmful,
                     date_gte=args.since,
-                    date_lte=args.until,
-                    max_pages=args.max_pages,
+                    date_lte=until,
+                    window_days=args.window_days,
                 ),
                 1,
             ):
@@ -118,7 +121,7 @@ def main() -> int:
     summary = {
         "generated": datetime.now().isoformat(timespec="seconds"),
         "source": "osmcha.org/api/v1/changesets",
-        "window": {"since": args.since, "until": args.until},
+        "window": {"since": args.since, "until": until, "slice_days": args.window_days},
         "available_in_window": totals,
         "stored_this_run": stored,
         "store_totals": final,

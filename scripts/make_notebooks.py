@@ -181,7 +181,16 @@ in every table it appears in. **R1b** is user-disjoint and is the honest number.
 both; the gap between them is itself a result.
 """),
         code("""
-from mapguard.evaluation.splits import random_split, user_disjoint_split   # WS2, week 2
+from mapguard.evaluation.splits import assert_user_disjoint, user_disjoint_split, random_split
+from mapguard.evaluation.metrics import summary, bootstrap_ci
+
+uids = changesets["uid"].tolist()
+r1b = user_disjoint_split(uids)
+assert_user_disjoint(r1b, uids)          # raises if any user spans folds
+r1a = random_split(len(changesets))      # Ovid protocol - LEAKY, label it everywhere
+
+print("R1b", r1b.summary(changesets["label"].values))
+print("R1a", r1a.summary(changesets["label"].values), "<- leaky, for comparability only")
 """),
         md("""
 ## Weights and Biases
@@ -199,6 +208,19 @@ run = wandb.init(project="mapguard", config={"split": "R1b", "seed": 20260904})
 # from mapguard.training.stage2 import build_model, train      # WS3, week 2-3
 # model = build_model(...)
 # train(model, ..., checkpoint_dir=os.environ["MAPGUARD_DATA"] + "/checkpoints")
+"""),
+        md("""
+## Metrics
+
+`summary()` reports the balanced number and the prevalence-corrected ones in **one**
+table. The collapse between them is the finding; splitting them across two tables is how
+a reader misses it. Recall will not move - only positives carry it - while precision
+falls off a cliff. That asymmetry is the operational story of this problem.
+"""),
+        code("""
+# scores = model.predict(x_test).ravel()
+# print(json.dumps(summary(y_test, scores), indent=2))
+# print("PR-AUC 95% CI:", bootstrap_ci(y_test, scores))
 """),
         md("## Results go to results/*.json, not to stdout"),
         code("""

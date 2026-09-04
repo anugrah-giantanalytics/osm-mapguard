@@ -177,6 +177,72 @@ def iter_labels(
             return
 
 
+def _shift(date: str, days: int) -> str:
+    from datetime import datetime, timedelta
+
+    return (datetime.fromisoformat(date) + timedelta(days=days)).strftime("%Y-%m-%d")
+
+
+def iter_labels_windowed(
+    sess: PoliteSession,
+    *,
+    harmful: bool,
+    date_gte: str,
+    date_lte: str,
+    window_days: int = 7,
+    max_pages_per_window: int = 12,
+) -> Iterator[OsmchaLabel]:
+    """Walk the range in date slices instead of paging deep into one query.
+
+    Offset pagination on this endpoint degrades badly: the harmful class for 2026 died
+    with a connection timeout at page 34, because every page makes the server scan past
+    everything before it. Slicing by date keeps every offset shallow - a week of harmful
+    changesets is a few hundred rows - and a failed slice costs one week, not the run.
+
+    A window that fills `max_pages_per_window` is split in half and retried, so a busy
+    week degrades into two quiet ones rather than silently truncating.
+    """
+    cursor = date_gte
+    while cursor < date_lte:
+        end = min(_shift(cursor, window_days), date_lte)
+        got = 0
+        for page in range(1, max_pages_per_window + 1):
+            params = {
+                "date__gte": cursor,
+                "date__lte": end,
+                "page_size": PAGE_SIZE,
+                "page": page,
+                "harmful": "True" if harmful else "False",
+            }
+            if not harmful:
+                params["checked"] = "True"
+            r = sess.get(f"{OSMCHA_API}/changesets/", params=params)
+            if not r.ok:
+                print(f"  {cursor}..{end} page {page}: HTTP {r.status}, skipping rest of window")
+                break
+            try:
+                payload = json.loads(r.text)
+            except ValueError:
+                break
+            feats = payload.get("features") or []
+            for f in feats:
+                label = parse_feature(f)
+                if label is not None:
+                    yield label
+                    got += 1
+            if not payload.get("next"):
+                break
+        else:
+            if window_days > 1:
+                print(f"  {cursor}..{end} saturated at {got}, splitting")
+                yield from iter_labels_windowed(
+                    sess, harmful=harmful, date_gte=cursor, date_lte=end,
+                    window_days=max(1, window_days // 2),
+                    max_pages_per_window=max_pages_per_window,
+                )
+        cursor = end
+
+
 def count_for(sess: PoliteSession, *, harmful: bool, date_gte: str, date_lte: str | None = None) -> int | None:
     """How many reviewed changesets match, without paging through them."""
     params = {
