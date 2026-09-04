@@ -1,0 +1,86 @@
+{
+  "generated": "2026-09-04",
+  "purpose": "Evidence for the plan review in docs/PLAN_REVIEW.md. Every claim the review overturns was measured here.",
+  "probes": [
+    {
+      "id": "P1",
+      "claim_tested": "PROJECT_PLAN v1 8.2/8.3: historical way geometry needs one API call per node, so branch B1 cannot run on Corpus A",
+      "verdict": "FALSE",
+      "method": "GET /api/0.6/ways?ways=254588427v1,202342236v4 and /api/0.6/nodes?nodes=4863084239v1,4863084239v2",
+      "result": {"ways": {"status": 200, "bytes": 1551, "sec": 2.52}, "nodes": {"status": 200, "bytes": 644, "sec": 8.16}},
+      "note": "Versioned multi-fetch works. Up to 725 versioned element ids per request, so previous states batch instead of costing one call each."
+    },
+    {
+      "id": "P2",
+      "claim_tested": "same as P1, second independent route",
+      "verdict": "FALSE - geometry is directly available for 2013 onward",
+      "method": "Overpass [adiff:\"2013-12-31T00:00:00Z\",\"2014-01-02T00:00:00Z\"];way(202342236);out geom meta;",
+      "result": {"status": 200, "bytes": 4260, "sec": 2.88, "returned": "<action type=modify><old>...<nd ref lat lon>...</old><new>...</new></action>"},
+      "note": "adiff returns BEFORE and AFTER with node coordinates already resolved on the way. This is the full-strength B1 input for the Ovid era."
+    },
+    {
+      "id": "P3",
+      "claim_tested": "per-changeset adiff is workable (bbox + [created_at, closed_at] window, filter by changeset id)",
+      "verdict": "CONFIRMED",
+      "method": "changeset 52850166 meta -> [adiff:\"2017-10-12T06:55:00Z\",\"2017-10-12T06:56:00Z\"];(node(bbox);way(bbox););out geom meta;",
+      "result": {"status": 200, "bytes": 1659, "sec": 4.2, "actions_returned": 5, "all_tagged_changeset": 52850166},
+      "note": "[bbox:...] in the setting block errors with adiff; put the bbox on each statement instead."
+    },
+    {
+      "id": "P4",
+      "claim_tested": "PROJECT_PLAN v1 7: current OSM data is reachable only through the API or Overpass, one changeset at a time",
+      "verdict": "FALSE",
+      "method": "GET planet.openstreetmap.org/replication/{minute,changesets,day}/state.txt|state.yaml",
+      "result": {
+        "minute": {"status": 200, "sequenceNumber": 7271812, "timestamp": "2026-09-04T04:12:47Z"},
+        "changesets": {"status": 200, "sequence": 7170065, "last_run": "2026-09-04 04:12:51 +00:00"},
+        "day": {"status": 200, "sequenceNumber": 5105, "timestamp": "2026-09-04T00:00:00Z"}
+      },
+      "note": "Both streams are live to the current minute. Bulk, free, no account. This is how the project gets genuinely latest OSM data."
+    },
+    {
+      "id": "P5",
+      "claim_tested": "changeset replication payload is rich enough for metadata + revert mining",
+      "verdict": "CONFIRMED",
+      "method": "GET /replication/changesets/007/170/060.osm.gz",
+      "result": {"status": 200, "gz_bytes": 2873, "raw_chars": 11940, "fields": ["id","created_at","closed_at","open","num_changes","user","uid","min_lat","max_lat","min_lon","max_lon","comments_count","tag comment","tag created_by","tag locale","tag source"]},
+      "note": "One ~3 KB gz per minute. A month of changeset metadata is ~125 MB gz - trivially affordable, and it removes the need to download the 8.7 GB dump for recent windows."
+    },
+    {
+      "id": "P6",
+      "claim_tested": "PROJECT_PLAN v1 8.2: OSM API changeset download takes ~0.2 s",
+      "verdict": "FALSE - the plan text contradicts its own results file",
+      "method": "re-read results/gate0b_fallback.json plus fresh probes",
+      "result": {"gate0b_recorded_seconds": [1.2, 1.17, 1.26], "fresh_probe_seconds": [2.52, 8.16, 2.33]},
+      "note": "1.2 s is the right planning number, and tail latency reaches 8 s. Fetch budgets in the plan must be rebuilt on 1.2 s, not 0.2 s."
+    },
+    {
+      "id": "P7",
+      "claim_tested": "real-changesets bucket is dense across its 147M-164M window (Gate 0c pinned bounds but never density)",
+      "verdict": "CONFIRMED - 82%, consistent with OSM's empty-changeset rate",
+      "method": "HEAD 72 random ids stratified across 147,000,000-164,000,000",
+      "result": {"hits": 59, "n": 72, "rate": 0.819, "status_codes": {"200": 59, "404": 13}},
+      "note": "No systematic hole. ~14M usable changesets. Corpus B and C are viable."
+    },
+    {
+      "id": "P8",
+      "claim_tested": "OSMCha API is readable without a token",
+      "verdict": "FALSE - token required, as the plan says",
+      "method": "GET osmcha.org/api/v1/changesets/?harmful=True&page_size=2",
+      "result": {"status": 401, "body": "Authentication credentials were not provided."},
+      "note": "Confirms Decision 5 is a real blocker for the OSMCha label route."
+    },
+    {
+      "id": "P9",
+      "claim_tested": "sizes of the bulk artefacts the plan depends on",
+      "verdict": "MEASURED",
+      "method": "HEAD on planet.openstreetmap.org",
+      "result": {
+        "changesets-latest.osm.bz2": 8723948594,
+        "planet-latest.osm.pbf": 94612383571,
+        "full-history/history-latest.osm.pbf": 162228979477
+      },
+      "note": "Changeset dump is 8.72 GB, not the 8.1 GB in the plan. Full-history planet at 162 GB is out of reach on free tiers - confirming that adiff/multi-fetch, not the history PBF, is the geometry route."
+    }
+  ]
+}

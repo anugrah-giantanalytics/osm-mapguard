@@ -2,7 +2,7 @@
 
 **Course:** Deep Learning (702AI0C008) — Mini Project
 **Team size:** 4
-**Status:** Architecture locked, pending Gate 0 verification (§8)
+**Status:** v2 — architecture locked, Gate 0 run and its consequences corrected by the plan review (`docs/PLAN_REVIEW.md`)
 **Last updated:** 2026-09-04
 
 ---
@@ -78,7 +78,7 @@ The 2024 survey *ML Updates for OpenStreetMap: Analysis of Research Gaps and Fut
 - *"leveraging unlabeled OSM data for model pre-training, despite its abundance"* → **our Stage 1**
 - geometry beyond simple point/polygon classification → **our G1**
 - *"inconsistent benchmarking practices"* → **our G5/G6**
-- industry/academia gap on *"real-time processing"* → **our Tier B live stream**
+- industry/academia gap on *"real-time processing"* → **our Corpus D live replication stream**
 
 Our contributions are literally three of the gaps a 2024 survey asked for. This section is the lit-review deliverable (2 marks).
 
@@ -106,28 +106,35 @@ Why fusing beats either alone: self-supervised tag modelling on its own is a sol
 flowchart TB
     subgraph SRC["Data sources — all free, no paid APIs, no LLM"]
         A1["Ovid labels TSV<br/>18,276 changesets<br/>9,138 pos / 9,138 neg<br/>2014-2019 · VERIFIED"]
-        A2["real-changesets S3<br/>public, minutely updated<br/>before+after geometry<br/>VERIFIED public"]
-        A3["OSM changeset dump<br/>8.1 GB bz2 · global<br/>user histories"]
-        A4["OSMCha API<br/>recent human harmful labels<br/>token = free OSM login"]
+        A2["OSM API 0.6<br/>changeset download +<br/>versioned multi-fetch<br/>VERIFIED 2026-09-04"]
+        A3["Overpass adiff<br/>before+after geometry<br/>any date from 2012<br/>VERIFIED 2026-09-04"]
+        A4["real-changesets S3<br/>147M-164M window<br/>82% dense · bulk<br/>VERIFIED 2026-09-04"]
+        A5["planet replication<br/>minute + changesets<br/>LIVE to 2026-09-04<br/>VERIFIED"]
+        A6["OSMCha API<br/>human harmful labels<br/>token = free OSM login"]
     end
 
-    subgraph TIER["Three data tiers"]
-        T1["Tier A — Historical labelled<br/>TRAIN"]
-        T2["Tier B — Latest OSM 2026<br/>TEMPORAL TEST + LIVE DEMO"]
-        T3["Tier C — Unlabelled bulk<br/>PRETRAIN"]
+    subgraph TIER["Four corpora"]
+        T1["Corpus A — Ovid-era labelled<br/>2014-2019 · TRAIN + R1"]
+        T2["Corpus B — Modern bulk<br/>Feb 2024-Mar 2025 · R3a"]
+        T3["Corpus C — Unlabelled<br/>PRETRAIN · disjoint from B/D"]
+        T4["Corpus D — Live 2026<br/>R3b TEMPORAL TEST + DEMO"]
     end
 
     A1 --> T1
     A2 --> T1
-    A2 --> T2
-    A2 --> T3
     A3 --> T1
     A4 --> T2
+    A4 --> T3
+    A5 --> T4
+    A2 --> T4
+    A6 --> T2
+    A6 --> T4
 
     T3 --> S1["STAGE 1<br/>Edit Foundation Encoder<br/>self-supervised"]
     S1 -->|"pretrained weights"| S2["STAGE 2<br/>Changeset Classifier<br/>supervised fine-tune"]
     T1 --> S2
-    T2 --> EV["STAGE 3<br/>Evaluation<br/>balanced · realistic · temporal"]
+    T2 --> EV["STAGE 3<br/>Evaluation<br/>R1 balanced · R2 realistic<br/>R3 temporal · R4 label-efficiency"]
+    T4 --> EV
     S2 --> EV
     EV --> OUT["Outputs:<br/>score + which edit + which signal"]
 ```
@@ -196,7 +203,30 @@ flowchart TB
 | Attention fusion | reimplements Ovid | beyond classroom | — |
 | Stage 1 → Stage 2 | label scarcity | **transfer learning** (lab expt 8, off-image) | U4 |
 
-### 5.4 Three outputs, not one
+### 5.4 Two rules the architecture must obey
+
+Both come out of the plan review; both are silent correctness bugs if forgotten.
+
+**Rule 1 — nothing is zeroed, ever (closes G4 properly).** Ovid discards the edit
+vector above a size threshold. A changeset can hold 50,000 edits, so we cannot simply
+attend over all of them either. Instead, encode hierarchically:
+
+| Level | Over what | Truncates? |
+|---|---|---|
+| Changeset summary | **all N edits** — op mix, type mix, tag-key histogram, geometry moments (max/mean/p95 displacement, total area delta), text-bearing edit count | **never** |
+| Per-edit encoding | stratified sample of up to **K = 256** edits: top displacement, top area change, all text-bearing edits, then random fill | yes, and the ratio `K/N` is itself an input feature |
+| Attention pooling | the K sampled edits | — |
+
+Scale therefore always reaches the classifier exactly, even when the per-edit detail is
+sampled. That is what makes the G4 claim defensible.
+
+**Rule 2 — user features are point-in-time.** Every B4 sequence and every B5 user
+statistic is computed **only from changesets with `created_at < target.created_at`**.
+Computing them from the full dump leaks the future: for a 2016 target the model would
+see that the account was blocked in 2017, which is a perfect and worthless predictor.
+This is enforced in the feature builder and asserted by a test, not left to discipline.
+
+### 5.5 Three outputs, not one
 
 Ovid emits a score. A human reviewer needs to know *where to look*:
 
@@ -230,117 +260,152 @@ Every unit genuinely used. Nothing name-dropped.
 
 ---
 
-## 7. Data plan
+## 7. Data plan — four corpora
 
-### Tier A — Historical labelled (training)
+Gate 0 killed the original single-corpus plan; the plan review (`docs/PLAN_REVIEW.md`)
+then killed the *replacement's* central assumption, that historical geometry is out of
+reach. Both routes to it were verified on 2026-09-04. What follows is the corrected plan.
 
-| Item | Detail | Status |
+### Corpus A — Ovid-era labelled, 2014–2019 (train + comparability)
+
+| Item | Source | Status |
 |---|---|---|
-| `ovid_labels.tsv` | 18,276 rows, 9,138 pos / 9,138 neg, changeset IDs 19,739,784–79,067,468 | ✅ **downloaded and inspected** |
-| Changeset **contents** | ~~`real-changesets` S3~~ → **OSM API** `/api/0.6/changeset/<id>/download` | ✅ **verified 3/3** (Gate 0 killed the S3 route for this era — see §8) |
-| Previous object versions | OSM API `/api/0.6/<type>/<id>/<version-1>` | ✅ verified 2/2; ways return `<nd>` refs without coordinates |
-| User histories | OSM changeset dump, 8.1 GB bz2, streamed | ✅ public, no login |
+| `ovid_labels.tsv` | 18,276 rows, 9,138 pos / 9,138 neg, ids 19,739,784–79,067,468 | downloaded and inspected |
+| Changeset contents | `GET /api/0.6/changeset/<id>/download` | verified 3/3, **1.2 s/call** (not 0.2 s) |
+| Previous object state | `GET /api/0.6/{nodes,ways}?{nodes,ways}=<id>v<ver>` — **batched, up to 725 ids** | verified 200 |
+| **Before/after geometry** | **Overpass `adiff` over the changeset bbox and `[created_at, closed_at]`** | **verified — full resolved polylines back to 2012** |
+| User histories | changeset replication stream (recent) or `changesets-latest.osm.bz2`, **8.72 GB** | public, no login |
+| Presumed-negative pool | ~50,000 unlabelled ids sampled from the same era, for R2 | to fetch, ~4.2 h |
 
-**Verified `real-changesets` record schema** — each element carries an `old` block:
+The `adiff` route is what makes Corpus A carry branch **B1**. Without it the geometry
+contribution would only ever be tested on a corpus with no labels and no baseline.
 
-```json
-{"elements": [{
-  "id": "494555506", "version": "6", "changeset": "147186571",
-  "uid": "15324596", "user": "dmfr", "timestamp": "...",
-  "old": {
-    "version": "5", "action": "modify", "type": "way",
-    "tags": {"landuse": "landfill", "name": "..."},
-    "nodes": [{"ref": "4863084239", "lat": "38.9390456", "lon": "-9.2914563"}, ...]
-  }
-}]}
-```
+**Per-changeset `adiff` recipe** (verified on changeset 52850166):
 
-Before **and** after tags, plus before/after node coordinates — the geometry branch handed to us directly, with no history PBF and no geometry reconstruction.
+1. `GET /api/0.6/changeset/<id>` → `created_at`, `closed_at`, bbox
+2. `[adiff:"<created_at>","<closed_at>"];(node(<bbox>);way(<bbox>););out geom meta;`
+3. keep only actions whose `<new>` carries `changeset="<id>"`
 
-**But only inside the bucket's window.** Gate 0 pinned that window to **~147M–164M (Feb 2024 – Mar 2025)**; the 2014–2019 label range returns 404 for every probe. So this shortcut serves Corpus B, not Corpus A. See §8.3.
+Gotchas, both hit during verification: `[bbox:...]` in the setting block does **not** parse
+alongside `adiff` — put the bbox on each statement. And a changeset with a global or
+missing bbox must fall back to versioned multi-fetch rather than asking Overpass for the
+planet.
 
-### Corpus B — Modern (Feb 2024 – Mar 2025)
+### Corpus B — Modern bulk, Feb 2024 – Mar 2025
 
-The bucket's usable window, ~17M changesets:
+The `real-changesets` bucket window, re-verified: **82% density** (59/72 probes across
+147M–164M), no systematic hole, ~14M usable changesets. The 18% of 404s matches the
+normal rate of empty changesets in OSM.
 
-- **Full before/after tags and geometry**, free and in bulk — the only place branch **B1** can run at full strength
-- Labels to be built: OSMCha `harmful` (human-reviewed, needs a free token) + revert mining from the changeset dump
-- **Uses:** (i) the geometry branch; (ii) **cross-corpus generalisation** — train on Corpus A, evaluate on Corpus B, closing **G6**; (iii) demo for phase-2 eval
+- full before/after tags and geometry, in bulk, free
+- **labels to be built** — OSMCha `harmful` (token required, confirmed 401 without one)
+  plus revert mining
+- role: the modern half of the temporal study, and the bulk source for Corpus C
 
-Expect a measurable drop across corpora. That drop *is* the finding — OSM's editor mix, tag conventions and vandalism styles have all shifted since 2019.
+### Corpus C — Unlabelled pretraining
 
-> **Note on "latest OSM data".** The bucket stops at ~Mar 2025 despite the AWS registry advertising minutely updates. Genuinely current data (to changeset 188,495,159, 2026-09-03) is reachable only through the OSM API or Overpass, one changeset at a time. Fine for a live demo; not for bulk training.
+Bulk `real-changesets` JSONs from the same window. Target 500k–2M edits.
 
-### Corpus C — Unlabelled (pretraining)
+> **Disjointness rule (non-negotiable).** Corpus C excludes every changeset id **and every
+> uid** that appears in any Corpus B or Corpus D evaluation split. Pretraining on the test
+> set would make R4 — the single most important figure in the paper — meaningless.
 
-Bulk `real-changesets` JSONs from the same window, no labels. Target ~500k–2M edits. Free and effectively unlimited within Feb 2024 – Mar 2025.
+### Corpus D — Live 2026 (the real temporal test)
+
+**The v1 plan was wrong that current OSM data is only reachable one changeset at a time.**
+Measured 2026-09-04:
+
+| Stream | Sequence | Freshness |
+|---|---|---|
+| `planet.openstreetmap.org/replication/minute/` | 7,271,812 | `2026-09-04T04:12:47Z` |
+| `planet.openstreetmap.org/replication/changesets/` | 7,170,065 | `2026-09-04T04:12:51Z` |
+| `planet.openstreetmap.org/replication/day/` | 5,105 | `2026-09-04T00:00:00Z` |
+
+Both streams are live to the current minute, bulk, free and account-free. One
+changeset-replication minute file is ~2.9 KB gzipped and carries `id, created_at,
+closed_at, num_changes, user, uid, bbox, comments_count` plus the `comment`,
+`created_by`, `locale` and `source` tags — everything B5 and the revert miner need.
+A **month** of changeset metadata is roughly 125 MB gzipped.
+
+Corpus D is therefore built as: harvest the changeset-replication stream over a chosen
+2026 window → sample → pull contents per changeset from the API → enrich geometry with
+`adiff` → label via OSMCha `harmful` and revert mining. This is what turns R3 from "test
+on later data" into a genuine 2026 evaluation, and it is the answer to the requirement
+that the project use the latest OSM data.
+
+### What we deliberately do not use
+
+- **Full-history planet PBF** — 162 GB. Out of reach on free tiers; `adiff` gets the same
+  information for the changesets we care about.
+- **Planet PBF** — 94.6 GB, and it is a snapshot, so it has no before-state anyway.
 
 ---
 
-## 8. Gate 0 — RESULT: FAILED, and what it changed
+## 8. Gates
 
-Run 2026-09-04. Scripts and raw output are in the repo: `scripts/gate0_coverage.py`, `gate0b_fallback.py`, `gate0c_bounds.py` → `results/*.json`.
+### 8.1 Gate 0a — bucket coverage of Ovid labels: FAILED
 
-### 8.1 Gate 0a — bucket coverage of Ovid labels: **FAIL**
+140 probes stratified across 19.7M–79.1M, both classes: **0/140, all 404**, uniform across
+every stratum. `real-changesets` simply does not hold 2014–2019 changesets.
+(`results/gate0_coverage.json`)
 
-Probed 140 labelled changeset IDs, stratified across the full 19.7M–79.1M range and both classes.
-
-```
- 19,739,784 .. 26,264,610    0/14   0.0%
- 26,766,789 .. 33,057,653    0/14   0.0%
- ... every stratum ...       0/14   0.0%
- 70,585,049 .. 77,858,897    0/14   0.0%
---------------------------------------------
- overall                    0/140   0.0%     status codes: {404: 140}
-```
-
-Not a partial cutoff — **zero coverage, uniform across every stratum.** `real-changesets` simply does not hold 2014–2019 changesets.
-
-### 8.2 Gate 0b/0c — the replacement, verified
+### 8.2 Gate 0b/0c — API fallback and bucket bounds: PASSED
 
 | Question | Result |
 |---|---|
-| Does `GET /api/0.6/changeset/<id>/download` work on old changesets? | ✅ **3/3**, HTTP 200, 1.4–2.9 KB, **~0.2 s** each. Contains full tag diffs, operations, object versions, and inline `lat`/`lon` for nodes |
-| Does `GET /api/0.6/<type>/<id>/<version-1>` return the previous state? | ✅ **2/2**, HTTP 200, ~0.8 s. Returns tags — **but ways return `<nd>` refs with no coordinates** |
-| Where does the bucket actually cover? | **~147M – 164M**, i.e. **Feb 2024 → ~Mar 2025**. Sharp cutoff between 164M and 165M |
-| Current max changeset ID | **188,495,159** (2026-09-03) |
+| `GET /api/0.6/changeset/<id>/download` on old changesets | **3/3**, HTTP 200, 1.4–2.9 KB, **~1.2 s each** — full tag diffs, ops, versions, inline `lat`/`lon` for nodes |
+| `GET /api/0.6/<type>/<id>/<version-1>` | **2/2**, HTTP 200. Returns tags; ways return `<nd>` refs with no coordinates |
+| Bucket window | **~147M – 164M**, Feb 2024 → ~Mar 2025, sharp cutoff between 164M and 165M |
+| Current max changeset id | **188,495,159** (2026-09-03) |
 
-Two consequences that change the plan:
+> **Correction.** v1 of this plan reported "~0.2 s each" for the changeset download. The
+> repository's own `results/gate0b_fallback.json` records **1.2, 1.17 and 1.26 s**, and fresh
+> probes on 2026-09-04 reached 8.2 s at the tail. Every fetch budget below is built on
+> **1.2 s**.
 
-1. **The AWS registry's "minutely updated" claim is stale.** The bucket stopped being fed around early 2025. "Latest OSM data" via the bucket means up to ~March 2025, not today.
-2. **Historical way geometry is expensive via the API.** A way's previous version gives node *references*, not coordinates; resolving them costs one extra call per node. For nodes, `lat`/`lon` are inline and free.
+### 8.3 Gate 0d — plan review probes: PASSED, and they overturn two v1 conclusions
 
-### 8.3 What this forces — and why the result is better than the plan it replaced
+Raw output: `results/gate0d_review_probes.json`.
 
-The geometry branch cannot run at full strength on the Ovid-era labels, and the bucket cannot serve those labels at all. So the corpus splits in two, and each half does the job it is actually good at:
-
-| | **Corpus A — Ovid-era** | **Corpus B — Modern** |
+| Probe | Question | Result |
 |---|---|---|
-| Period | 2014–2019 | Feb 2024 – Mar 2025 |
-| Source | OSM API, per changeset | `real-changesets` S3, bulk |
-| Labels | ✅ 18,276, published, **downloaded** | ⚠️ to be built — OSMCha `harmful` + revert mining |
-| Tags, ops, versions | ✅ full | ✅ full |
-| Node geometry | ✅ inline | ✅ inline |
-| **Way/relation geometry** | ✗ expensive (N calls/way) | ✅ **free, before + after** |
-| Cost | ~5 h fetch, cached, resumable | bulk download |
-| **Role** | comparability with published SOTA; branches **B2, B3, B4, B5** | the **B1 geometry branch** at full strength; **G6** temporal test |
+| P1 | Is previous state really one call per object? | **No.** Versioned multi-fetch `?nodes=<id>v<ver>` / `?ways=<id>v<ver>` returns 200, up to 725 ids per call |
+| P2 | Can we get before/after way geometry for 2014–2019? | **Yes.** Overpass `adiff` returns `<old>`/`<new>` with coordinates resolved onto the way |
+| P3 | Does per-changeset `adiff` work? | **Yes** — bbox + `[created_at, closed_at]`, filter by changeset id. 5/5 actions attributed correctly |
+| P4 | Is current OSM data bulk-reachable? | **Yes.** Minute and changeset replication both live to the current minute |
+| P5 | Is changeset replication rich enough? | **Yes** — 16 fields including `num_changes`, bbox, `comment`, `created_by` |
+| P7 | Is the bucket window dense? | **82%** (59/72), no hole, ~14M usable |
+| P8 | Is OSMCha readable without a token? | **No** — HTTP 401. Decision 5 is a real blocker |
+| P9 | How big are the bulk artefacts? | changesets dump **8.72 GB**; planet 94.6 GB; full-history 162 GB |
 
-This is a stronger design than the single-corpus plan. The temporal contribution (**G6**) sharpens from "test on later data" into a genuine cross-corpus generalisation study, and **building a modern labelled benchmark becomes a contribution in its own right** — precisely the "inconsistent benchmarking practices" gap named by arXiv 2407.03365.
+**Consequence:** branch B1 runs on Corpus A. Corpus B stops being "the only place geometry
+works" and becomes the modern half of the temporal study. Corpus D becomes possible at all.
 
-**Cost of the failure: ~20 person-hours**, as budgeted in the original fallback. Nothing is blocked.
+### 8.4 Gate 1 — must pass before any modelling (week 1)
 
-### 8.4 Remaining open item
+| Gate | Question | Pass criterion | Owner |
+|---|---|---|---|
+| **1a** | Does `adiff` scale to a real batch? | 100 random Corpus A changesets enriched end-to-end; **≥90% return usable before/after geometry**; median wall-clock recorded | WS1 |
+| **1b** | Is the public Overpass instance enough for 18k queries? | measure sustained throughput and 429/504 rate over 30 min. If it will not carry 18k, pick a mirror or a subset before committing | WS1 |
+| **1c** | Does the leakage tripwire stay quiet? | baseline **B0** (comment length + editor string + account age only) scores **F1 < 0.70** on R1b. If it reaches ~0.8 the labels leak and everything downstream is void | WS2 |
+| **1d** | Does Keras 3 handle the real model shape? | toy model: 5 heterogeneous inputs, ragged set of edits, masked multi-head attention, trains one epoch without fighting. Pass → Keras. Fail → PyTorch, **decided by day 5** | WS3 |
+| **1e** | What is Stage-1 throughput? | measured edits/sec on one Kaggle P100 at the real batch size. The pretraining budget is then derived, not guessed. 30 GPU-h/week is a ceiling | WS4 |
 
-Corpus B needs labels. Two independent routes, either sufficient:
+### 8.5 Open item — Corpus B/D labels
 
-- **OSMCha `harmful` flag** — human-reviewed, cleanest. Needs a free token from your OSMCha user page after OSM login. **Action on you.**
-- **Revert mining** — parse the 8.1 GB changeset dump for revert comments in the 2024–25 window. No account needed; runs on Colab.
+Confirmed still open (P8 returned 401). Two independent routes, either sufficient:
 
-Do both; use OSMCha as the high-precision set and revert mining for volume.
+- **OSMCha `harmful`** — human-reviewed, highest precision. Needs a free token from the
+  OSMCha user page after OSM login. **Action on Ayush.**
+- **Revert mining** — parse changeset comments for revert patterns. For 2024–2026 windows
+  this now runs off the **changeset replication stream** (~125 MB gz/month) rather than
+  the 8.72 GB dump. No account needed.
+
+Do both: OSMCha as the high-precision set, revert mining for volume.
 
 ---
 
-## 9. Compute plan — sized to your hardware
+## 9. Compute plan
 
 ### Measured local machine
 
@@ -351,40 +416,42 @@ Disk  : C: 475.6 GB total, 72 GB free
 GPU   : integrated — no CUDA
 ```
 
-### ⚠️ Two hard constraints and one trap
+### Two hard constraints
 
 1. **No CUDA.** All GPU work goes to Colab or Kaggle. Non-negotiable.
-2. **0.77 GB free RAM.** Anything that "loads a dataframe" locally will thrash. Heavy data work goes to the cloud, where Colab gives 12.7 GB and Kaggle gives ~29 GB.
-3. **🚩 TRAP — the project folder is inside OneDrive.**
-   `C:\Users\Ayush Manoj Garg\OneDrive\Desktop\mpstme\...`
-   Writing GBs of data there makes OneDrive attempt to sync all of it. This *will* wedge the machine.
-   **Rule: all data goes in `C:\osm-data\` (outside OneDrive). Only code, figures and documents live in the project folder.**
+2. **0.77 GB free RAM.** Anything that loads a dataframe locally will thrash. Heavy data
+   work goes to the cloud — Colab 12.7 GB, Kaggle ~29 GB.
+
+The OneDrive trap is resolved: the project now lives at
+`C:\AyushGarg\projects\personal\osm_mapguard`, outside OneDrive. **Bulk data still goes in
+`C:\osm-data\`, never in the repository.**
+
+### Fetch budgets — rebuilt on measured latency
+
+| Job | Volume | Rate | Wall clock |
+|---|---|---|---|
+| Corpus A contents | 18,276 changesets | 1.2 s/call, 4 concurrent | **~1.5 h** |
+| Corpus A `adiff` enrichment | ~18k Overpass queries | 3–4 s/query, 2 slots | **~10 h**, Gate 1b decides whether to subset |
+| R2 presumed-negative pool | 50,000 changesets | 1.2 s/call, 4 concurrent | **~4.2 h** |
+| Corpus B/C bulk | ~100k–500k bucket JSONs | S3, parallel | hours, bandwidth-bound |
+| Corpus D changeset metadata | 1 month of replication | ~125 MB gz | minutes |
+
+Split across 4 machines where it helps. Be polite: 1 req/s per worker, real User-Agent,
+back off on HTTP 509, resume from disk cache.
 
 ### Where each stage runs
 
 | Stage | Where | Why |
 |---|---|---|
-| Fetch 18k changeset JSONs | **Colab** | fast network; keeps GB off the laptop |
-| Parse JSON → Parquet features | **Colab** (12.7 GB RAM) | laptop has 0.77 GB free |
-| Feature store | **Google Drive** | persistent across sessions |
-| Changeset dump → user histories | **Colab** | bz2 decompression is CPU-heavy and single-threaded |
-| Baselines (LogReg, XGBoost) | **Laptop** ok | small; DuckDB keeps RAM flat |
-| **Stage 1 pretraining** | **Kaggle** (P100 / 2×T4) | longest job; 30 GPU-h/week, explicit quota |
-| **Stage 2 training** | **Colab T4** | fast iteration loop |
-| Ablation grid (~40 runs) | **Kaggle** | batch overnight |
-| Figures, maps, paper | **Laptop** | light |
-
-### Kaggle vs Colab
-
-| | Colab free | Kaggle free |
-|---|---|---|
-| GPU | T4 | P100 or 2×T4 |
-| Weekly quota | 15–30 h, **unstated** | ~30 h, **explicit** |
-| RAM | 12.7 GB | ~29 GB |
-| Disk | ~110 GB ephemeral | 20 GB **persistent** |
-| Session | 12 h, idle-kill ~90 min | 12 h |
-
-**Use both.** Colab for iteration (Drive mount, better UX), Kaggle for long/batch runs.
+| Corpus A/D fetch | Colab | fast network, keeps GB off the laptop |
+| Parse → Parquet | Colab (12.7 GB) | laptop has 0.77 GB free |
+| Feature store | Google Drive | persistent across sessions |
+| Replication / dump mining | Colab | decompression is CPU-heavy |
+| Baselines (B0, LogReg, XGBoost) | Laptop | small; DuckDB keeps RAM flat |
+| **Stage 1 pretraining** | **Kaggle** (P100 / 2×T4) | longest job; 30 GPU-h/week explicit quota |
+| **Stage 2 training** | **Colab T4** | fast iteration |
+| Ablation grid (~40 runs) | Kaggle | batch overnight |
+| Figures, paper | Laptop | light |
 
 ### Working loop
 
@@ -401,12 +468,12 @@ flowchart LR
     C -->|"results.json"| L
 ```
 
-**Rules that keep this loop tight:**
-- Notebooks stay **thin** — `git pull`, `pip install -r requirements.txt`, `import` from `.py` modules. No 2000-line cells, so edits are small diffs
-- **Checkpoint to Drive every epoch.** Sessions die at 12 h / 90 min idle; every run must be resumable
-- Featurised Parquet lives on Drive, uploaded once, never re-downloaded
-- Metrics → `results.json`, one small file back, not screenfuls of stdout
-- Everything I can run locally, I run and debug myself — no courier work. Only pretraining and the ablation grid need you in the loop
+Rules that keep this loop tight:
+
+- Notebooks stay **thin** — `git pull`, `pip install -r requirements.txt`, import from `.py`
+- **Checkpoint to Drive every epoch.** Sessions die at 12 h and after 90 min idle; every run must resume
+- Featurised Parquet lives on Drive, uploaded once
+- Metrics go to `results/*.json`, one small file back, not screenfuls of stdout
 
 ---
 
@@ -414,41 +481,68 @@ flowchart LR
 
 | Layer | Tool | Why |
 |---|---|---|
-| Language | Python 3.11 | — |
-| **Out-of-core SQL** | **DuckDB** | queries Parquet larger than RAM. The key tool for an 8 GB machine |
+| Language | Python 3.12 (TensorFlow does not support 3.14) | — |
+| Out-of-core SQL | **DuckDB** | queries Parquet larger than RAM. The key tool for an 8 GB machine |
 | Dataframes | **Polars** (+ pandas where needed) | far lower memory than pandas |
 | Columnar IO | PyArrow / Parquet | compressed, columnar, range-readable |
-| S3 access | `requests` / `boto3` `--no-sign-request` | bucket is public |
-| OSM parsing | `lxml.etree.iterparse`, `bz2` streaming | constant memory over the 8.1 GB dump |
-| Geometry | Shapely, GeoPandas, pyproj | area/length/displacement features |
-| **DL framework** | **Keras 3 (TF backend)** | course labs are TF/Keras; functional API handles multi-input cleanly. *PyTorch is the alternative if the team prefers it — decide once, in week 1* |
-| Classical baselines | scikit-learn, XGBoost | LogReg / RF / GBDT reference points |
-| Experiment tracking | Weights & Biases (free) | ablation grid is unmanageable in spreadsheets |
-| Maps / viz | matplotlib, seaborn, Folium, contextily | figures + demo |
-| Paper | LaTeX on Overleaf, IEEE conference template | plagiarism-checked deliverable |
-| Repo | GitHub (private) | 4-way collaboration + Colab sync |
+| HTTP / S3 | `requests`, `boto3 --no-sign-request` | bucket is public |
+| OSM parsing | `lxml.etree.iterparse`, `bz2` / `gzip` streaming | constant memory over 8.72 GB |
+| Geometry | Shapely, pyproj | area, length, displacement, Hausdorff |
+| DL framework | **Keras 3 (TF backend)**, pending **Gate 1d** | course-aligned; PyTorch is the fallback if 1d fails |
+| Baselines | scikit-learn, XGBoost | B0, LogReg, RF, GBDT |
+| Tracking | Weights & Biases (free) | the ablation grid is unmanageable in spreadsheets |
+| Viz | matplotlib, seaborn, Folium, contextily | figures and demo |
+| Paper | LaTeX on Overleaf, IEEE template | plagiarism-checked deliverable |
 
-**No paid APIs. No LLM anywhere in the pipeline.** Consistent with the deterministic ethos of the prior stale-POI work, and matched to Wikimedia's finding that LLM-based revert-risk is too slow for production.
+**No paid APIs. No LLM anywhere in the pipeline.** Matched to the Wikimedia finding that
+LLM-based revert-risk is too slow for production.
 
 ---
 
 ## 11. Evaluation protocol
 
-The methodological contribution. Four regimes:
+The methodological contribution. Six regimes.
 
 | Regime | Setup | Purpose | Closes |
 |---|---|---|---|
-| **R1 Balanced** | 9,138 / 9,138, user-disjoint 70/10/20 | apples-to-apples with Ovid's F1 81.66 | — |
-| **R2 Realistic prevalence** | negatives upsampled to 1:100, 1:1000 | operational truth. **Report PR-AUC and precision@k, not F1** | **G5** |
-| **R3 Temporal holdout** | train ≤2019, test on 2026 | drift. Nobody has published this | **G6** |
-| **R4 Label efficiency** | fine-tune on 10/25/50/100% of labels | does pretraining actually help? | core claim |
+| **R1a Balanced, Ovid protocol** | 9,138 / 9,138, **random** 70/10/20 | apples-to-apples with the Ovid F1 of 81.66. **Flagged as user-leaky** | — |
+| **R1b Balanced, user-disjoint** | same data, **no uid crosses splits** | the honest number. The R1a–R1b gap is itself a result | — |
+| **R2 Realistic prevalence** | prevalence-corrected PR curves at 1% and 0.1%, plus a **sampled** 1:100 set of ~50k presumed-negatives | operational truth. **PR-AUC and precision@k, never F1** | **G5** |
+| **R3a Temporal — 2024/25** | train Corpus A, test Corpus B | drift over five years | **G6** |
+| **R3b Temporal — live 2026** | train Corpus A, test Corpus D | drift to today. Nobody has published this | **G6** |
+| **R4 Label efficiency** | fine-tune on 10/25/50/100% of labels, pretrained vs scratch | does pretraining actually help? | core claim |
 
-**R4 produces the single most convincing figure in the paper:** pretrained vs from-scratch across label budgets. If the pretrained curve sits above the scratch curve — especially at 10% — the whole thesis is demonstrated in one plot.
+### R2, stated precisely
+
+The corpus has 9,138 negatives. **1:100 needs 913,800 and 1:1000 needs 9,138,000 — you
+cannot upsample your way to a lower positive rate.** So:
+
+1. **Primary — prevalence correction.** Reweight negatives on the balanced test set by
+   `w = ((1 - p) / p) * (n_pos / n_neg)` for target prevalence `p`, and recompute the PR
+   curve. Exact, free, standard.
+2. **Confirmatory — a genuinely sampled 1:100 set.** ~50,000 unlabelled Ovid-era
+   changesets as presumed-negatives. True vandalism prevalence among them is well under
+   1%, so contamination is bounded and quantifiable; report it as a caveat.
+3. **Prevalence 0.1% is reported weight-corrected only**, and labelled as such.
+
+### Integrity checks that gate the results
+
+- **B0 tripwire** (Gate 1c) — comment length + editor + account age only. F1 at or above
+  0.70 means the labels leak and no downstream number is trustworthy.
+- **Point-in-time user features** — asserted by a test, not by discipline (§5.4 Rule 2).
+- **Corpus C disjointness** — no evaluation changeset id or uid may appear in pretraining (§7).
+- **Zero-shot corruption transfer** — before fine-tuning, score the frozen Pretext-C head
+  on the real labelled set. AUC near 0.5 means the synthetic corruptions are the wrong
+  distribution and Pretext C needs redesigning. Report the number either way.
+- **Manual label audit** — 100 randomly drawn labelled changesets read by hand, two
+  reviewers, to estimate the noise rate. Turns inherited label noise from a hand-wave into
+  a measured limitation.
 
 ### Ablation grid
 
 | Config | B1 geom | B2 text | B3 edit-seq | B4 user-seq | B5 tab | Stage-1 pretrain |
 |---|---|---|---|---|---|---|
+| B0 tripwire | ✗ | ✗ | ✗ | ✗ | 3 features | ✗ |
 | Ovid-repro | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ |
 | +geometry | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ |
 | +text | ✗ | ✓ | ✗ | ✗ | ✓ | ✗ |
@@ -456,21 +550,26 @@ The methodological contribution. Four regimes:
 | Full, scratch | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ |
 | **Full, pretrained** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-Plus a **per-vandalism-type breakdown** — geometric vs semantic vs destructive. This matters: if geometry only helps the geometric subclass, that is a precise and useful finding rather than a null result.
+Plus a **per-vandalism-type breakdown** — geometric vs semantic vs destructive. If geometry
+only helps the geometric subclass, that is a precise finding, not a null result.
 
 ### Expected results — stated in advance
 
 | Regime | Expectation | Confidence |
 |---|---|---|
-| R1 balanced | **+2 to +6 F1** over Ovid's 81.66 | medium — could be +1 |
-| R2 realistic | F1 collapses for **everyone** to ~0.2–0.4; PR-AUC becomes the real metric | high that it collapses; the number is the finding |
-| R3 temporal | measurable drop on 2026 data | high |
+| R1a balanced, Ovid protocol | +2 to +6 F1 over 81.66 | medium |
+| R1b user-disjoint | **below R1a**, possibly well below | high — that gap is the point |
+| R2 realistic | F1 collapses for everyone to roughly 0.2–0.4; PR-AUC becomes the real metric | high that it collapses; the number is the finding |
+| R3a / R3b temporal | measurable drop, larger on 2026 than on 2024/25 | high |
 | R4 label efficiency | pretrained above scratch, gap widest at 10% | medium-high — standard SSL result |
 
 ### Failure modes — and why neither sinks the project
 
-- **Geometry adds little.** Plausible if most vandalism is tag-only. Finding becomes *"geometry helps only the geometric subclass"*, supported by the per-type breakdown. Still publishable.
-- **Pretraining doesn't help.** Would mean 18k labels is already sufficient. Finding: *"label scarcity is not the bottleneck — feature coverage is."* That contradicts the field's stated assumption, including Ovid's own abstract. Also publishable.
+- **Geometry adds little.** The finding becomes *geometry helps only the geometric
+  subclass*, supported by the per-type breakdown. Still publishable.
+- **Pretraining does not help.** The finding: *label scarcity is not the bottleneck —
+  feature coverage is.* That contradicts a stated assumption of the field, including the
+  Ovid abstract. Also publishable.
 
 **No outcome leaves us empty-handed.** That is deliberate.
 
@@ -480,45 +579,61 @@ Plus a **per-vandalism-type breakdown** — geometric vs semantic vs destructive
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| ~~Gate 0 fails~~ | ~~High~~ | ✅ **Resolved — it did fail.** Two-corpus design adopted, +20 person-hours, §8 |
-| Corpus B labels unobtainable | **Medium** | Two independent routes (OSMCha, revert mining); either alone suffices. If both fail, Corpus B still serves pretraining (C) and the geometry branch degrades to Corpus A node-only |
-| ~~OneDrive syncs GBs of data~~ | ~~High~~ | ✅ **Resolved** — project moved to `C:\AyushGarg\projects\personal\osm_mapguard`, outside OneDrive |
-| OSM API throttling during the 18k fetch | Medium | 1 req/s, resumable disk cache, back off on HTTP 509, split across 4 machines |
-| Laptop RAM exhaustion | **High** | DuckDB + Polars + streaming; heavy work on Colab/Kaggle |
-| Label noise — a revert ≠ always vandalism | Medium | Inherited from Ovid; identical protocol keeps comparison fair. Wikimedia's production model uses the same trace-based labelling. Limitations paragraph |
-| Colab session death mid-run | Medium | Checkpoint to Drive every epoch; all runs resumable |
+| ~~Gate 0 fails~~ | ~~High~~ | **Resolved — it did fail.** Multi-corpus design, §7 and §8 |
+| ~~Corpus A has no geometry~~ | ~~High~~ | **Resolved — the premise was false.** `adiff` and versioned multi-fetch verified, §8.3 |
+| ~~Latest OSM data unreachable in bulk~~ | ~~Medium~~ | **Resolved — false.** Replication streams live; Corpus D added |
+| ~~OneDrive syncs GBs~~ | ~~High~~ | **Resolved** — project outside OneDrive |
+| Overpass cannot carry 18k adiff queries | **Medium** | Gate 1b measures it first. Fallbacks: mirror instance, geometry subset, versioned multi-fetch |
+| Corpus B/D labels unobtainable | **Medium** | Two independent routes. If both fail, Corpus B still serves pretraining and R3 degrades to metadata-only drift analysis |
+| Label leakage (revert text in the record) | **High** | Gate 1c B0 tripwire before any DL work |
+| Future leakage via user features | **High** | Point-in-time rule plus unit test, §5.4 Rule 2 |
+| Pretraining contaminates the test set | **High** | Corpus C disjointness rule, §7 |
+| Pretext C learns synthetic artefacts | Medium | Zero-shot transfer check before fine-tuning |
+| Keras 3 fights ragged multi-input attention | Medium | Gate 1d, day-5 decision point |
+| Stage 1 exceeds 30 GPU-h/week | Medium | Gate 1e measures throughput before the budget is set |
+| OSM API throttling | Medium | 1 req/s per worker, resumable cache, back off on 509, split across 4 machines |
+| Laptop RAM exhaustion | **High** | DuckDB, Polars, streaming; heavy work on Colab and Kaggle |
+| Label noise — a revert is not always vandalism | Medium | Identical protocol to Ovid keeps the comparison fair; measured by the 100-changeset audit |
+| Colab session death mid-run | Medium | Checkpoint to Drive every epoch |
 | Class imbalance | Medium | It *is* the contribution — focal loss, PR-AUC, threshold analysis |
-| Scope creep from two fused ideas | Medium | Stage 1 is **ablatable**. If it fails, Stage 2 still stands as a complete project |
-| OSMCha token / OSM account | Low | Free, instant. Needed for Tier B only |
-| 4-way coordination | Medium | Workstream split in §13; one owner per branch |
+| Scope creep from two fused ideas | Medium | Stage 1 is **ablatable**. If it fails, Stage 2 stands alone |
+| Four-way coordination | Medium | Workstream split in §13; one owner per branch |
 
 ---
 
 ## 13. Phasing and workstreams
 
-Aligned to the course calendar: **topic approval end of week 3 · phase-1 eval week 7 · phase-2 eval week 14/15.**
+Course calendar: topic approval end of week 3, phase-1 eval week 7, phase-2 eval week 14/15.
+Week 1 starts **2026-09-04**.
 
-| Phase | Weeks | Deliverable |
-|---|---|---|
-| **P0 Setup** | 1 | Gate 0 result, repo, OSM + OSMCha accounts, framework decision, data dirs |
-| **P1 Baseline** | 2–7 | Tier A pipeline, Ovid reproduction, B2+B4+B5 branches, R1+R2 results → **phase-1 eval** |
-| **P2 Full system** | 8–14 | Stage 1 pretraining, B1 geometry branch, Tier B temporal test, full ablation grid, demo → **phase-2 eval** |
-| **P3 Paper** | 12–15 | Draft, figures, plagiarism check, submission |
+| Phase | Weeks | Dates | Deliverable |
+|---|---|---|---|
+| **P0 Setup** | 1 | Sep 4 – Sep 10 | Gates 1a–1e all passed, repo hygiene, accounts, framework decision |
+| **P1 Baseline** | 2–7 | Sep 11 – Oct 22 | Corpus A pipeline including geometry, B0 and Ovid reproduction, B2+B4+B5, R1 and R2 → **phase-1 eval** |
+| **P2 Full system** | 8–14 | Oct 23 – Dec 10 | Stage 1 pretraining, B1, Corpus B and D, R3 and R4, full ablation grid, demo → **phase-2 eval** |
+| **P3 Paper** | 12–15 | Nov 26 – Dec 24 | Draft, figures, plagiarism check, submission |
+
+Dates assume a week-1 start of 2026-09-04 and no reading weeks; adjust once the official
+calendar is in hand.
 
 ### Compressed 3-week variant
 
-If the whole thing must ship in 3 weeks (~145 person-hours) rather than staged: drop **B1 geometry rasters**, keep node-displacement features only; run **one** pretext task instead of three; static figures instead of an interactive demo. Contributions **G2, G3, G4, G5** survive intact; **G1** becomes partial. Still a real paper — just narrower.
+If the whole thing must ship in three weeks (~145 person-hours): keep `adiff` geometry but
+**node-and-way displacement features only, no rasters**; run **one** pretext task instead
+of three; static figures instead of an interactive demo; R3b only, skipping Corpus B.
+Contributions **G2, G3, G4, G5, G6** survive intact; **G1** becomes partial.
 
 ### Workstream split (4 people, one owner each)
 
 | Owner | Workstream | Artefacts |
 |---|---|---|
-| **WS1** | Data pipeline | Gate 0, S3 fetcher, JSON→Parquet, DuckDB feature store, user histories |
-| **WS2** | Baselines + evaluation harness | LogReg/XGBoost, Ovid reproduction, R1–R4 harness, metrics, calibration |
-| **WS3** | Model — Stage 2 branches | B1–B5, attention fusion, training loop, W&B |
-| **WS4** | Model — Stage 1 + demo | pretext tasks, corruption generator, pretraining runs, Folium demo, figures |
+| **WS1** | Data pipeline | Gates 1a and 1b, Corpus A fetch plus `adiff` enrichment, Corpus B/C/D, Parquet, DuckDB store, point-in-time user histories |
+| **WS2** | Baselines and eval harness | Gate 1c, B0 tripwire, LogReg/XGBoost, Ovid reproduction, R1–R4 harness, calibration, label audit |
+| **WS3** | Model — Stage 2 | Gate 1d, B1–B5, hierarchical encoder, attention fusion, training loop, W&B |
+| **WS4** | Model — Stage 1 and demo | Gate 1e, pretext tasks, corruption generator plus transfer check, pretraining runs, Folium demo, figures |
 
-All four co-author the paper. WS1 must finish first — it gates everyone, so WS2/3/4 build against a small mock Parquet in week 1 rather than waiting.
+All four co-author the paper. WS1 gates the others, so WS2–4 build against a small mock
+Parquet in week 1 rather than waiting.
 
 ---
 
@@ -528,12 +643,18 @@ All four co-author the paper. WS1 must finish first — it gates everyone, so WS
 
 Claimed contributions, each checkable against §3:
 
-1. First deep model to use **actual edit geometry** for general OSM vandalism (prior geometry work is buildings-only random forest)
-2. First application of **self-supervised pretraining** to OSM quality assurance — named as an open gap by arXiv 2407.03365 (2024)
-3. First evaluation at **realistic prevalence** and under **temporal shift**
+1. First deep model to use **actual edit geometry** for general OSM vandalism — and, via
+   Overpass `adiff`, the first to do so **on the published 2014–2019 benchmark**, so the
+   claim is testable against Ovid rather than against a corpus of our own making
+2. First application of **self-supervised pretraining** to OSM quality assurance — an open
+   gap named by arXiv 2407.03365 (2024)
+3. First evaluation at **realistic prevalence**, under **temporal shift to live 2026 data**,
+   and with a **user-disjoint split reported alongside the leaky one**
 4. **Explainable output** — which edit, which signal — for the human review queue
 
-Positioned as: *the Stripe/Wikimedia production pattern (self-supervised sequence foundation model + trace-derived labels), applied to a domain where production systems still run monthly batch checks.*
+Positioned as: *the Stripe and Wikimedia production pattern — self-supervised sequence
+foundation model plus trace-derived labels — applied to a domain where production systems
+still run monthly batch checks.*
 
 ---
 
@@ -541,16 +662,19 @@ Positioned as: *the Stripe/Wikimedia production pattern (self-supervised sequenc
 
 | # | Decision | Status |
 |---|---|---|
-| 1 | Gate 0 | ✅ **run — FAILED.** Two-corpus design adopted, §8 |
-| 2 | Keras 3 vs PyTorch | ✅ **Keras 3 on TensorFlow.** Course-aligned; multi-input functional API suffices |
-| 3 | Timeline | ✅ **Staged** — P1 → week 7, P2 → week 14, per §13 |
-| 4 | Region scope | ✅ **Global.** Both corpora are keyed by changeset ID, not geography. The per-region label-scarcity risk never applies |
-| 5 | OSM account + OSMCha token | ⏳ **on you** — free, instant. Gates Corpus B labels only |
-| 6 | Corpus B label route | ⏳ OSMCha `harmful` **and** revert mining; use both |
+| 1 | Gate 0 | **run — FAILED.** Multi-corpus design adopted, §8 |
+| 2 | Keras 3 vs PyTorch | **Keras 3 on TensorFlow, pending Gate 1d.** Decide by day 5 |
+| 3 | Timeline | **Staged** — P1 to week 7, P2 to week 14, §13 |
+| 4 | Region scope | **Global.** Every corpus is keyed by changeset id, not geography |
+| 5 | OSM account and OSMCha token | **on Ayush** — free, instant. Confirmed blocking (HTTP 401); gates Corpus B/D labels |
+| 6 | Corpus B/D label route | OSMCha `harmful` **and** revert mining; use both |
+| 7 | Corpus A geometry route | **Overpass `adiff` primary, versioned multi-fetch fallback.** Verified, §8.3 |
+| 8 | Latest-data route | **Changeset and minute replication streams.** Verified live 2026-09-04 |
+| 9 | Relations | **Out of scope as a modelled object.** Counted in features, not geometrically encoded |
 
-### ⚠️ Environment note — local Python is 3.14
+### Environment note — local Python is 3.14
 
-The machine has Python 3.14.4. **TensorFlow does not support 3.14.** Local work therefore needs a separate 3.12 virtual environment:
+TensorFlow does not support 3.14. Local work needs a 3.12 virtual environment:
 
 ```
 py -3.12 -m venv .venv
@@ -558,7 +682,22 @@ py -3.12 -m venv .venv
 pip install -r requirements.txt
 ```
 
-If 3.12 is not installed, install it — or skip local model work entirely and use Colab/Kaggle, which ship supported versions. Local Python is only needed for baselines and figures; nothing on the critical path depends on it.
+---
+
+## 16. Licensing, ethics and data handling
+
+- **Licence.** OSM data is ODbL. Every derived dataset, figure and table must carry
+  "© OpenStreetMap contributors". Any released corpus is a Derivative Database and must be
+  released under ODbL too.
+- **Personal data.** `uid` and `user` identify real people, and this project labels their
+  edits as damaging. Keep the raw uid only in the local working store; **publish only a
+  salted hash**, and never publish a username alongside a vandalism label.
+- **No account-level claims.** The model scores changesets, not people. The paper must not
+  present per-user scores or rankings.
+- **Rate limits are an ethical obligation, not just a technical one.** The OSM API is
+  donated infrastructure. 1 req/s per worker, honest User-Agent with contact, back off on 509.
+- **Traceability.** Gate results, probe output and metrics are committed as JSON so every
+  number in the paper traces to a file in `results/`.
 
 ---
 
@@ -576,3 +715,4 @@ If 3.12 is not installed, install it — or skip local model work entirely and u
 - Wikimedia. *Language-agnostic Revert Risk model.* Meta-Wiki
 - Overture Maps Foundation — data quality and validation documentation
 - Registry of Open Data on AWS — `real-changesets`
+- OpenStreetMap wiki — Planet.osm/diffs, Overpass API `adiff`, API v0.6 multi-fetch
