@@ -10,6 +10,11 @@ Tick as you go. If a gate fails, stop and re-plan — do not build past a red ga
 - Owner is the workstream (WS1 data · WS2 eval · WS3 Stage 2 · WS4 Stage 1) or a name.
 - Every gate writes a JSON file to `results/`. If there is no file, the gate did not run.
 
+> **Status 2026-09-04.** Phase 0 and the Gate 1a half of Phase 1 are done; the data
+> pipeline is scaffolded and collecting. Live results: `results/gate1a_adiff_batch.json`
+> (PASS, 93/100), `results/corpus_d_harvest.json` (1,426 changesets from the live stream).
+> Corpus A metadata fetch is running. Gate 1b, 1c, 1d and 1e are still open.
+
 Reference: [`PROJECT_PLAN.md`](PROJECT_PLAN.md) · [`docs/PLAN_REVIEW.md`](docs/PLAN_REVIEW.md)
 
 ---
@@ -21,19 +26,19 @@ Do this before any code. It is 90 minutes and it prevents a month of mess.
 ### 0.1 Repository state
 
 - [ ] **0.1.1** Merge the plan-review branch into the mainline, then delete it.
-- [ ] **0.1.2** Reconcile the diverged branches. `master`, `setup`, `claude/project-plan-checkpoints-1ec64b` and `claude/project-plan-evaluation-2a0729` currently hold parallel commits with identical messages and different SHAs. Pick one mainline, rebase or cherry-pick the rest onto it, delete the others.
+- [~] **0.1.2** Reconcile the diverged branches. `master`, `setup`, `claude/project-plan-checkpoints-1ec64b` and `claude/project-plan-evaluation-2a0729` currently hold parallel commits with identical messages and different SHAs. Pick one mainline, rebase or cherry-pick the rest onto it, delete the others.
   **A/C:** `git branch -a` lists exactly the mainline plus any live feature branch.
-- [ ] **0.1.3** Decide the mainline name — `main` or `master` — and make the remote default match. Right now the local default is `master` while tooling assumes `main`.
+- [x] **0.1.3** Decide the mainline name — `main` or `master` — and make the remote default match. Right now the local default is `master` while tooling assumes `main`.
 - [ ] **0.1.4** Remove all git worktrees and delete `.claude/worktrees/`.
   ```bash
   git worktree list && git worktree remove --force .claude/worktrees/project-plan-evaluation-2a0729 && git worktree prune && rm -rf .claude/worktrees
   ```
   **A/C:** `git worktree list` shows only the main checkout; `.claude/worktrees` does not exist.
-- [ ] **0.1.5** Add `.claude/` to `.gitignore` so local agent state never enters history.
-- [ ] **0.1.6** Branch naming convention: `ws1/…`, `ws2/…`, `ws3/…`, `ws4/…`, or `fix/…`. **No tool-named branches.**
-- [ ] **0.1.7** Commit convention: Conventional Commits, no `Co-Authored-By` trailers for tooling, no generated-by footers.
+- [x] **0.1.5** Add `.claude/` to `.gitignore` so local agent state never enters history.
+- [x] **0.1.6** Branch naming convention: `ws1/…`, `ws2/…`, `ws3/…`, `ws4/…`, or `fix/…`. **No tool-named branches.**
+- [x] **0.1.7** Commit convention: Conventional Commits, no `Co-Authored-By` trailers for tooling, no generated-by footers.
 - [ ] **0.1.8** Set up the GitHub repository (private), add all four members, enable branch protection on the mainline.
-- [ ] **0.1.9** Add `CONTRIBUTING.md`: branch names, commit format, "no data in the repo", "metrics go to `results/*.json`".
+- [x] **0.1.9** Add `CONTRIBUTING.md`: branch names, commit format, "no data in the repo", "metrics go to `results/*.json`".
 
 ### 0.2 Local environment
 
@@ -43,11 +48,11 @@ Do this before any code. It is 90 minutes and it prevents a month of mess.
   ```
 - [ ] **0.2.2** `pip install -r requirements.txt`; record the resolved versions to `requirements.lock`.
   **A/C:** `python -c "import tensorflow, duckdb, polars, shapely; print('ok')"` succeeds.
-- [ ] **0.2.3** Create `C:\osm-data\` and confirm it is outside OneDrive.
+- [x] **0.2.3** Create `C:\osm-data\` and confirm it is outside OneDrive.
   **A/C:** the path contains no `OneDrive` segment and OneDrive is not syncing it.
-- [ ] **0.2.4** Add `MAPGUARD_DATA` env var pointing at `C:\osm-data\`; make every module read it rather than hard-coding `ROOT/data`.
+- [x] **0.2.4** Add `MAPGUARD_DATA` env var pointing at `C:\osm-data\`; make every module read it rather than hard-coding `ROOT/data`.
   **A/C:** no module writes bulk data inside the repository.
-- [ ] **0.2.5** Add `pytest` and a `tests/` directory with one trivial passing test, so the harness exists before it is needed.
+- [x] **0.2.5** Add `pytest` and a `tests/` directory with one trivial passing test, so the harness exists before it is needed.
 
 ### 0.3 Accounts and access
 
@@ -74,10 +79,10 @@ Do this before any code. It is 90 minutes and it prevents a month of mess.
 
 ### Gate 1a — `adiff` at batch scale · WS1
 
-- [ ] **1a.1** Write `scripts/gate1a_adiff_batch.py`: sample 100 random Corpus A changeset ids, fetch metadata, build the per-changeset `adiff` query, parse `<old>`/`<new>`.
-- [ ] **1a.2** Handle the two known gotchas: `[bbox:…]` in the setting block does not parse with `adiff` (put the bbox on each statement); a global or missing bbox must fall back to versioned multi-fetch.
-- [ ] **1a.3** Record per-changeset: HTTP status, wall-clock, action count, how many actions carry the target changeset id, whether ways came back with resolved coordinates.
-- [ ] **1a.4** **A/C: ≥90 of 100 return usable before/after geometry.** Median wall-clock recorded. → `results/gate1a_adiff_batch.json`
+- [x] **1a.1** Write `scripts/gate1a_adiff_batch.py`: sample 100 random Corpus A changeset ids, fetch metadata, build the per-changeset `adiff` query, parse `<old>`/`<new>`.
+- [x] **1a.2** Handle the two known gotchas: `[bbox:…]` in the setting block does not parse with `adiff` (put the bbox on each statement); a global or missing bbox must fall back to versioned multi-fetch.
+- [x] **1a.3** Record per-changeset: HTTP status, wall-clock, action count, how many actions carry the target changeset id, whether ways came back with resolved coordinates.
+- [x] **1a.4** **A/C: ≥90 of 100 return usable before/after geometry.** Median wall-clock recorded. → `results/gate1a_adiff_batch.json`
 - [ ] **1a.5** If below 90%: characterise the failures (empty bbox? relation-only? too large?) and decide the fallback split before proceeding.
 
 ### Gate 1b — Overpass capacity · WS1
@@ -126,20 +131,20 @@ Do this before any code. It is 90 minutes and it prevents a month of mess.
 
 ### 2.2 Geometry enrichment (the fix from the plan review)
 
-- [ ] **2.2.1** Write `src/mapguard/data/adiff.py`: per-changeset `adiff` → before/after geometry per edited object.
-- [ ] **2.2.2** Write `src/mapguard/data/multifetch.py`: versioned multi-fetch (`?nodes=<id>v<ver>`, `?ways=<id>v<ver>`), batching up to 725 ids per request, as the fallback route.
-- [ ] **2.2.3** Route selection: `adiff` primary; multi-fetch when the bbox is missing, global, or the query fails.
+- [~] **2.2.1** Write `src/mapguard/data/adiff.py`: per-changeset `adiff` → before/after geometry per edited object.
+- [~] **2.2.2** Write `src/mapguard/data/multifetch.py`: versioned multi-fetch (`?nodes=<id>v<ver>`, `?ways=<id>v<ver>`), batching up to 725 ids per request, as the fallback route.
+- [~] **2.2.3** Route selection: `adiff` primary; multi-fetch when the bbox is missing, global, or the query fails.
 - [ ] **2.2.4** Store geometry alongside contents, keyed by (changeset, type, id).
 - [ ] **2.2.5** Run enrichment across the corpus (or the Gate-1b-approved subset).
   **A/C:** geometry coverage rate reported per object type. → `results/corpus_a_geometry_coverage.json`
-- [ ] **2.2.6** **Fix the false docstrings** in `osmchange.py` and `build_corpus_a.py` that say Corpus A geometry is node-only.
+- [x] **2.2.6** **Fix the false docstrings** in `osmchange.py` and `build_corpus_a.py` that say Corpus A geometry is node-only.
 
 ### 2.3 Parser hardening
 
-- [ ] **2.3.1** Fix the memory leak in `osmchange.parse()`: `elem.clear()` empties children but leaves the husk attached to the root, so a 50,000-object changeset still accumulates 50,000 elements. Detach from the parent.
-- [ ] **2.3.2** Unit-test the parser against: a create-only changeset, a mixed create/modify/delete, a deleted node, a way with `<nd>` refs, a relation with members, and a truncated document.
-- [ ] **2.3.3** Confirm document order is preserved — B3 consumes commit order and must not be sorted.
-- [ ] **2.3.4** Confirm the `num_changes` / `changes_count` attribute name difference between the changeset API and the replication stream is handled in both readers.
+- [x] **2.3.1** Fix the memory leak in `osmchange.parse()`: `elem.clear()` empties children but leaves the husk attached to the root, so a 50,000-object changeset still accumulates 50,000 elements. Detach from the parent.
+- [x] **2.3.2** Unit-test the parser against: a create-only changeset, a mixed create/modify/delete, a deleted node, a way with `<nd>` refs, a relation with members, and a truncated document.
+- [x] **2.3.3** Confirm document order is preserved — B3 consumes commit order and must not be sorted.
+- [x] **2.3.4** Confirm the `num_changes` / `changes_count` attribute name difference between the changeset API and the replication stream is handled in both readers.
 
 ### 2.4 User histories — point-in-time
 
@@ -163,12 +168,12 @@ Do this before any code. It is 90 minutes and it prevents a month of mess.
 - [ ] **3.1** Extend `build_corpus_a.py` to emit three tables, not two: `changesets.parquet`, `edits.parquet`, `geometry.parquet`.
 - [ ] **3.2** Implement the **exact** whole-changeset summary statistics over all N edits (op mix, type mix, tag-key histogram, geometry moments). These must never truncate — this is what makes the G4 claim honest.
 - [ ] **3.3** Implement the **stratified edit sample**, K = 256: top displacement, top area change, all text-bearing edits, then random fill. Store `K/N` as a feature.
-- [ ] **3.4** Geometry features per edit: node displacement (haversine), way length delta, polygon area delta, bbox diagonal delta, vertex count delta, Hausdorff distance where both sides exist.
+- [x] **3.4** Geometry features per edit: node displacement (haversine), way length delta, polygon area delta, bbox diagonal delta, vertex count delta, Hausdorff distance where both sides exist.
 - [ ] **3.5** Text features: extract text-key values (`name`, `name:*`, `description`, `note`, `operator`, …), old and new, as character sequences for B2.
 - [ ] **3.6** Tabular features: a documented superset of Ovid's, so the reproduction is honest.
 - [ ] **3.7** Build the DuckDB view layer over the Parquet files.
   **A/C:** a full-corpus aggregate query runs on the laptop with peak RSS under 1 GB.
-- [ ] **3.8** Write a **mock Parquet generator** — 200 synthetic changesets with the identical schema — and publish it in week 1 so WS2/3/4 are not blocked on WS1.
+- [x] **3.8** Write a **mock Parquet generator** — 200 synthetic changesets with the identical schema — and publish it in week 1 so WS2/3/4 are not blocked on WS1.
 - [ ] **3.9** Freeze and document the schema. Any later change bumps a version field.
 - [ ] **3.10** Upload the featurised Parquet to Drive once.
 
@@ -255,8 +260,8 @@ Do this before any code. It is 90 minutes and it prevents a month of mess.
 
 ### 6.4 Corpus D — live 2026
 
-- [ ] **6.4.1** Write `src/mapguard/data/replication.py`: read `state.yaml`, walk sequence numbers, stream `.osm.gz` changeset files.
-- [ ] **6.4.2** Harvest a defined 2026 window (state the exact dates; they go in the paper).
+- [x] **6.4.1** Write `src/mapguard/data/replication.py`: read `state.yaml`, walk sequence numbers, stream `.osm.gz` changeset files.
+- [~] **6.4.2** Harvest a defined 2026 window (state the exact dates; they go in the paper).
 - [ ] **6.4.3** Sample, fetch contents per changeset from the API, enrich geometry with `adiff`.
 - [ ] **6.4.4** Featurise into the frozen schema.
 - [ ] **6.4.5** Verify the temporal boundary: **no Corpus D changeset may predate the Corpus A training cut-off.**

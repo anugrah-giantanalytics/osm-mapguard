@@ -1,0 +1,29 @@
+{
+  "generated": "2026-09-04T10:24:00",
+  "corpus": "D",
+  "source": "planet.openstreetmap.org/replication/changesets",
+  "head_sequence": 7170103,
+  "head_last_run": "2026-09-04 04:52:21.906455000 +00:00",
+  "minute_stream_head": "2026-09-04T04:52:47Z",
+  "minutes_harvested": 60,
+  "changesets_stored_this_run": 1426,
+  "changesets_in_store": 1362,
+  "window_oldest_created_at": "2024-07-13T23:51:40Z",
+  "window_newest_created_at": "2026-09-04T04:51:21Z",
+  "revert_comment_matches": 5,
+  "revert_rate": 0.00351,
+  "top_editors": {
+    "iD 2.42.2": 367,
+    "StreetComplete 63.4": 334,
+    "JOSM/1.5 (19555 en)": 97,
+    "StreetComplete_ee 63.4": 93,
+    "JOSM/1.5 (19481 en)": 64,
+    "iD 2.41.2-kme.1": 56,
+    "DeFlock 2.11.0": 30,
+    "JOSM/1.5 (19096 SVN en)": 29,
+    "iD 2.41.2": 26,
+    "osmapi/4.3.0": 24
+  },
+  "seconds": 24.4,
+  "database": "C:\\osm-data\\raw\\corpus_d.sqlite"
+}

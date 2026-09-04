@@ -65,6 +65,10 @@ class Response:
     seconds: float
     attempts: int
     error: str | None = None
+    # Raw bytes as well as decoded text: the replication stream serves .osm.gz with no
+    # Content-Encoding header, so requests hands back gzip bytes decoded as if they were
+    # text. Round-tripping that through str is lossy, and the file will not decompress.
+    content: bytes = b""
 
     @property
     def ok(self) -> bool:
@@ -116,16 +120,19 @@ class PoliteSession:
         last_error: str | None = None
         status = 0
         text = ""
+        blob = b""
 
         for attempt in range(1, self.max_retries + 1):
             self._serve_penalty()
             self.bucket.take()
             try:
                 r = self._session().get(url, timeout=self.timeout, **kwargs)
-                status, text = r.status_code, r.text
+                status, text, blob = r.status_code, r.text, r.content
 
                 if status == 200:
-                    return Response(url, status, text, time.monotonic() - started, attempt)
+                    return Response(
+                        url, status, text, time.monotonic() - started, attempt, content=blob
+                    )
 
                 if status in (429, 509):
                     # The explicit slow-down signals. Penalise everyone, not just us.
@@ -141,11 +148,13 @@ class PoliteSession:
                     continue
 
                 # 4xx that is not a rate limit is our problem, and it is final.
-                return Response(url, status, text, time.monotonic() - started, attempt)
+                return Response(
+                    url, status, text, time.monotonic() - started, attempt, content=blob
+                )
 
             except requests.RequestException as exc:
                 last_error = repr(exc)[:200]
-                status = 0
+                status, blob = 0, b''
                 time.sleep(min(2**attempt, 30) * (0.5 + random.random()))
 
         return Response(url, status, text, time.monotonic() - started, self.max_retries, last_error)

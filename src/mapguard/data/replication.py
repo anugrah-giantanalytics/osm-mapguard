@@ -152,10 +152,11 @@ def fetch_changeset_sequence(session: PoliteSession, seq: int) -> list[Changeset
     if not r.ok:
         return []
     try:
-        # requests decoded the gzip transfer-encoding for us in some cases and not
-        # others; go back to bytes and decompress explicitly.
-        raw = r.text.encode("utf-8", "surrogateescape")
-        if raw[:2] == b"\x1f\x8b":
+        # The file is gzip *content*, not a gzip transfer-encoding, so requests does not
+        # unwrap it. Work from raw bytes; decoding to str first is lossy and the archive
+        # will not decompress afterwards.
+        raw = r.content
+        if raw.startswith(bytes([0x1F, 0x8B])):  # gzip magic number
             raw = gzip.decompress(raw)
         return parse_changeset_file(raw.decode("utf-8", "replace"))
     except (OSError, UnicodeDecodeError):
