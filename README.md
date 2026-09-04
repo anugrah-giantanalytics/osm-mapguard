@@ -36,50 +36,101 @@ Raw gate output: [`results/`](results/)
 ## Layout
 
 ```
-data/labels/      ovid_labels.tsv — 18,276 changesets, 9,138 vandalism (tracked)
-data/raw/         fetched changeset contents (gitignored)
-data/interim/     featurised Parquet (gitignored)
-scripts/          one-shot investigations; gate0*.py are the data-availability gates
-src/mapguard/     library code
-notebooks/        thin Colab/Kaggle notebooks — git pull, import, run
+data/labels/      ovid_labels.tsv - 18,276 changesets, 9,138 vandalism (tracked)
+data/mock/        synthetic corpus in the real schema (generated, gitignored)
+docs/             plan review, architecture page
+scripts/          gates and one-shot jobs; each writes JSON to results/
+src/mapguard/
+  config.py       paths, endpoints, User-Agent, politeness defaults
+  data/
+    http.py       PoliteSession - global token bucket, 509/429 backoff
+    osm_api.py    changeset metadata, osmChange download, versioned multi-fetch
+    overpass.py   adiff - before/after geometry for any date from 2012
+    replication.py  the live changeset stream (Corpus D, revert mining)
+    osmchange.py  osmChange XML -> per-edit records, streaming
+    users.py      account_created cache, account age at edit time
+    store.py      resumable SQLite stores
+  features/
+    geometry.py   displacement, length, area, Hausdorff, changeset summary
+    build_corpus_a.py  SQLite -> Parquet
+tests/            38 tests, no network
 results/          gate output and experiment metrics (tracked)
+notebooks/        thin Colab/Kaggle notebooks - git pull, import, run
 ```
+
+Bulk data lives under `MAPGUARD_DATA` (default `C:\osm-data`), never in the repository.
 
 ## Setup
 
-**TensorFlow does not support Python 3.14.** Use 3.12:
+**TensorFlow does not support Python 3.14.** Use 3.12 for anything that trains:
 
 ```bash
 py -3.12 -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
 ```
 
-Local Python is only needed for baselines and figures. Model training runs on Colab (iteration) and Kaggle (pretraining, ablation grid) — see PROJECT_PLAN.md §9.
+```bash
+pip install -r requirements.txt && pip install -e .
+```
+
+```bash
+cp .env.example .env
+```
+
+Data collection, the gates and the tests need only `requests`, `numpy`, `scikit-learn`
+and `pyarrow`, so they run on the system Python too.
+
+## Running things
+
+Gates, in order. Each writes its evidence to `results/`:
+
+```bash
+python scripts/gate1a_adiff_batch.py --sample 100
+```
+
+```bash
+python scripts/gate1b_overpass_capacity.py --minutes 30
+```
+
+```bash
+python scripts/fetch_corpus_a_meta.py --rate 3 --workers 3
+```
+
+```bash
+python scripts/gate1c_b0_tripwire.py
+```
+
+Unblock WS2/3/4 without waiting for the fetch - a synthetic corpus in the real schema:
+
+```bash
+python scripts/make_mock_corpus.py
+```
+
+Tests:
+
+```bash
+python -m pytest -q
+```
 
 ## Rules
 
-- **No data in this repo, and none in OneDrive.** Bulk data goes in `C:\osm-data\`.
-- Notebooks stay thin: `git pull`, `pip install -r requirements.txt`, import from `src/`. No long cells.
-- Checkpoint to Drive every epoch — Colab kills sessions at 12 h and after 90 min idle.
+Full version in [CONTRIBUTING.md](CONTRIBUTING.md). The short one:
+
+- **No data and no secrets in this repository.** Bulk data goes in `C:\osm-data\`.
+- Notebooks stay thin: `git pull`, install, import from `src/`, run.
+- Checkpoint to Drive every epoch - Colab kills sessions at 12 h and after 90 min idle.
 - Metrics go to `results/*.json`, not stdout.
-- Be polite to the OSM API: 1 req/s, cache to disk, resume on restart, back off on HTTP 509.
-
-## Reproducing the gates
-
-```bash
-python scripts/gate0_coverage.py --sample 150   # bucket coverage of Ovid labels
-python scripts/gate0b_fallback.py               # API fallback + coverage ladder
-python scripts/gate0c_bounds.py                 # exact window + previous-version endpoint
-```
+- Be polite to OSM: one shared token bucket, real User-Agent, back off on 509, resume
+  from cache. Never send Overpass a planet-sized bbox.
+- Three rules that are correctness, not style: user features are point-in-time, splits
+  are user-disjoint, pretraining excludes the evaluation set by id **and** uid.
 
 ## Workstreams
 
 | | Owner | Scope |
 |---|---|---|
-| WS1 | | data pipeline — fetchers, Parquet, DuckDB feature store, user histories |
-| WS2 | | baselines + R1–R4 evaluation harness, calibration |
-| WS3 | | Stage 2 branches B1–B5, attention fusion, training loop |
+| WS1 | | data pipeline - fetchers, adiff enrichment, Parquet, DuckDB store, user histories |
+| WS2 | | baselines + R1-R4 evaluation harness, calibration, label audit |
+| WS3 | | Stage 2 branches B1-B5, hierarchical encoder, attention fusion, training loop |
 | WS4 | | Stage 1 pretext tasks, corruption generator, demo, figures |
 
-WS1 gates the others, so WS2–4 build against a small mock Parquet in week 1 rather than waiting.
+WS1 gates the others, so WS2-4 build against `data/mock/` in week 1 rather than waiting.

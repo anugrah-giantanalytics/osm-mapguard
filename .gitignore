@@ -32,3 +32,9 @@ venv/
 .idea/
 Thumbs.db
 desktop.ini
+
+# secrets
+.env
+
+# generated locally from a seed, not tracked - scripts/make_mock_corpus.py
+data/mock/

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mapguard"
+version = "0.2.0"
+description = "Self-supervised, geometry-aware detection of damaging edits in OpenStreetMap"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+# Runtime pins live in requirements.txt so a Colab or Kaggle cell can install them
+# without building this package. Installing this project is only about making
+# `import mapguard` work from a notebook, a script, or a test.
+dependencies = ["requests>=2.32"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+markers = [
+    "network: hits a live public API; deselect with -m 'not network'",
+]
