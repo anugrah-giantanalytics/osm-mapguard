@@ -39,3 +39,10 @@ desktop.ini
 
 # generated locally from a seed, not tracked - scripts/make_mock_corpus.py
 data/mock/
+
+# cluster upload bundles - build artefacts, and some carry data
+cluster/_bundles/
+
+# experiment outputs
+experiments/checkpoints/
+experiments/results/

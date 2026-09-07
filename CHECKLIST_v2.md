@@ -17,8 +17,8 @@ checklist remains unchanged for historical reference.
   was zero.
 - [x] Corpus D replication harvest, OSMCha labels, mock data, parser, geometry helpers,
   splits, and padded dataset assembly exist.
-- [ ] Gate 1c has a tracked result and an explicit leakage decision.
-- [ ] Corpus A has been fully fetched, geometry-enriched, featurised, and schema-frozen.
+- [x] Gate 1c has a tracked result and an explicit leakage decision.
+- [~] Corpus A has been fully fetched, geometry-enriched, featurised, and schema-frozen.
 - [ ] A real trainable model, checkpoint, inference path, and experiment results exist.
 - [ ] A visual demo exists and scores the same input through the same inference path as
   the research results.
@@ -39,40 +39,40 @@ checklist remains unchanged for historical reference.
 
 ## Phase 0 — reconcile the repo before modelling
 
-- [ ] Update the status table in `README.md` from actual `results/*.json` artifacts;
+- [x] Update the status table in `README.md` from actual `results/*.json` artifacts;
   distinguish verified, running, stale, and not-started work.
-- [ ] Decide the Gate 1b route in writing: mirror, id-sampled Corpus A, or another
+- [x] Decide the Gate 1b route in writing: mirror, id-sampled Corpus A, or another
   reproducible route. Record the sampling rule and its coverage consequences.
-- [ ] Run and save Gate 1c. If the B0 tripwire is high, stop and diagnose leakage before
+- [x] Run and save Gate 1c. If the B0 tripwire is high, stop and diagnose leakage before
   training anything.
-- [ ] Confirm the Python environment is reproducible. The checked-in `.venv311` points
+- [x] Confirm the Python environment is reproducible. The checked-in `.venv311` points
   to a missing Python 3.11 executable; document the supported interpreter and a clean
   setup path.
-- [ ] Run the no-network test suite in that supported environment and save the command,
+- [x] Run the no-network test suite in that supported environment and save the command,
   interpreter version, and result.
-- [ ] Remove or explicitly track stale assumptions in docstrings and docs, especially
+- [x] Remove or explicitly track stale assumptions in docstrings and docs, especially
   the node-only Corpus A geometry description.
-- [ ] Reconcile schema names across `build_corpus_a.py`, `build_store.py`,
+- [~] Reconcile schema names across `build_corpus_a.py`, `build_store.py`,
   `training/dataset.py`, mock Parquet, and the plan. One field name must mean one thing.
-- [ ] Decide the canonical artifact layout: raw, interim, features, checkpoints,
+- [x] Decide the canonical artifact layout: raw, interim, features, checkpoints,
   fixtures, results. Ensure no large data or secrets enter git.
 
 ## Phase 1 — data and feature contract
 
-- [ ] Fetch Corpus A metadata and contents with resumability, status accounting, and
+- [~] Fetch Corpus A metadata and contents with resumability, status accounting, and
   retry/backoff evidence.
 - [ ] Enrich Corpus A geometry through the selected Gate 1b route and fallback; report
   coverage by object type and by label.
-- [ ] Build exact all-edit changeset summaries; never erase scale information.
-- [ ] Build the K=256 stratified per-edit sample: displacement, area change, text-bearing
+- [x] Build exact all-edit changeset summaries; never erase scale information.
+- [x] Build the K=256 stratified per-edit sample: displacement, area change, text-bearing
   edits, then random fill. Persist `K/N` and truncation status.
-- [ ] Build point-in-time user history using only changesets strictly earlier than the
+- [x] Build point-in-time user history using only changesets strictly earlier than the
   target; add the explicit future-event regression test.
-- [ ] Build text features from the agreed tag keys and document the treatment of casing,
+- [x] Build text features from the agreed tag keys and document the treatment of casing,
   Unicode, empty values, and personal data.
 - [ ] Freeze and version the feature schema; write a schema manifest with dtypes, units,
   missing-value policy, and provenance for every field.
-- [ ] Add a deterministic fixture set containing at least: normal edit, text vandalism,
+- [x] Add a deterministic fixture set containing at least: normal edit, text vandalism,
   geometry displacement, mass change, deleted-account/anonymous case, no-bbox case, and
   a changeset whose geometry requires fallback.
 - [ ] Verify Corpus C pretraining is disjoint from every Corpus D evaluation changeset
@@ -80,18 +80,18 @@ checklist remains unchanged for historical reference.
 
 ## Phase 2 — baselines and research model
 
-- [ ] Produce R1a random/user-leaky and R1b user-disjoint splits with persisted ids.
-- [ ] Produce B0, logistic regression, and XGBoost baselines with bootstrap intervals,
+- [x] Produce R1a random/user-leaky and R1b user-disjoint splits with persisted ids.
+- [~] Produce B0, logistic regression, and XGBoost baselines with bootstrap intervals,
   PR-AUC, precision@k, calibration, and prevalence-corrected curves.
 - [ ] Reproduce the Ovid feature protocol before claiming improvement; document any
   feature or label mismatch that explains a gap from the published number.
-- [ ] Implement the smallest end-to-end B5 tabular classifier first and establish a
+- [~] Implement the smallest end-to-end B5 tabular classifier first and establish a
   working checkpoint/inference contract.
-- [ ] Implement B2 text, B1 geometry, B3 edit sequence, and B4 point-in-time user
+- [~] Implement B2 text, B1 geometry, B3 edit sequence, and B4 point-in-time user
   history branches incrementally; test each branch in isolation.
-- [ ] Implement masked attention over sampled edits and verify padded edits cannot
+- [x] Implement masked attention over sampled edits and verify padded edits cannot
   change the output.
-- [ ] Emit the three promised outputs: damage probability, suspicious edit index/weight,
+- [x] Emit the three promised outputs: damage probability, suspicious edit index/weight,
   and branch/signal attribution.
 - [ ] Train the full supervised model before attempting Stage 1 self-supervision.
 - [ ] Run the planned ablations and at least two seeds for headline comparisons.

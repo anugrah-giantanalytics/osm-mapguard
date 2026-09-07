@@ -71,6 +71,20 @@ REAL_CHANGESETS = "https://real-changesets.s3.us-west-2.amazonaws.com"
 # The OSM multi-fetch endpoints cap at 725 elements per request. Verified 2026-09-04.
 MULTIFETCH_MAX = 725
 
+# Gate 1b measured public Overpass at 3.17 queries/minute, projecting to 96 hours for the
+# full corpus. See docs/GATE1B_DECISION.md. Geometry is therefore enriched on a fixed
+# subset chosen by a hash of the changeset id - independent of size, author and content,
+# because sampling by any of those would correlate "has geometry" with "is damaging".
+GEOMETRY_SUBSET_PERMILLE = 328          # ~32.8%, about 6,000 of 18,276
+
+
+def in_geometry_subset(cid: int) -> bool:
+    """Deterministic, reproducible from the id alone, no stored list needed."""
+    import hashlib
+
+    digest = hashlib.sha256(str(int(cid)).encode()).hexdigest()
+    return int(digest[:8], 16) % 1000 < GEOMETRY_SUBSET_PERMILLE
+
 # --- identification ----------------------------------------------------------
 
 CONTACT = os.environ.get("MAPGUARD_CONTACT", "ayushmgarg10@gmail.com")
