@@ -1,0 +1,62 @@
+{
+  "generated": "2026-09-08T01:40:30",
+  "gate": "1c",
+  "question": "are the labels readable from changeset metadata alone?",
+  "criterion": {
+    "metric": "ROC-AUC on a class-balanced user-disjoint test fold",
+    "pass_below": 0.75,
+    "fail_at_or_above": 0.85,
+    "why_not_f1": "On a balanced set, predicting everything positive scores F1 = 0.667. An F1 threshold of 0.70 therefore sits barely above trivial and fails honest weak models. Rank quality is what separates a leak from a prior."
+  },
+  "n_rows": 18276,
+  "split": {
+    "kind": "user_disjoint",
+    "seed": 20260904,
+    "leaky": false,
+    "n_train": 12793,
+    "n_val": 1828,
+    "n_test": 3655,
+    "pos_rate_train": 0.5048,
+    "pos_rate_val": 0.488,
+    "pos_rate_test": 0.4892
+  },
+  "always_positive_f1_on_test": 0.657,
+  "probes": [
+    {
+      "features": "comment_length",
+      "f1": 0.6105,
+      "roc_auc": 0.5825,
+      "pr_auc": 0.5364,
+      "predicted_positive_rate": 0.6213
+    },
+    {
+      "features": "editor",
+      "f1": 0.7047,
+      "roc_auc": 0.6266,
+      "pr_auc": 0.5718,
+      "predicted_positive_rate": 0.768
+    },
+    {
+      "features": "B0 (comment_length + editor)",
+      "f1": 0.6959,
+      "roc_auc": 0.6562,
+      "pr_auc": 0.5803,
+      "predicted_positive_rate": 0.7516
+    }
+  ],
+  "top_editor_coefficients": {
+    "id": 1.053,
+    "streetcomplete": -0.576,
+    "potlatch": 0.567,
+    "ios": 0.263,
+    "me": 0.26,
+    "pl": -0.249,
+    "rapid": -0.248,
+    "level": -0.228,
+    "osmapi": -0.218,
+    "de": -0.199
+  },
+  "user_cache": null,
+  "verdict": "PASS - weak prior, not leakage",
+  "interpretation": "Editor string carries most of it. The strongest positive coefficient is the beginner-facing editor, which matches the top OSMCha harmful reason ('New mapper') and is a real property of who vandalises, not a label leak. Ovid uses the same feature. It is reported as a baseline, not excluded."
+}

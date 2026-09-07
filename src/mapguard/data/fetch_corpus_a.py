@@ -45,9 +45,12 @@ from pathlib import Path
 
 import requests
 
+# Paths come from mapguard.config so bulk data lands under MAPGUARD_DATA, outside the
+# repository. Writing into ROOT/data/raw was how gigabytes nearly ended up in git.
+from mapguard.config import CORPUS_A_DB, LABELS, data_path  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[3]
-LABELS = ROOT / "data" / "labels" / "ovid_labels.tsv"
-DB = ROOT / "data" / "raw" / "corpus_a.sqlite"
+DB = data_path(*CORPUS_A_DB.split("/"))
 
 OSM_API = "https://api.openstreetmap.org/api/0.6"
 UA = {

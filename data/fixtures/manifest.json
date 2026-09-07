@@ -1,0 +1,33 @@
+{
+  "generated": "2026-09-08T01:37:06",
+  "source": "real changesets selected from the local Corpus A stores",
+  "provenance": {
+    "metadata_db": "C:\\osm-data\\raw\\corpus_a_meta.sqlite",
+    "geometry_db": "C:\\osm-data\\raw\\corpus_a_geom.sqlite",
+    "labels": "C:\\AyushGarg\\projects\\personal\\osm_mapguard\\data\\labels\\ovid_labels.tsv"
+  },
+  "note": "Selected, not generated. A synthetic corpus tells you the code runs; it cannot tell you the code is right, because the same person wrote both sides of it. Every awkward case here is one the real data actually does.",
+  "cases": {
+    "normal": [
+      19777718
+    ],
+    "text_vandalism": [
+      19739784
+    ],
+    "mass_change": [
+      24150516
+    ],
+    "anonymous": [],
+    "no_bbox": [
+      19759541
+    ],
+    "geometry_shift": [
+      19740973
+    ],
+    "geometry_fallback": []
+  },
+  "missing_cases": [
+    "anonymous",
+    "geometry_fallback"
+  ]
+}

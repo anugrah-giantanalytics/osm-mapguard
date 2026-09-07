@@ -56,6 +56,30 @@ def test_user_disjoint_never_leaks():
     assert_user_disjoint(s, uids)     # raises if any user spans folds
 
 
+def test_user_disjoint_preserves_class_balance_when_given_labels():
+    """The bug this catches was real: without labels the folds came out 63/23/32 percent
+    positive against 50 percent overall, because vandals have one or two changesets each
+    while prolific mappers are overwhelmingly clean, so a size-ordered greedy packs them
+    together. Every metric on that fold describes a different problem."""
+    rng = np.random.default_rng(5)
+    uids, y = [], []
+    for u in range(300):                       # clean, prolific
+        k = int(rng.integers(5, 60))
+        uids += [u] * k
+        y += [0] * k
+    for u in range(300, 1500):                 # vandals, one or two edits each
+        k = int(rng.integers(1, 3))
+        uids += [u] * k
+        y += [1] * k
+    y = np.array(y)
+
+    s = user_disjoint_split(uids, y)
+    assert_user_disjoint(s, uids)
+    overall = y.mean()
+    for m in (s.train, s.val, s.test):
+        assert abs(y[m].mean() - overall) < 0.06
+
+
 def test_user_disjoint_handles_one_dominant_user():
     """A prolific mapper must not be split, and must not wreck the fold sizes either."""
     uids = [1] * 300 + list(range(2, 702))

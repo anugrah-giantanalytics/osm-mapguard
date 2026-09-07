@@ -1,0 +1,23 @@
+[
+  {
+    "cid": 19777718,
+    "created_at": "2014-01-02T22:55:59Z",
+    "closed_at": "2014-01-02T22:56:00Z",
+    "uid": 296768,
+    "user": "Georg Schölly",
+    "num_changes": 2,
+    "min_lat": 47.4835344,
+    "min_lon": 7.7383279,
+    "max_lat": 47.4841497,
+    "max_lon": 7.7390252,
+    "comments_count": 0,
+    "comment": "Turnhalle Kaserne besser benamt.",
+    "editor": "iD 1.3.4",
+    "label": 0,
+    "tags": {
+      "comment": "Turnhalle Kaserne besser benamt.",
+      "created_by": "iD 1.3.4",
+      "imagery_used": "Bing"
+    }
+  }
+]

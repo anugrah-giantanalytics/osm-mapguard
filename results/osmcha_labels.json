@@ -1,39 +1,40 @@
 {
-  "generated": "2026-09-04T11:11:46",
+  "generated": "2026-09-04T21:20:43",
   "source": "osmcha.org/api/v1/changesets",
   "window": {
-    "since": "2026-01-01",
-    "until": null
+    "since": "2026-06-01",
+    "until": "2026-06-15",
+    "slice_days": 7
   },
   "available_in_window": {
-    "harmful": 8298,
-    "clean": 19002
+    "harmful": null,
+    "clean": null
   },
   "stored_this_run": {
-    "harmful": 3300,
-    "clean": 0
+    "harmful": 334,
+    "clean": 887
   },
   "store_totals": {
-    "total": 3600,
+    "total": 4654,
     "by_label": {
-      "clean": 300,
-      "harmful": 3300
+      "clean": 1187,
+      "harmful": 3467
     }
   },
-  "distinct_reviewers": 196,
+  "distinct_reviewers": 226,
   "top_harmful_reasons": {
-    "New mapper": 1541,
-    "New mapper,Review requested": 178,
-    "User has multiple blocks": 144,
+    "New mapper": 1627,
+    "New mapper,Review requested": 179,
+    "User has multiple blocks": 150,
     "suspect_word,New mapper": 80,
-    "New mapper,Crossing ways": 61,
-    "Review requested": 52,
-    "Crossing ways": 46,
+    "New mapper,Crossing ways": 63,
+    "Review requested": 53,
+    "Crossing ways": 49,
     "suspect_word,New mapper,Review requested": 45,
     "suspect_word": 28,
-    "mass deletion,New mapper": 27
+    "mass deletion,New mapper": 28
   },
-  "seconds": 2229.3,
+  "seconds": 35974.4,
   "database": "C:\\osm-data\\raw\\osmcha_labels.sqlite",
   "note": "harmful=True is a human calling a changeset damaging. harmful=False is sent with checked=True so negatives are reviewed, not merely unexamined - otherwise the negative class encodes reviewer attention."
 }

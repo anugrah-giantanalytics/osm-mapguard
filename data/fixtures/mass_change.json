@@ -1,0 +1,23 @@
+[
+  {
+    "cid": 24150516,
+    "created_at": "2014-07-14T22:23:43Z",
+    "closed_at": "2014-07-15T00:10:26Z",
+    "uid": 179778,
+    "user": "JulienBalas",
+    "num_changes": 50000,
+    "min_lat": -1.6534361,
+    "min_lon": -89.3905518,
+    "max_lat": 64.054981,
+    "max_lon": 139.0603038,
+    "comments_count": 0,
+    "comment": "validator",
+    "editor": "JOSM/1.5 (7287 fr)",
+    "label": 1,
+    "tags": {
+      "comment": "validator",
+      "created_by": "JOSM/1.5 (7287 fr)",
+      "source": "validator"
+    }
+  }
+]

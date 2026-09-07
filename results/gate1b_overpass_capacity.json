@@ -1,0 +1,29 @@
+{
+  "generated": "2026-09-04T11:41:22",
+  "gate": "1b",
+  "question": "will the public Overpass instance carry 18,276 adiff queries?",
+  "minutes_run": 30.0,
+  "queries_attempted": 95,
+  "queries_per_minute": 3.17,
+  "statuses": {
+    "200": 91,
+    "429": 1,
+    "504": 3
+  },
+  "notes": {
+    "ok": 91,
+    "bbox too large": 4,
+    "no bbox": 2,
+    "http 429": 1,
+    "http 504": 3
+  },
+  "latency_seconds": {
+    "median": 10.64,
+    "p90": 42.26,
+    "max": 72.08
+  },
+  "projected_hours_for_full_corpus": 96.2,
+  "error_rate": 0.042,
+  "verdict": "SUBSET_OR_MIRROR",
+  "decision_required": "pick a mirror instance, or subset by changeset id (never by size or user)"
+}
