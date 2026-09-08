@@ -46,3 +46,6 @@ cluster/_bundles/
 # experiment outputs
 experiments/checkpoints/
 experiments/results/
+
+# release build artefacts
+dist/
