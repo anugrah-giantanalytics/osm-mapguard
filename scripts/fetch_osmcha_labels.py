@@ -50,6 +50,8 @@ def main() -> int:
     ap.add_argument("--window-days", type=int, default=7,
                     help="date slice width. Offset pagination on this endpoint dies "
                          "around page 30, so we walk dates instead")
+    ap.add_argument("--retry-gaps", action="store_true",
+                    help="second pass: re-fetch only the windows recorded as gaps")
     ap.add_argument("--stats", action="store_true")
     ap.add_argument("--no-count", action="store_true",
                     help="skip the upfront availability counts. Over a multi-year window "
@@ -71,7 +73,7 @@ def main() -> int:
             print(json.dumps(c, indent=2))
             return 0
 
-        sess = session()
+        sess = session(fast=True)
         started = time.monotonic()
         until = args.until or datetime.now().strftime("%Y-%m-%d")
 

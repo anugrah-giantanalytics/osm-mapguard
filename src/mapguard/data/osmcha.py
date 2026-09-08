@@ -37,7 +37,13 @@ OSMCHA_API = "https://osmcha.org/api/v1"
 # The changeset endpoint is heavy. One request every two seconds, and a generous read
 # timeout, is the difference between a working harvest and a wall of 504s.
 OSMCHA_RATE = 0.5
+# 180 s suits the heavy count queries, which scan. Page queries return in seconds, so a
+# long timeout there only buys silence: at 4 retries a single refusing window costs ~12
+# minutes and a run of them collapses throughput entirely. Harvesting fails fast and
+# records the gap; gaps get their own retry pass afterwards, when the service has calmed.
 OSMCHA_TIMEOUT = 180
+OSMCHA_PAGE_TIMEOUT = 25
+OSMCHA_PAGE_RETRIES = 2
 PAGE_SIZE = 100
 
 
@@ -65,11 +71,12 @@ def token() -> str:
     return tok
 
 
-def session() -> PoliteSession:
+def session(*, fast: bool = False) -> PoliteSession:
+    """`fast=True` for paging: short timeout, few retries, record the gap and move on."""
     return PoliteSession(
         OSMCHA_RATE,
-        max_retries=4,
-        timeout=OSMCHA_TIMEOUT,
+        max_retries=OSMCHA_PAGE_RETRIES if fast else 4,
+        timeout=OSMCHA_PAGE_TIMEOUT if fast else OSMCHA_TIMEOUT,
         headers={
             "Authorization": f"Token {token()}",
             "User-Agent": "MapGuard-research/0.2 (academic OSM vandalism-detection study)",
