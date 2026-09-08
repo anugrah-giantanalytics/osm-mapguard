@@ -35,6 +35,7 @@ from mapguard.config import (
     CORPUS_A_META_DB,
     OVERPASS_RATE,
     data_path,
+    in_geometry_subset,
 )
 from mapguard.data.http import PoliteSession
 from mapguard.data.osm_api import ChangesetMeta
@@ -97,6 +98,10 @@ def action_payload(actions) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--all", action="store_true",
+                    help="ignore the id-hash subset and enrich everything. Gate 1b "
+                         "measured 96 hours for the full corpus, so this is not the "
+                         "default; see docs/GATE1B_DECISION.md")
     ap.add_argument("--rate", type=float, default=OVERPASS_RATE)
     ap.add_argument("--stats", action="store_true")
     args = ap.parse_args()
@@ -113,7 +118,18 @@ def main() -> int:
             print(json.dumps(c, indent=2))
             return 0
 
-        metas = meta_rows(data_path(*CORPUS_A_META_DB.split("/")), args.limit)
+        metas = meta_rows(data_path(*CORPUS_A_META_DB.split("/")), None)
+        if not args.all:
+            # Deterministic subset by sha256 of the changeset id. Sampling by size would
+            # put mass vandalism and broken imports in the enriched half - size correlates
+            # with the label - and the geometry branch would then appear to work for a
+            # reason unrelated to geometry.
+            before = len(metas)
+            metas = [m for m in metas if in_geometry_subset(m.cid)]
+            print(f"id-hash subset: {len(metas):,} of {before:,} "
+                  f"({len(metas)/max(1,before):.1%})")
+        if args.limit:
+            metas = metas[: args.limit]
         already = done_ids(conn, "geometry")
         todo = [m for m in metas if m.cid not in already]
 
