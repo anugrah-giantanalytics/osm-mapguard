@@ -1,0 +1,194 @@
+{
+  "generated": "2026-09-08T03:34:52",
+  "gate": "D0 / 2a",
+  "question": "what window of OSMCha review is dense and diverse enough to train on?",
+  "api": "https://osmcha.org/api/v1",
+  "method": "count queries (page_size=1) per year; reviewer concentration from a 300-row sample per year",
+  "years": {
+    "2018": {
+      "harmful": 0,
+      "reviewed_clean": 0,
+      "clean_per_harmful": null
+    },
+    "2019": {
+      "harmful": 0,
+      "reviewed_clean": 0,
+      "clean_per_harmful": null
+    },
+    "2020": {
+      "harmful": 0,
+      "reviewed_clean": 0,
+      "clean_per_harmful": null
+    },
+    "2021": {
+      "harmful": 0,
+      "reviewed_clean": 0,
+      "clean_per_harmful": null
+    },
+    "2022": {
+      "harmful": 0,
+      "reviewed_clean": 0,
+      "clean_per_harmful": null
+    },
+    "2023": {
+      "harmful": 17002,
+      "reviewed_clean": 33874,
+      "clean_per_harmful": 1.99,
+      "reviewers_january_only": {
+        "sampled": 300,
+        "with_reviewer": 300,
+        "distinct_reviewers": 77,
+        "top5_share": 0.3633,
+        "top1_share": 0.1067,
+        "months_covered": 1,
+        "top5_counts": [
+          32,
+          21,
+          20,
+          18,
+          18
+        ]
+      },
+      "reviewers": {
+        "sampled": 400,
+        "distinct": 76,
+        "months": [
+          "2023-02",
+          "2023-05",
+          "2023-08",
+          "2023-11"
+        ],
+        "top5_share": 0.39,
+        "top1_share": 0.138,
+        "method": "4 months spread across the year"
+      }
+    },
+    "2024": {
+      "harmful": 14840,
+      "reviewed_clean": 54809,
+      "clean_per_harmful": 3.69,
+      "reviewers_january_only": {
+        "sampled": 300,
+        "with_reviewer": 300,
+        "distinct_reviewers": 61,
+        "top5_share": 0.5133,
+        "top1_share": 0.2067,
+        "months_covered": 1,
+        "top5_counts": [
+          62,
+          34,
+          23,
+          22,
+          13
+        ]
+      },
+      "reviewers": {
+        "sampled": 400,
+        "distinct": 85,
+        "months": [
+          "2024-02",
+          "2024-05",
+          "2024-08",
+          "2024-11"
+        ],
+        "top5_share": 0.365,
+        "top1_share": 0.128,
+        "method": "4 months spread across the year"
+      }
+    },
+    "2025": {
+      "harmful": 11593,
+      "reviewed_clean": 35791,
+      "clean_per_harmful": 3.09,
+      "reviewers_january_only": {
+        "sampled": 300,
+        "with_reviewer": 300,
+        "distinct_reviewers": 73,
+        "top5_share": 0.47,
+        "top1_share": 0.23,
+        "months_covered": 1,
+        "top5_counts": [
+          69,
+          32,
+          17,
+          12,
+          11
+        ]
+      },
+      "reviewers": {
+        "sampled": 400,
+        "distinct": 76,
+        "months": [
+          "2025-02",
+          "2025-05",
+          "2025-08",
+          "2025-11"
+        ],
+        "top5_share": 0.525,
+        "top1_share": 0.228,
+        "method": "4 months spread across the year"
+      }
+    },
+    "2026": {
+      "harmful": 8390,
+      "reviewed_clean": 19242,
+      "clean_per_harmful": 2.29,
+      "reviewers_january_only": {
+        "sampled": 300,
+        "with_reviewer": 300,
+        "distinct_reviewers": 54,
+        "top5_share": 0.58,
+        "top1_share": 0.3133,
+        "months_covered": 1,
+        "top5_counts": [
+          94,
+          32,
+          27,
+          13,
+          8
+        ]
+      },
+      "reviewers": {
+        "sampled": 300,
+        "distinct": 63,
+        "months": [
+          "2026-02",
+          "2026-05",
+          "2026-08"
+        ],
+        "top5_share": 0.457,
+        "top1_share": 0.24,
+        "method": "4 months spread across the year"
+      }
+    }
+  },
+  "totals": {
+    "harmful": 51825,
+    "reviewed_clean": 143716,
+    "combined": 195541
+  },
+  "corpus_a_overlap": {
+    "checked": 2000,
+    "overlapping_ids": 0,
+    "note": "an overlapping id would carry both a revert-derived and a human label, which is the cheapest available cross-source agreement signal"
+  },
+  "threshold_policy": "NOT pre-registered. Per decision 4 in docs/DATA_FOUNDATION.md the exclusion rule is chosen after inspecting this distribution, and the paper states that it was set post-hoc. Per-year numbers are published so a reader can apply a different threshold.",
+  "decision": {
+    "window": "2023-01-01 to 2026-09-08",
+    "reason": "The full available range. Pre-2023 is empty at source, so the lower bound is not a choice. No year is excluded: the most concentrated year has one reviewer at 24% and a top-5 at 52.5%, which is influence, not capture.",
+    "threshold_set_post_hoc": true,
+    "disclosure": "Per-year concentration is published above so a reader can apply a stricter cut. Concentration rises toward the present, so restricting to recent data would have INCREASED reviewer dominance - the opposite of the naive instinct to prefer the newest slice.",
+    "corpus_M_selection": "all 51,825 harmful + 51,825 reviewed-clean sampled 1:1",
+    "corpus_N_selection": "20,000 random unreviewed changesets from the same window"
+  },
+  "pre_2023_verified_empty": {
+    "probes": {
+      "2021-06": 0,
+      "2022-06": 0,
+      "2022-11..12": 0,
+      "2023-01": 729
+    },
+    "conclusion": "OSMCha queryable review history begins 2023-01. Sharp boundary, verified with narrow-window count queries, not an API artifact."
+  },
+  "sampling_correction": "The first reviewer-concentration pass walked date windows chronologically and broke after N rows, so with dense data it never left January and its numbers described one month, not a year. Re-sampled across Feb/May/Aug/Nov. The correction mattered: 2024 went from 51% top-5 (worst-looking year) to 36.5% (the most diverse). Both sets of numbers are kept so the error is visible."
+}

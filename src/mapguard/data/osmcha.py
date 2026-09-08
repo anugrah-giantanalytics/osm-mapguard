@@ -191,6 +191,9 @@ def iter_labels_windowed(
     date_lte: str,
     window_days: int = 7,
     max_pages_per_window: int = 12,
+    on_gap=None,
+    on_window_done=None,
+    skip_windows=None,
 ) -> Iterator[OsmchaLabel]:
     """Walk the range in date slices instead of paging deep into one query.
 
@@ -205,7 +208,12 @@ def iter_labels_windowed(
     cursor = date_gte
     while cursor < date_lte:
         end = min(_shift(cursor, window_days), date_lte)
+        if skip_windows and (cursor, end) in skip_windows:
+            cursor = end
+            continue
         got = 0
+        failed = False
+        saturated = False
         for page in range(1, max_pages_per_window + 1):
             params = {
                 "date__gte": cursor,
@@ -218,7 +226,12 @@ def iter_labels_windowed(
                 params["checked"] = "True"
             r = sess.get(f"{OSMCHA_API}/changesets/", params=params)
             if not r.ok:
-                print(f"  {cursor}..{end} page {page}: HTTP {r.status}, skipping rest of window")
+                # A skipped window is a hole in the dataset. Record it so coverage can be
+                # measured and the window retried, rather than discovered as a gap later.
+                print(f"  {cursor}..{end} page {page}: HTTP {r.status}, recording gap")
+                if on_gap is not None:
+                    on_gap(cursor, end, "harmful" if harmful else "clean", r.status)
+                failed = True
                 break
             try:
                 payload = json.loads(r.text)
@@ -233,13 +246,26 @@ def iter_labels_windowed(
             if not payload.get("next"):
                 break
         else:
-            if window_days > 1:
-                print(f"  {cursor}..{end} saturated at {got}, splitting")
-                yield from iter_labels_windowed(
-                    sess, harmful=harmful, date_gte=cursor, date_lte=end,
-                    window_days=max(1, window_days // 2),
-                    max_pages_per_window=max_pages_per_window,
-                )
+            # The for-loop ran to exhaustion rather than breaking, which means the page
+            # budget ran out before the data did: this window is saturated.
+            saturated = True
+
+        if failed:
+            pass                      # gap already recorded; do not mark it complete
+        elif saturated and window_days > 1:
+            print(f"  {cursor}..{end} saturated at {got}, splitting")
+            yield from iter_labels_windowed(
+                sess, harmful=harmful, date_gte=cursor, date_lte=end,
+                window_days=max(1, window_days // 2),
+                max_pages_per_window=max_pages_per_window,
+                on_gap=on_gap, on_window_done=on_window_done, skip_windows=skip_windows,
+            )
+        elif on_window_done is not None:
+            # Recorded so a restart resumes instead of re-walking three years of slices.
+            # At roughly 225 rows/min the harvest cannot afford to start over each time
+            # it drops.
+            on_window_done(cursor, end, "harmful" if harmful else "clean")
+
         cursor = end
 
 

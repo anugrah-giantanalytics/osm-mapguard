@@ -77,6 +77,21 @@ SCHEMA = {
             fetched           TEXT DEFAULT (datetime('now'))
         )
     """,
+    # windows a harvest failed to retrieve, so coverage is measured rather than assumed.
+    # A silently skipped window is a hole in the published dataset that nobody can see.
+    "fetch_gaps": """
+        CREATE TABLE IF NOT EXISTS fetch_gaps (
+            source      TEXT NOT NULL,      -- osmcha | osm_api | overpass
+            window_from TEXT NOT NULL,
+            window_to   TEXT NOT NULL,
+            klass       TEXT,               -- harmful | clean | NULL
+            status      INTEGER,            -- 0 means the request never completed
+            attempts    INTEGER DEFAULT 1,
+            resolved    INTEGER DEFAULT 0,
+            noted       TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (source, window_from, window_to, klass)
+        )
+    """,
     # before/after geometry from Overpass adiff, one row per changeset
     "geometry": """
         CREATE TABLE IF NOT EXISTS geometry (
@@ -139,6 +154,11 @@ def counts(conn: sqlite3.Connection, table: str) -> dict:
         ).fetchall()
         out["by_label"] = {("harmful" if h == 1 else "clean" if h == 0 else "unknown"): n
                            for h, n in rows}
+    if table == "fetch_gaps":
+        out["unresolved"] = conn.execute(
+            "SELECT COUNT(*) FROM fetch_gaps WHERE resolved = 0").fetchone()[0]
+        out["by_status"] = dict(conn.execute(
+            "SELECT status, COUNT(*) FROM fetch_gaps GROUP BY status"))
     if table == "geometry":
         rows = conn.execute(
             "SELECT route, COUNT(*) FROM geometry GROUP BY route ORDER BY 2 DESC"

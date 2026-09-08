@@ -51,11 +51,15 @@ def main() -> int:
                     help="date slice width. Offset pagination on this endpoint dies "
                          "around page 30, so we walk dates instead")
     ap.add_argument("--stats", action="store_true")
+    ap.add_argument("--no-count", action="store_true",
+                    help="skip the upfront availability counts. Over a multi-year window "
+                         "those are full scans that time out and retry before any real "
+                         "work starts; results/gate2a_osmcha_coverage.json already has them")
     args = ap.parse_args()
 
     db = data_path(*LABELS_DB.split("/"))
 
-    with store(db, "labels") as conn:
+    with store(db, "labels", "fetch_gaps") as conn:
         if args.stats:
             c = counts(conn, "labels")
             c["distinct_reviewers"] = conn.execute(
@@ -72,10 +76,14 @@ def main() -> int:
         until = args.until or datetime.now().strftime("%Y-%m-%d")
 
         totals = {}
-        for harmful in (True, False):
-            totals["harmful" if harmful else "clean"] = count_for(
-                sess, harmful=harmful, date_gte=args.since, date_lte=until
-            )
+        if args.no_count:
+            totals = {"harmful": None, "clean": None,
+                      "note": "skipped; see results/gate2a_osmcha_coverage.json"}
+        else:
+            for harmful in (True, False):
+                totals["harmful" if harmful else "clean"] = count_for(
+                    sess, harmful=harmful, date_gte=args.since, date_lte=until
+                )
         print(f"window {args.since} .. {until}  (slices of {args.window_days} days)")
         print(f"available: {totals}")
 
@@ -83,6 +91,32 @@ def main() -> int:
         for harmful in (True, False):
             key = "harmful" if harmful else "clean"
             print(f"\nfetching {key}...")
+            def note_gap(w_from, w_to, klass, status):
+                conn.execute(
+                    "INSERT INTO fetch_gaps (source,window_from,window_to,klass,status)"
+                    " VALUES ('osmcha',?,?,?,?)"
+                    " ON CONFLICT(source,window_from,window_to,klass)"
+                    " DO UPDATE SET attempts = attempts + 1, resolved = 0",
+                    (w_from, w_to, klass, status))
+
+            def note_done(w_from, w_to, klass):
+                conn.execute(
+                    "INSERT INTO fetch_gaps (source,window_from,window_to,klass,status,resolved)"
+                    " VALUES ('osmcha',?,?,?,200,1)"
+                    " ON CONFLICT(source,window_from,window_to,klass)"
+                    " DO UPDATE SET resolved = 1, status = 200",
+                    (w_from, w_to, klass))
+
+            # Windows already fully covered by a previous run are skipped, so a restart
+            # resumes rather than re-walking three years of slices.
+            done_windows = {
+                (a, b) for a, b in conn.execute(
+                    "SELECT window_from, window_to FROM fetch_gaps"
+                    " WHERE resolved = 1 AND klass = ?", (key,))
+            }
+            if done_windows:
+                print(f"  resuming: {len(done_windows)} {key} windows already complete")
+
             for n, lab in enumerate(
                 iter_labels_windowed(
                     sess,
@@ -90,6 +124,9 @@ def main() -> int:
                     date_gte=args.since,
                     date_lte=until,
                     window_days=args.window_days,
+                    on_gap=note_gap,
+                    on_window_done=note_done,
+                    skip_windows=done_windows,
                 ),
                 1,
             ):
@@ -109,6 +146,7 @@ def main() -> int:
                     print(f"  {key}: {n}", flush=True)
             print(f"  {key}: {stored[key]} stored")
 
+        gaps = counts(conn, "fetch_gaps")
         final = counts(conn, "labels")
         reviewers = conn.execute(
             "SELECT COUNT(DISTINCT check_user) FROM labels WHERE check_user IS NOT NULL"
@@ -125,6 +163,7 @@ def main() -> int:
         "available_in_window": totals,
         "stored_this_run": stored,
         "store_totals": final,
+        "fetch_gaps": gaps,
         "distinct_reviewers": reviewers,
         "top_harmful_reasons": dict(top_reasons),
         "seconds": round(time.monotonic() - started, 1),
