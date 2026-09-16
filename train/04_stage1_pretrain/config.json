@@ -1,0 +1,28 @@
+{
+  "stage": "stage1_pretrain",
+  "task": "T2",
+  "split": "R1b",
+  "seed": 20260904,
+  "device": "auto",
+  "resplit": false,
+  "data": {
+    "feature_store": null
+  },
+  "model": {
+    "branches": ["B1", "B2", "B3", "B4", "B5"],
+    "max_edits": 256,
+    "user_steps": 200,
+    "embed": 64
+  },
+  "pretrain": {
+    "max_edits": 400000,
+    "val_fraction": 0.1,
+    "corruptions": ["displace", "area_blowup", "length_stretch", "tag_wipe", "tag_spam", "mass_points"],
+    "epochs": 30,
+    "batch_size": 1024,
+    "lr": 0.001,
+    "dropout": 0.1,
+    "patience": 4,
+    "verbose": 2
+  }
+}

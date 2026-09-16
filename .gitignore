@@ -49,3 +49,8 @@ experiments/results/
 
 # release build artefacts
 dist/
+
+# training run directories hold weights and predictions - large, regenerable
+experiments/runs/
+# frozen split files are deliberately TRACKED: they are the reproducibility contract
+!experiments/splits/

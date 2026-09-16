@@ -1,0 +1,5 @@
+{
+  "name": "plus_text",
+  "purpose": "adds B2 - the char-CNN over tag text (gap G2)",
+  "overrides": {"model": {"branches": ["B2", "B5"]}}
+}

@@ -66,6 +66,8 @@ src/mapguard/          library - everything real lives here
   models/              stage2 - five branches, masked attention, Keras 2/3 compatible
   training/            dataset assembly (padding + masking)
 scripts/               local CLI - fetchers, gates, fixtures. Network-bound, no GPU.
+train/                 every training and evaluation entry point, one folder per stage,
+                       named by run order and tagged with plan stage - see train/README.md
 cluster/               everything GPU-bound, one folder per task. See RUN_ALTAIR.md
   00_env_check/        proves the model builds on the cluster image
   01_baselines/        B0, logreg, XGBoost

@@ -1,0 +1,5 @@
+{
+  "name": "full_scratch",
+  "purpose": "all five branches, random initialisation - the Stage 2 headline",
+  "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5"]}}
+}

@@ -1,0 +1,5 @@
+{
+  "name": "base_edits_tabular",
+  "purpose": "common base: edit trunk without geometry columns, tabular without geometry or text counts",
+  "overrides": {"model": {"branches": ["B5"]}}
+}

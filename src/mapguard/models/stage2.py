@@ -1,29 +1,29 @@
 """Stage 2 - the changeset classifier. Five branches, masked attention fusion.
 
-Written to build under **both Keras 2 and Keras 3**, because the two machines this runs on
-disagree. Gate 1d verified the architecture locally on Keras 3.15 / TF 2.21, but the SVKM
-cluster's `tensorflow_pbs:23.07-tf2-py3` image is NGC 23.07, which ships TF 2.13 and Keras
-2.x. Discovering that in the middle of a training run would cost a day, so:
+Must build and train under **both Keras 2 and Keras 3**. The SVKM cluster image
+(`tensorflow_pbs:23.07-tf2-py3`) is TF 2.13 / Keras 2; a current TensorFlow on a laptop
+or an M4 is Keras 3. The two disagree in one place that matters here:
 
-  - everything goes through `tf.keras`, never a bare `import keras`
-  - tensor ops are `tf.*`, never `keras.ops.*` (Keras 3 only)
-  - no `Input(..., dtype=...)` tricks or Keras-3-only layer kwargs
+    Keras 3 refuses raw TensorFlow ops on symbolic tensors while a model is being built.
+
+An earlier version called `tf.cast` and `tf.logical_and` directly on `keras.Input`
+tensors. Keras 2 quietly wrapped those; Keras 3 raises. So every tensor operation in the
+graph now lives inside a small `Layer` subclass, where it runs on real tensors at call
+time. That is the only pattern that behaves identically under both.
 
 The branches, and the gap each closes (PROJECT_PLAN section 5.3):
 
-    B1  geometry     2-channel before/after raster per edit      -> G1
-    B2  text         char-CNN, multi-width parallel kernels      -> G2
-    B3  edit seq     BiLSTM over sampled edits in commit order   -> G4
-    B4  user history GRU over point-in-time prior changesets     -> G3
-    B5  tabular      MLP over changeset-level features           -> parity
+    B1  geometry     scalar per-edit geometry, optional raster CNN  -> G1
+    B2  text         char-CNN, multi-width parallel kernels         -> G2
+    B3  edit seq     BiLSTM over sampled edits in commit order      -> G4
+    B4  user history GRU over point-in-time prior changesets        -> G3
+    B5  tabular      MLP over changeset-level features              -> parity
 
-Fusion is multi-head attention pooling over the K sampled edits. The mask is not optional
-decoration: a model that attends to padding trains fine, scores fine, and is wrong, and
-the failure presents as "geometry did not help". `verify_masking` below is the same check
-Gate 1d runs, exposed so the training script can assert it on the real model.
-
-Three outputs, because a reviewer needs to know where to look:
-    p(damaging) - per-edit attention weights - branch attribution
+Outputs:
+    p_damaging              (N, 1)  the score
+    edit_attention_weight   (N, K)  which edit the model attended to - output 2 in the plan
+Branch attribution (output 3) is computed at evaluation time by occlusion; see
+`train/common/attribution.py`. It needs no extra graph.
 """
 
 from __future__ import annotations
@@ -33,31 +33,75 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+ALL_BRANCHES = ("B1", "B2", "B3", "B4", "B5")
 
-def pairwise_mask(mask: tf.Tensor) -> tf.Tensor:
+
+# ------------------------------------------------------------------- mask layers
+
+
+class ToBool(layers.Layer):
+    """float mask -> bool mask, as a layer so Keras 3 accepts it."""
+
+    def call(self, mask):
+        return tf.cast(mask, tf.bool)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+
+class PairwiseMask(layers.Layer):
     """(N, K) key mask -> (N, K, K) attention mask.
 
-    A padded edit must be unable to attend and unable to be attended to; masking only one
-    direction still lets padding influence the output through the softmax denominator.
+    A padded edit must be unable to attend *and* unable to be attended to; masking only one
+    direction still lets padding leak in through the softmax denominator.
     """
-    m = tf.cast(mask, tf.bool)
-    return tf.logical_and(m[:, :, None], m[:, None, :])
+
+    def call(self, mask):
+        m = tf.cast(mask, tf.bool)
+        return tf.logical_and(m[:, :, None], m[:, None, :])
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0], input_shape[1], input_shape[1])
 
 
 class MaskedMeanPool(layers.Layer):
     """Mean over the real edits only.
 
-    `GlobalAveragePooling1D(mask=...)` exists in both Keras versions but its keyword
-    handling differs, so the arithmetic is written out. Dividing by the true count rather
-    than by K also stops a changeset with 3 real edits reading as one with 253 zeros.
+    Takes `[values, mask]` as one list input rather than a `mask=` argument: `mask` is a
+    reserved keyword in Keras's call machinery and the two versions treat it differently.
+    Dividing by the true count also stops 3 real edits reading like 253 zeros.
     """
 
-    def call(self, x, mask):
+    def call(self, inputs):
+        x, mask = inputs
         m = tf.cast(mask, x.dtype)[:, :, None]
-        return tf.reduce_sum(x * m, axis=1) / tf.maximum(tf.reduce_sum(m, axis=1), 1e-6)
+        return tf.reduce_sum(x * m, axis=1) / tf.maximum(tf.reduce_sum(m, axis=1), 1.0)
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0][0], input_shape[0][-1])
+
+
+class AttentionReceived(layers.Layer):
+    """(N, heads, K, K) scores -> (N, K): attention each edit received, over real queries.
+
+    Averaging over *all* queries would let padded query rows dilute the weight, so the
+    mean is taken over real queries only, and padded keys read exactly 0.
+    """
+
+    def call(self, inputs):
+        scores, mask = inputs
+        m = tf.cast(mask, scores.dtype)                     # (N, K)
+        per_query = tf.reduce_mean(scores, axis=1)          # (N, K, K) mean over heads
+        weighted = per_query * m[:, :, None]                # drop padded query rows
+        received = tf.reduce_sum(weighted, axis=1)          # (N, K)
+        n_real = tf.maximum(tf.reduce_sum(m, axis=1, keepdims=True), 1.0)
+        return (received / n_real) * m
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0][0], input_shape[0][-1])
+
+
+# ------------------------------------------------------------------------ model
 
 
 def build_model(
@@ -70,32 +114,41 @@ def build_model(
     user_features: int,
     tabular_features: int,
     raster: int | None = None,
-    embed: int = 32,
+    embed: int = 64,
     heads: int = 4,
     dropout: float = 0.2,
-    branches: tuple[str, ...] = ("B1", "B2", "B3", "B4", "B5"),
+    branches: tuple[str, ...] = ALL_BRANCHES,
 ) -> keras.Model:
     """The full model, or any subset of branches for the ablation grid.
 
-    `branches` is what makes the ablation table cheap: every row in PROJECT_PLAN section 11
-    is this function with a different tuple, so the configurations cannot drift apart the
-    way parallel hand-written models do.
+    Every row of the ablation table is this function with a different `branches` tuple,
+    so the configurations cannot drift apart the way parallel hand-written models do.
 
-    `raster=None` runs B1 on scalar geometry features only. The rasters are the expensive
-    part and Gate 1b already forced a geometry subset, so scalar-only is the honest default
-    until raster coverage is measured.
+    The edit trunk is always present: attention pooling over edits is the fusion
+    mechanism, and "B1 off" means the geometry columns are removed before they reach it,
+    not that edits disappear. Column selection happens in `train/common/preprocess.py`.
+
+    **Precondition:** every row must have at least one real edit in `edit_mask`. A fully
+    masked row gives an all-false attention row, softmax over all -inf, and NaN - which
+    poisons the whole batch. `train/common/preprocess.ensure_nonempty` enforces it.
     """
-    inputs: dict[str, keras.Input] = {}
-    heads_out: list[tf.Tensor] = []
+    branches = tuple(branches)
+    unknown = set(branches) - set(ALL_BRANCHES)
+    if unknown:
+        raise ValueError(f"unknown branches {sorted(unknown)}; expected a subset of {ALL_BRANCHES}")
+
+    inputs: dict = {}
+    fusion: list = []
 
     edit_in = keras.Input(shape=(max_edits, edit_features), name="edit_features")
     mask_in = keras.Input(shape=(max_edits,), name="edit_mask")
     inputs["edit_features"] = edit_in
     inputs["edit_mask"] = mask_in
+    edit_bool = ToBool(name="edit_mask_bool")(mask_in)
 
     per_edit = [edit_in]
 
-    # --- B1 geometry -------------------------------------------------------------
+    # --- B1 geometry raster (optional; scalar geometry already sits in edit_features)
     if "B1" in branches and raster:
         geom_in = keras.Input(shape=(max_edits, raster, raster, 2), name="geometry")
         inputs["geometry"] = geom_in
@@ -105,9 +158,27 @@ def build_model(
         g = layers.TimeDistributed(layers.GlobalAveragePooling2D())(g)
         per_edit.append(g)
 
-    # --- B2 text: multi-width parallel kernels, the Inception idea ---------------
+    # --- per-edit trunk. Named so Stage 1 pretrained weights load into it by name.
+    x = layers.Concatenate(axis=-1)(per_edit) if len(per_edit) > 1 else per_edit[0]
+    x = layers.TimeDistributed(layers.Dense(embed, activation="relu"), name="edit_encoder")(x)
+
+    # --- B3 edit sequence
+    if "B3" in branches:
+        x = layers.Bidirectional(
+            layers.LSTM(embed // 2, return_sequences=True), name="b3_edit_sequence"
+        )(x, mask=edit_bool)
+
+    # --- attention fusion over edits
+    attended, scores = layers.MultiHeadAttention(
+        num_heads=heads, key_dim=max(8, embed // heads), name="edit_attention"
+    )(x, x, attention_mask=PairwiseMask(name="edit_pair_mask")(mask_in),
+      return_attention_scores=True)
+    fusion.append(MaskedMeanPool(name="edit_pool")([attended, mask_in]))
+    edit_weight = AttentionReceived(name="edit_attention_weight")([scores, mask_in])
+
+    # --- B2 text
     if "B2" in branches:
-        text_in = keras.Input(shape=(text_len,), name="text")
+        text_in = keras.Input(shape=(text_len,), name="text", dtype="int32")
         inputs["text"] = text_in
         e = layers.Embedding(vocab_size, 24, name="char_embed")(text_in)
         conv = [
@@ -116,103 +187,107 @@ def build_model(
             )
             for w in (3, 5, 7)
         ]
-        heads_out.append(layers.Concatenate(name="b2_text")(conv))
+        fusion.append(layers.Concatenate(name="b2_text")(conv))
 
-    # --- per-edit trunk, shared by B3 and the attention pooling ------------------
-    x = layers.Concatenate(axis=-1)(per_edit) if len(per_edit) > 1 else per_edit[0]
-    x = layers.TimeDistributed(layers.Dense(embed, activation="relu"), name="edit_encoder")(x)
-
-    if "B3" in branches:
-        x = layers.Bidirectional(
-            layers.LSTM(embed // 2, return_sequences=True), name="b3_edit_sequence"
-        )(x, mask=tf.cast(mask_in, tf.bool))
-
-    attn_layer = layers.MultiHeadAttention(
-        num_heads=heads, key_dim=max(8, embed // heads), name="edit_attention"
-    )
-    attended, attn_scores = attn_layer(
-        x, x, attention_mask=pairwise_mask(mask_in), return_attention_scores=True
-    )
-    pooled = MaskedMeanPool(name="masked_pool")(attended, mask_in)
-    heads_out.append(pooled)
-
-    # Per-edit suspicion: how much the rest of the changeset attends to each edit,
-    # averaged over heads and queries. This is output 2, and it costs nothing extra.
-    edit_weight = layers.Lambda(
-        lambda t: tf.reduce_mean(t, axis=[1, 2]), name="edit_attention_weight"
-    )(attn_scores)
-
-    # --- B4 user history ---------------------------------------------------------
+    # --- B4 user history
     if "B4" in branches:
         user_in = keras.Input(shape=(user_steps, user_features), name="user_sequence")
         umask_in = keras.Input(shape=(user_steps,), name="user_mask")
         inputs["user_sequence"] = user_in
         inputs["user_mask"] = umask_in
-        u = layers.GRU(32, name="b4_user_history")(user_in, mask=tf.cast(umask_in, tf.bool))
-        heads_out.append(u)
+        u = layers.GRU(32, name="b4_user_history")(
+            user_in, mask=ToBool(name="user_mask_bool")(umask_in))
+        fusion.append(u)
 
-    # --- B5 tabular --------------------------------------------------------------
+    # --- B5 tabular
     if "B5" in branches:
         tab_in = keras.Input(shape=(tabular_features,), name="tabular")
         inputs["tabular"] = tab_in
         t = layers.Dense(64, activation="relu")(tab_in)
         t = layers.Dropout(dropout)(t)
-        heads_out.append(layers.Dense(32, activation="relu", name="b5_tabular")(t))
+        fusion.append(layers.Dense(32, activation="relu", name="b5_tabular")(t))
 
-    fused = layers.Concatenate(name="fusion")(heads_out) if len(heads_out) > 1 else heads_out[0]
+    fused = layers.Concatenate(name="fusion")(fusion) if len(fusion) > 1 else fusion[0]
     h = layers.Dense(64, activation="relu")(fused)
     h = layers.Dropout(dropout)(h)
     h = layers.LayerNormalization()(h)
     out = layers.Dense(1, activation="sigmoid", name="p_damaging")(h)
 
-    model = keras.Model(
+    return keras.Model(
         inputs=[inputs[k] for k in sorted(inputs)],
         outputs=[out, edit_weight],
         name="mapguard_stage2",
     )
-    model.branch_config = tuple(branches)      # recorded in every results file
-    return model
+
+
+def input_names(model: keras.Model) -> list[str]:
+    """Input names in model order. Keras 2 names end in ':0', Keras 3 names do not."""
+    return [t.name.split(":")[0] for t in model.inputs]
+
+
+def pack(model: keras.Model, arrays: dict, rows=None) -> list:
+    """Dict of arrays -> list in the model's input order, optionally row-selected.
+
+    A list rather than a dict because dict inputs to a list-built functional model are
+    matched differently by Keras 2 and Keras 3.
+    """
+    out = []
+    for name in input_names(model):
+        if name not in arrays:
+            raise KeyError(f"model needs input '{name}' but it was not provided")
+        a = np.asarray(arrays[name])
+        out.append(a if rows is None else a[rows])
+    return out
+
+
+def scoring_model(model: keras.Model) -> keras.Model:
+    """Single-output view sharing the same weights, used for fit().
+
+    Training the two-output model would need a loss or a dummy target for the attention
+    output, and the two Keras versions disagree on how an unlabelled output is handled.
+    A single-output view avoids the question: gradients flow into exactly the same
+    weights, and the validation metric is named `val_pr_auc` under both versions.
+    """
+    return keras.Model(model.inputs, model.outputs[0], name="mapguard_stage2_scoring")
 
 
 def focal_loss(gamma: float = 2.0, alpha: float = 0.5):
-    """Focal loss (Lin et al.). Down-weights easy examples so the rare hard ones matter.
+    """Focal loss (Lin et al.). Compared against BCE in the ablation, not assumed to help."""
 
-    Compared against plain BCE in the ablation - PROJECT_PLAN section 11. It is not
-    assumed to help; imbalance handling is one of the things being measured.
-    """
     def loss(y_true, y_pred):
-        y_true = tf.cast(y_true, y_pred.dtype)
+        y_true = tf.cast(tf.reshape(y_true, tf.shape(y_pred)), y_pred.dtype)
         p = tf.clip_by_value(y_pred, 1e-7, 1 - 1e-7)
-        pt = tf.where(tf.equal(y_true, 1), p, 1 - p)
-        w = tf.where(tf.equal(y_true, 1), alpha, 1 - alpha)
+        pt = tf.where(tf.equal(y_true, 1.0), p, 1 - p)
+        w = tf.where(tf.equal(y_true, 1.0), alpha, 1 - alpha)
         return -tf.reduce_mean(w * tf.pow(1 - pt, gamma) * tf.math.log(pt))
+
+    loss.__name__ = "focal_loss"
     return loss
 
 
-def verify_masking(model: keras.Model, inputs: dict, mask_key: str = "edit_mask") -> dict:
+def verify_masking(model: keras.Model, arrays: dict, n: int = 64) -> dict:
     """Assert padded edits cannot change the output. The Gate 1d check, on the real model.
 
-    Run this once per training script, not once per project. The architecture changes, the
-    branches get toggled for ablations, and the failure is silent every time.
+    Run once per training run. Architectures change and branches get toggled for
+    ablations, and a masking failure is silent every time.
     """
-    order = [t.name.split(":")[0] for t in model.inputs]
-    base = {k: np.asarray(v) for k, v in inputs.items()}
-    before = model.predict([base[k] for k in order], verbose=0)[0]
-
     rng = np.random.default_rng(0)
-    pad = 1.0 - base[mask_key]
-    perturbed = {k: v.copy() for k, v in base.items()}
-    for key, arr in perturbed.items():
-        if key in (mask_key, "text", "tabular", "user_sequence", "user_mask"):
-            continue
-        if arr.ndim >= 2 and arr.shape[1] == pad.shape[1]:
-            shape = (1,) * 0 + pad.shape + (1,) * (arr.ndim - pad.ndim)
-            perturbed[key] = arr + pad.reshape(shape) * rng.normal(size=arr.shape) * 50.0
+    base = {k: np.asarray(v)[:n] for k, v in arrays.items()}
+    before = model.predict(pack(model, base), verbose=0)[0]
 
-    after = model.predict([perturbed[k] for k in order], verbose=0)[0]
+    pad = 1.0 - base["edit_mask"]
+    perturbed = dict(base)
+    for key in ("edit_features", "geometry"):
+        if key in base:
+            arr = base[key]
+            shape = pad.shape + (1,) * (arr.ndim - pad.ndim)
+            perturbed[key] = (arr + pad.reshape(shape) * rng.normal(size=arr.shape) * 50.0).astype(arr.dtype)
+
+    after = model.predict(pack(model, perturbed), verbose=0)[0]
     delta = float(np.max(np.abs(before - after)))
     return {
         "max_delta": delta,
         "masking_holds": bool(delta < 1e-4),
-        "note": "padded edits were perturbed by 50x noise; a correct model does not move",
+        "rows_checked": int(len(before)),
+        "note": "padded edits perturbed with 50x noise; a correct model does not move",
     }

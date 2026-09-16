@@ -1,0 +1,5 @@
+{
+  "name": "plus_sequences",
+  "purpose": "adds B3 edit order and B4 point-in-time user history (gaps G3, G4)",
+  "overrides": {"model": {"branches": ["B3", "B4", "B5"]}}
+}

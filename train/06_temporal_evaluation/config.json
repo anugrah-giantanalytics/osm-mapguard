@@ -1,0 +1,45 @@
+{
+  "stage": "stage2_temporal",
+  "task": "T2",
+  "split": "temporal",
+  "seed": 20260904,
+  "device": "auto",
+  "resplit": false,
+  "reference_run": null,
+  "temporal": {
+    "cutoff": "2026-01-01T00:00:00Z",
+    "exclude_test_users_from_train": true
+  },
+  "data": {
+    "feature_store": null
+  },
+  "model": {
+    "branches": ["B1", "B2", "B3", "B4", "B5"],
+    "max_edits": 256,
+    "user_steps": 200,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.2,
+    "raster": null
+  },
+  "train": {
+    "epochs": 40,
+    "batch_size": 64,
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2
+  },
+  "init": {
+    "pretrained_encoder": null,
+    "freeze_encoder": false
+  },
+  "evaluate": {
+    "attribution": true,
+    "top_k": 20
+  }
+}
