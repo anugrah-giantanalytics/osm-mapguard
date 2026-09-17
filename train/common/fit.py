@@ -185,6 +185,11 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
         callbacks=callbacks,
         verbose=int(t_cfg.get("verbose", 2)),
     )
+    # Keras 2 restores the best weights only when EarlyStopping actually fires; a run that
+    # uses every epoch would keep the last epoch. Reload the checkpoint explicitly so both
+    # versions evaluate the epoch that was selected on validation.
+    if run.path("best.weights.h5").exists():
+        scorer.load_weights(str(run.path("best.weights.h5")))
     model.save_weights(str(run.path("model.weights.h5")))
 
     # 5. masking after --------------------------------------------------------------

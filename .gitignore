@@ -52,5 +52,6 @@ dist/
 
 # training run directories hold weights and predictions - large, regenerable
 experiments/runs/
+experiments/pipeline/
 # frozen split files are deliberately TRACKED: they are the reproducibility contract
 !experiments/splits/

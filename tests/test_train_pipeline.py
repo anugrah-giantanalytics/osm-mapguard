@@ -238,6 +238,7 @@ def test_each_corruption_changes_the_intended_columns():
     x = np.zeros(len(cols))
     x[cols.index("n_tags")] = 4
     x[cols.index("centroid_shift_m")] = 2.0
+    x[cols.index("geom_route")] = 2
     rng = np.random.default_rng(0)
 
     d = corrupt_one(x, "displace", cols, rng)
@@ -256,9 +257,35 @@ def test_impossible_corruption_returns_none_rather_than_a_fake_positive():
     assert corrupt_one(x, "tag_wipe", cols, np.random.default_rng(0)) is None
 
 
+def test_corruptions_never_write_geometry_the_edit_could_not_have():
+    cols = list(EDIT_FEATURES)
+    rng = np.random.default_rng(0)
+    x = np.zeros(len(cols))
+    x[cols.index("n_tags")] = 3
+    x[cols.index("geom_route")] = 0                  # a created object: no geometry route
+    for kind in ("displace", "area_blowup", "length_stretch", "mass_points"):
+        assert corrupt_one(x, kind, cols, rng) is None, kind
+    s = corrupt_one(x, "tag_spam", cols, rng)
+    assert s[cols.index("tags_added")] == 0           # unobserved tag diffs stay unobserved
+    x[cols.index("geom_route")] = 1                  # previous-version route
+    assert corrupt_one(x, "area_blowup", cols, rng) is None
+    m = corrupt_one(x, "mass_points", cols, rng)
+    assert m[cols.index("d_refs")] >= 200 and m[cols.index("d_points")] == 0
+
+
+def test_user_history_rows_are_never_fully_masked_after_normalisation():
+    prep = small_prepared(n=40)
+    prep.arrays["user_mask"][:5] = 0.0
+    norm = Normaliser().fit(prep, np.arange(40) < 30)
+    out = norm.apply(prep)
+    assert (out.arrays["user_mask"].sum(axis=1) >= 1).all()
+    assert (out.arrays["user_sequence"][:5] == 0).all()
+
+
 def test_contrast_set_is_balanced_and_every_corrupted_row_differs():
     cols = list(EDIT_FEATURES)
     real = np.random.default_rng(1).lognormal(0, 1, (300, len(cols)))
+    real[:, cols.index("geom_route")] = 2
     X, y, kinds = make_contrast_set(real, cols, seed=2, kinds=CORRUPTIONS)
     assert (y == 0).sum() == 300 and (y == 1).sum() == 300
     assert (kinds[y == 0] == -1).all() and (kinds[y == 1] >= 0).all()

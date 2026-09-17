@@ -1,14 +1,24 @@
-"""Generate the cluster notebooks.
+"""Generate the cluster notebooks - one per training stage, plus one that runs everything.
 
-Notebooks are build artefacts, not source. The rule in CONTRIBUTING is that they stay
-thin - unzip, import from `src/`, run, write a results file - and the cheapest way to keep
-that true is to generate them from a script that has nowhere to put a 2000-line cell.
-
-Hand-editing a generated notebook is allowed while debugging on the cluster. Regenerating
-overwrites it, so move anything worth keeping into `src/mapguard/` first, which is where
-it belonged.
+Notebooks are build artefacts, not source. Each one is four thin cells around a single
+call to `train/run_pipeline.py`, so the notebook, the M4 terminal and any other machine all
+run *exactly* the same code path. There is no training logic in here to drift.
 
     python cluster/make_notebooks.py
+
+Folders mirror train/:
+
+    cluster/00_wiring_check/            run first on every new image
+    cluster/01_baselines/               CPU is enough
+    cluster/02_stage2_supervised/
+    cluster/03_stage2_ablations/        run 04 first so row 07 has an encoder
+    cluster/04_stage1_pretrain/
+    cluster/05_stage1_label_efficiency/ needs a finished 04
+    cluster/06_temporal_evaluation/
+    cluster/99_full_pipeline/           everything, in dependency order, in one job
+
+Hand-editing a generated notebook while debugging on the cluster is fine; regenerating
+overwrites it.
 """
 
 from __future__ import annotations
@@ -17,6 +27,44 @@ import json
 from pathlib import Path
 
 CLUSTER = Path(__file__).resolve().parent
+
+STAGES = [
+    ("00_wiring_check", "00", "Wiring check",
+     "Pushes random tensors through every real code path - every ablation branch set, weight "
+     "save/rebuild, Stage 1 pretraining and encoder transfer - for one tiny epoch each. "
+     "Produces **no results**, only PASS/FAIL. Run it first on every new image: it is the only "
+     "proof that the model builds under this image's Keras version.",
+     "under 5 min on a GPU", "nothing"),
+    ("01_baselines", "01", "Baselines (B0 tripwire, logistic regression, XGBoost)",
+     "Also **creates the frozen split** in experiments/splits/ that every later stage reuses. "
+     "If B0 (metadata only) reaches ROC-AUC >= 0.85 it stops: the labels are readable from "
+     "metadata and nothing downstream can be trusted.",
+     "a few minutes, CPU", "nothing"),
+    ("02_stage2_supervised", "02", "Stage 2 - the supervised five-branch classifier",
+     "The headline R1 result on the user-disjoint split (R1b). For the ovid task it also trains "
+     "on the random split (R1a) for comparison with Ovid's published number - R1a is "
+     "user-leaky and must be labelled so wherever it appears.",
+     "30-90 min on one MIG slice", "01 (for the frozen split; created automatically if absent)"),
+    ("03_stage2_ablations", "03", "Stage 2 ablation grid",
+     "Seven rows x two seeds through the same training core as stage 02. Row 07 (pretrained "
+     "encoder) is skipped unless a stage 04 run exists for this task.",
+     "several hours - submit as its own job", "04 for row 07"),
+    ("04_stage1_pretrain", "04", "Stage 1 - corruption-contrast pretraining + zero-shot check",
+     "Pretrains the edit encoder on training-fold edits only (evaluation authors excluded, "
+     "proof in disjointness.json), then scores real labelled changesets with the frozen "
+     "pretext model. Report the zero-shot number whatever it is.",
+     "20-60 min", "nothing"),
+    ("05_stage1_label_efficiency", "05", "Label efficiency (R4): pretrained vs scratch",
+     "Four label budgets x two seeds x {scratch, pretrained}, nested and class-stratified.",
+     "several hours - submit as its own job", "04"),
+    ("06_temporal_evaluation", "06", "Temporal evaluation (R3)",
+     "Train strictly before the cutoff, test strictly after, with authors active on both sides "
+     "removed from training. ovid: 2014-2018 -> 2019. T1/T2: -> 2025-07 onwards.",
+     "30-90 min", "02 for the in-distribution reference (optional)"),
+    ("99_full_pipeline", "00,01,02,04,03,05,06", "Full pipeline",
+     "Every stage in dependency order in one job. Stops at the first failure.",
+     "most of a day - run --quick first", "nothing"),
+]
 
 
 def md(text: str) -> dict:
@@ -44,412 +92,137 @@ def notebook(cells: list[dict]) -> dict:
     }
 
 
-UNZIP = '''
-# Unzip the bundle uploaded through the Altair portal, then work from it.
-# Everything real lives in src/mapguard/ - see CONTRIBUTING.md.
-import glob, json, os, sys, zipfile, pathlib
+SETUP = r'''
+# 1. Find the bundle, unpack it once, install only what is missing.
+import glob, json, os, pathlib, subprocess, sys, zipfile
 
-BUNDLE = next(iter(sorted(glob.glob("*.zip")) + sorted(glob.glob("/data/**/*.zip", recursive=True))), None)
-if BUNDLE and not pathlib.Path("src/mapguard").exists():
-    with zipfile.ZipFile(BUNDLE) as z:
-        z.extractall(".")
-    print("unpacked", BUNDLE)
+HOME = pathlib.Path.cwd()
+if (HOME / "train" / "run_pipeline.py").exists():   # cell re-run after chdir below
+    HOME = HOME.parent
+candidates = sorted(glob.glob("mapguard_bundle*.zip") + glob.glob("../mapguard_bundle*.zip")
+                    + glob.glob("/data/**/mapguard_bundle*.zip", recursive=True),
+                    key=os.path.getmtime)
+ROOT = HOME / "mapguard"
+# Unpack when there is no copy yet, or when a newer bundle was uploaded. experiments/runs is
+# never inside a bundle, so earlier results survive an update.
+if candidates:
+    with zipfile.ZipFile(candidates[-1]) as z:
+        fresh = json.loads(z.read("BUNDLE_MANIFEST.json"))
+        current = ROOT / "BUNDLE_MANIFEST.json"
+        if not current.exists() or json.loads(current.read_text()).get("generated") != fresh.get("generated"):
+            z.extractall(ROOT)
+            print("unpacked", candidates[-1], "->", ROOT)
+elif not (ROOT / "train" / "run_pipeline.py").exists():
+    raise SystemExit("upload cluster/_bundles/mapguard_bundle.zip next to this notebook first")
+os.chdir(ROOT)
+manifest = json.loads((ROOT / "BUNDLE_MANIFEST.json").read_text())
+print(json.dumps({k: manifest.get(k) for k in ("git_sha", "git_dirty", "generated", "feature_schema")}, indent=2))
 
-sys.path.insert(0, "src")
-TASK = [p for p in glob.glob("*/BUNDLE_MANIFEST.json")]
-if TASK:
-    manifest = json.load(open(TASK[0]))
-    print(json.dumps({k: manifest[k] for k in ("task","git_sha","git_dirty","generated")}, indent=2))
-    if manifest.get("git_dirty"):
-        print("WARNING: bundle was built from a dirty tree; git_sha does not fully describe it")
+# Install missing packages without letting pip upgrade numpy: the image's TensorFlow is
+# built against its own numpy, and a silent upgrade breaks it.
+import importlib.util, numpy
+missing = [pkg for mod, pkg in (("pyarrow", "pyarrow"), ("pandas", "pandas"),
+                                ("sklearn", "scikit-learn"), ("xgboost", "xgboost"))
+           if importlib.util.find_spec(mod) is None]
+if missing:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", *missing,
+                           f"numpy=={numpy.__version__}"])
+import tensorflow as tf
+print("python", sys.version.split()[0], "| tensorflow", tf.__version__,
+      "| GPUs", [g.name for g in tf.config.list_physical_devices("GPU")])
+'''.strip()
+
+RUN = r'''
+# 2. Run. QUICK=True is a smoke test with tiny epochs - never report its numbers.
+TASK = "ovid"          # ovid | T1 | T2  (T1/T2 need corpora M and N in the feature store)
+QUICK = False
+STAGES = "{stages}"
+
+cmd = [sys.executable, "-u", "train/run_pipeline.py", "--feature-store", "data/interim",
+       "--task", TASK, "--stages", STAGES] + (["--quick"] if QUICK else [])
+print(" ".join(cmd))
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+for line in proc.stdout:
+    print(line, end="")
+print("exit code", proc.wait())
+'''.strip()
+
+SHOW = r'''
+# 3. Headlines of the runs this job produced.
+summaries = sorted(glob.glob("experiments/pipeline/*.json"), key=os.path.getmtime)
+summary = json.loads(pathlib.Path(summaries[-1]).read_text())
+print(json.dumps(summary["stages"], indent=1))
+for run_dir in summary["runs_created"]:
+    res = pathlib.Path(run_dir) / "results.json"
+    if res.exists():
+        r = json.loads(res.read_text())
+        print(f"\n{run_dir}\n  headline: {json.dumps(r.get('headline'))[:600]}")
+'''.strip()
+
+PACK = r'''
+# 4. Pack results for download (Files -> right-click -> Download). Weights included.
+import shutil, time
+out = HOME / f"mapguard_results_{STAGES.replace(',', '-')}_{TASK}_{time.strftime('%Y%m%d-%H%M%S')}"
+shutil.make_archive(str(out), "zip", root_dir=ROOT, base_dir="experiments")
+print("download:", str(out) + ".zip")
 '''.strip()
 
 
-def nb_env_check() -> dict:
+def stage_notebook(folder, stages, title, what, time_needed, needs) -> dict:
     return notebook([
-        md("""
-# 00 - environment check
+        md(f"""
+# {folder[:2]} - {title}
 
-**Run this first, and again whenever the container image changes.** It is cheap and it
-catches the one thing that would waste a day.
+{what}
 
-`tensorflow_pbs:23.07-tf2-py3` is NGC 23.07, which ships **TensorFlow 2.13 / Keras 2.x**.
-Gate 1d was verified locally on Keras **3.15**, and the two APIs differ in exactly the
-places this model uses them - `keras.ops`, masked attention keywords, pooling signatures.
-`src/mapguard/models/stage2.py` is written to build on both. This notebook proves it on
-the image that will actually train.
+| | |
+|---|---|
+| Expected time | {time_needed} |
+| Needs first | {needs} |
+| Runs | `python train/run_pipeline.py --feature-store data/interim --task <TASK> --stages {stages}` |
 
-It needs no data and no credentials.
+**Before running:** upload `mapguard_bundle.zip` (built with `python cluster/bundle.py`) next to
+this notebook. Submit with the `tensorflow_pbs` image, 1 GPU, 8 CPUs, 32 GB. See RUN_ALTAIR.md.
+
+Outputs land in `mapguard/experiments/runs/<stage>/...`; cell 4 zips them for download.
+Every run directory carries its config, git SHA, data fingerprint and split file.
 """),
-        code(UNZIP),
-        md("## GPU and versions\n\nAsk for **1 GPU**. It is a 40 GB MIG slice of an H100 and the others belong to other people."),
-        code('''
-import subprocess
-print(subprocess.run(["nvidia-smi"], capture_output=True, text=True).stdout)
-'''),
-        code('''
-import sys, platform
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-
-print("python  ", platform.python_version())
-print("tf      ", tf.__version__)
-print("keras   ", keras.__version__)
-print("numpy   ", np.__version__)
-gpus = tf.config.list_physical_devices("GPU")
-print("GPUs    ", gpus)
-assert gpus, "no GPU visible - resubmit the job with Number of GPUs per Node = 1"
-'''),
-        md("""
-## Does the model build here?
-
-Every branch, then a few subsets, since the ablation grid is the same function with a
-different `branches` tuple.
-"""),
-        code('''
-from mapguard.models.stage2 import build_model, focal_loss, verify_masking
-
-CFG = dict(max_edits=32, edit_features=14, text_len=128, vocab_size=56,
-           user_steps=32, user_features=4, tabular_features=41)
-
-for branches in [("B5",), ("B2","B5"), ("B3","B5"), ("B4","B5"), ("B1","B2","B3","B4","B5")]:
-    m = build_model(branches=branches, raster=16 if "B1" in branches else None, **CFG)
-    print(f"{str(branches):34} inputs={len(m.inputs)}  params={m.count_params():>9,}")
-'''),
-        md("""
-## Does it train, and does masking hold?
-
-The masking check is the one that matters. A model that silently attends to padding trains
-fine, scores fine, and is wrong - and the failure presents three weeks later as
-"geometry did not help".
-
-We perturb **only the padded slots** by 50x noise. A correct model does not move at all.
-"""),
-        code('''
-import numpy as np
-model = build_model(branches=("B1","B2","B3","B4","B5"), raster=16, **CFG)
-model.compile(optimizer="adam",
-              loss={"p_damaging": focal_loss()},
-              metrics={"p_damaging": ["accuracy"]})
-
-rng = np.random.default_rng(20260908)
-n, K = 64, CFG["max_edits"]
-real = rng.integers(1, K + 1, n)
-mask = (np.arange(K)[None, :] < real[:, None]).astype("float32")
-
-x = dict(
-    edit_features=(rng.normal(size=(n, K, CFG["edit_features"])) * mask[:, :, None]).astype("float32"),
-    edit_mask=mask,
-    geometry=(rng.normal(size=(n, K, 16, 16, 2)) * mask[:, :, None, None, None]).astype("float32"),
-    text=rng.integers(0, CFG["vocab_size"], (n, CFG["text_len"])).astype("int32"),
-    user_sequence=rng.normal(size=(n, CFG["user_steps"], 4)).astype("float32"),
-    user_mask=np.ones((n, CFG["user_steps"]), "float32"),
-    tabular=rng.normal(size=(n, CFG["tabular_features"])).astype("float32"),
-)
-order = [t.name.split(":")[0] for t in model.inputs]
-y = rng.integers(0, 2, n).astype("float32")
-
-hist = model.fit([x[k] for k in order],
-                 {"p_damaging": y, "edit_attention_weight": np.zeros((n, K), "float32")},
-                 epochs=1, batch_size=16, verbose=0)
-print("trained one epoch, loss =", hist.history["loss"][0])
-
-check = verify_masking(model, x)
-print("masking:", check)
-assert check["masking_holds"], "MASKING LEAKS - do not train on this image until fixed"
-'''),
-        md("""
-## Three outputs
-
-`p(damaging)`, per-edit attention weight, and (at training time) branch attribution.
-Output 2 is what tells a reviewer *which edit* to open.
-"""),
-        code('''
-p, w = model.predict([x[k] for k in order], verbose=0)
-print("p(damaging)      ", p.shape)
-print("edit weights     ", w.shape)
-row = 0
-print(f"row {row}: {int(real[row])} real edits, most suspicious index = {int(w[row][:real[row]].argmax())}")
-'''),
-        md("## Save the evidence\n\nDownload `results/cluster_env_check.json` and commit it. A gate with no file did not run."),
-        code('''
-import json, os, subprocess, datetime
-os.makedirs("results", exist_ok=True)
-out = {
-    "generated": datetime.datetime.now().isoformat(timespec="seconds"),
-    "where": "SVKM AI/ML cluster, Altair Access",
-    "python": platform.python_version(),
-    "tensorflow": tf.__version__,
-    "keras": keras.__version__,
-    "gpus": [d.name for d in gpus],
-    "model_built": True,
-    "trained_one_epoch": True,
-    "masking": check,
-    "verdict": "PASS" if check["masking_holds"] else "FAIL",
-}
-json.dump(out, open("results/cluster_env_check.json", "w"), indent=2)
-print(json.dumps(out, indent=2))
-'''),
+        code(SETUP),
+        code(RUN.replace("{stages}", stages)),
+        code(SHOW),
+        code(PACK),
     ])
 
 
-def nb_baselines() -> dict:
-    return notebook([
-        md("""
-# 01 - baselines
+README = """# {folder}
 
-B0, logistic regression and XGBoost on the real feature store, under both splits.
-CPU-only really, but it runs here so every number in the paper comes from one environment.
+{title}
 
-**Read `results/gate1c_b0_tripwire.json` before trusting anything below.** B0 is the
-leakage tripwire: comment length plus editor string, nothing about what was edited. It
-passed locally at AUC 0.656, which is a weak prior and not a leak. If it ever climbs
-above 0.85, stop.
-"""),
-        code(UNZIP),
-        code('''
-import json
-import numpy as np
-import pyarrow.parquet as pq
+{what}
 
-changesets = pq.read_table("data/interim/changesets.parquet").to_pandas()
-print(len(changesets), "changesets x", changesets.shape[1], "columns")
-print(changesets["label"].value_counts(dropna=False).to_dict())
-'''),
-        md("""
-## Splits
+- Expected time: {time_needed}
+- Needs first: {needs}
+- Equivalent command on the M4 or any machine:
 
-**R1a** is Ovid's protocol: a random split. It is user-leaky and every table it appears in
-must say so. **R1b** is user-disjoint *and class-stratified* - without the stratification
-the folds came out 63/23/32 percent positive against 50 overall, because vandals have one
-or two changesets each while prolific mappers are overwhelmingly clean.
-"""),
-        code('''
-from mapguard.evaluation.splits import random_split, user_disjoint_split, assert_user_disjoint
+```bash
+python train/run_pipeline.py --feature-store data/interim --task ovid --stages {stages}
+```
 
-y = changesets["label"].to_numpy(dtype="float32", na_value=0.0)
-uids = changesets["uid"].tolist()
-
-r1b = user_disjoint_split(uids, y)
-assert_user_disjoint(r1b, uids)
-r1a = random_split(len(changesets))
-
-print("R1b user-disjoint:", r1b.summary(y))
-print("R1a random (LEAKY):", r1a.summary(y))
-'''),
-        md("## Baselines\n\nEvery run records split, seed and git SHA. A number without those cannot go in the paper."),
-        code('''
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from mapguard.evaluation.metrics import summary as metric_summary, bootstrap_ci
-from mapguard.training.dataset import TABULAR_FEATURES
-
-X = np.nan_to_num(changesets[[c for c in TABULAR_FEATURES if c in changesets.columns]]
-                  .to_numpy(dtype="float64"), nan=0.0, posinf=0.0, neginf=0.0)
-
-results = {}
-for name, split in (("R1b", r1b), ("R1a_leaky", r1a)):
-    tr, te = split.train | split.val, split.test
-    lr = make_pipeline(StandardScaler(), LogisticRegression(max_iter=3000, class_weight="balanced"))
-    lr.fit(X[tr], y[tr])
-    p = lr.predict_proba(X[te])[:, 1]
-    res = metric_summary(y[te], p)
-    res["pr_auc_ci95"] = bootstrap_ci(y[te], p)
-    results[f"logreg_{name}"] = res
-    print(name, "PR-AUC", res["by_prevalence"]["0.5"]["pr_auc"], "CI", res["pr_auc_ci95"])
-'''),
-        code('''
-try:
-    import xgboost as xgb
-except ImportError:
-    !pip install -q xgboost
-    import xgboost as xgb
-
-for name, split in (("R1b", r1b), ("R1a_leaky", r1a)):
-    tr, te = split.train | split.val, split.test
-    clf = xgb.XGBClassifier(n_estimators=400, max_depth=6, learning_rate=0.08,
-                            subsample=0.8, colsample_bytree=0.8, eval_metric="aucpr")
-    clf.fit(X[tr], y[tr])
-    p = clf.predict_proba(X[te])[:, 1]
-    res = metric_summary(y[te], p)
-    res["pr_auc_ci95"] = bootstrap_ci(y[te], p)
-    results[f"xgboost_{name}"] = res
-    print(name, "PR-AUC", res["by_prevalence"]["0.5"]["pr_auc"], "CI", res["pr_auc_ci95"])
-'''),
-        md("""
-## The number that matters
-
-**R1a minus R1b is a finding, not a nuisance.** It measures how much of a published score
-is account memorisation rather than edit understanding - a question this literature has
-not asked.
-"""),
-        code('''
-import datetime, os, subprocess
-os.makedirs("results", exist_ok=True)
-manifest = json.load(open([p for p in __import__("glob").glob("*/BUNDLE_MANIFEST.json")][0]))
-out = {
-    "generated": datetime.datetime.now().isoformat(timespec="seconds"),
-    "git_sha": manifest["git_sha"],
-    "feature_schema": manifest.get("feature_schema"),
-    "n_changesets": int(len(changesets)),
-    "splits": {"R1b": r1b.summary(y), "R1a_leaky": r1a.summary(y)},
-    "results": results,
-    "leak_note": "R1a is user-leaky and exists only for comparability with Ovid.",
-}
-json.dump(out, open("results/baselines.json", "w"), indent=2, default=float)
-print(json.dumps({k: v for k, v in out.items() if k != "results"}, indent=2))
-'''),
-    ])
+Generated by `cluster/make_notebooks.py` - edit that, not this file.
+"""
 
 
-def nb_stage2() -> dict:
-    return notebook([
-        md("""
-# 02 - Stage 2 training
-
-The full five-branch model on the real feature store. This is the research result.
-
-Order matters: `00_env_check` must have passed on this image, and `01_baselines` gives the
-number this has to beat. Training first and checking later is how you end up with a
-result you cannot explain.
-"""),
-        code(UNZIP),
-        code('''
-import json, glob, os, datetime
-import numpy as np
-import pyarrow.parquet as pq
-import tensorflow as tf
-from tensorflow import keras
-
-print("tf", tf.__version__, "| keras", keras.__version__, "| GPU", tf.config.list_physical_devices("GPU"))
-
-changesets = pq.read_table("data/interim/changesets.parquet").to_pandas()
-edits      = pq.read_table("data/interim/edits.parquet").to_pandas()
-user_seq   = pq.read_table("data/interim/user_seq.parquet").to_pandas()
-print(len(changesets), "changesets |", len(edits), "sampled edits |", len(user_seq), "history steps")
-'''),
-        md("""
-## Assemble the padded arrays
-
-`build_batch` is where masking bugs are born - each changeset holds a different number of
-edits, and if the mask does not line up with the padding the model attends to zeros. The
-alignment is unit-tested locally (`tests/test_dataset.py`); the assertion below is the
-belt to that braces.
-"""),
-        code('''
-from mapguard.training.dataset import build_batch, standardise, EDIT_FEATURES, TABULAR_FEATURES
-
-batch = build_batch(changesets, edits, user_seq, max_edits=256, max_user_steps=200)
-print("edit_features", batch.edit_features.shape, "| edit_mask", batch.edit_mask.shape)
-print("mean real edits per changeset:", batch.edit_mask.sum(axis=1).mean().round(2))
-assert np.all(batch.edit_features[batch.edit_mask == 0] == 0), "padded slots carry signal"
-'''),
-        code('''
-from mapguard.evaluation.splits import user_disjoint_split, random_split, assert_user_disjoint
-
-y = batch.y
-r1b = user_disjoint_split(list(batch.uids), y)
-assert_user_disjoint(r1b, list(batch.uids))
-print("R1b:", r1b.summary(y))
-
-tr, va, te = r1b.train, r1b.val, r1b.test
-tab_tr, tab_va, tab_te = standardise(batch.tabular[tr], batch.tabular[va], batch.tabular[te])
-'''),
-        md("## Build, verify masking on the REAL model, then train"),
-        code('''
-from mapguard.models.stage2 import build_model, focal_loss, verify_masking
-
-CFG = dict(max_edits=batch.edit_features.shape[1],
-           edit_features=batch.edit_features.shape[2],
-           text_len=batch.text.shape[1], vocab_size=int(batch.text.max()) + 2,
-           user_steps=batch.user_sequence.shape[1], user_features=batch.user_sequence.shape[2],
-           tabular_features=batch.tabular.shape[1])
-
-model = build_model(branches=("B2","B3","B4","B5"), raster=None, **CFG)
-model.compile(optimizer=keras.optimizers.Adam(1e-3),
-              loss={"p_damaging": focal_loss(), "edit_attention_weight": None},
-              metrics={"p_damaging": [keras.metrics.AUC(curve="PR", name="pr_auc")]})
-model.summary()
-
-order = [t.name.split(":")[0] for t in model.inputs]
-def pack(mask, tab):
-    d = dict(batch.inputs()); d["tabular"] = tab
-    return [np.asarray(d[k])[mask] if k != "tabular" else tab for k in order]
-
-check = verify_masking(model, {k: v[:64] for k, v in dict(batch.inputs()).items()})
-print("masking on the real model:", check)
-assert check["masking_holds"]
-'''),
-        code('''
-os.makedirs("experiments/checkpoints", exist_ok=True)
-cb = [
-    keras.callbacks.ModelCheckpoint("experiments/checkpoints/stage2_epoch{epoch:02d}.weights.h5",
-                                    save_weights_only=True),
-    keras.callbacks.EarlyStopping(monitor="val_p_damaging_pr_auc", mode="max",
-                                  patience=5, restore_best_weights=True),
-]
-# Early stopping on validation PR-AUC, never accuracy. The classes are balanced here but
-# the operating point is not, and accuracy would happily pick the wrong model.
-
-hist = model.fit(
-    pack(tr, tab_tr), {"p_damaging": y[tr]},
-    validation_data=(pack(va, tab_va), {"p_damaging": y[va]}),
-    epochs=40, batch_size=64, callbacks=cb, verbose=2,
-)
-'''),
-        code('''
-from mapguard.evaluation.metrics import summary as metric_summary, bootstrap_ci
-
-p, w = model.predict(pack(te, tab_te), verbose=0)
-p = p.ravel()
-res = metric_summary(y[te], p)
-res["pr_auc_ci95"] = bootstrap_ci(y[te], p)
-print(json.dumps(res, indent=2, default=float))
-'''),
-        md("## Save everything a result needs to be reproducible"),
-        code('''
-manifest = json.load(open(glob.glob("*/BUNDLE_MANIFEST.json")[0]))
-model.save("experiments/checkpoints/stage2_final.keras")
-out = {
-    "generated": datetime.datetime.now().isoformat(timespec="seconds"),
-    "git_sha": manifest["git_sha"],
-    "feature_schema": manifest.get("feature_schema"),
-    "branches": list(model.branch_config),
-    "config": CFG,
-    "split": r1b.summary(y),
-    "seed": 20260904,
-    "checkpoint": "experiments/checkpoints/stage2_final.keras",
-    "masking_check": check,
-    "epochs_run": len(hist.history["loss"]),
-    "test": res,
-}
-os.makedirs("results", exist_ok=True)
-json.dump(out, open("results/stage2_r1b.json", "w"), indent=2, default=float)
-print(json.dumps({k: v for k, v in out.items() if k != "test"}, indent=2, default=float))
-print("\\nDownload results/stage2_r1b.json and experiments/checkpoints/stage2_final.keras")
-'''),
-    ])
-
-
-TASKS = {
-    "00_env_check": nb_env_check,
-    "01_baselines": nb_baselines,
-    "02_stage2_train": nb_stage2,
-}
-
-
-def main() -> int:
-    for task, fn in TASKS.items():
-        d = CLUSTER / task
+def main() -> None:
+    for folder, stages, title, what, time_needed, needs in STAGES:
+        d = CLUSTER / folder
         d.mkdir(parents=True, exist_ok=True)
-        path = d / f"{task}.ipynb"
-        path.write_text(json.dumps(fn(), indent=1), encoding="utf-8")
-        print(f"{task:20} {len(fn()['cells']):>2} cells -> {path.relative_to(CLUSTER.parent)}")
-    print("\nRegenerate with: python cluster/make_notebooks.py")
-    return 0
+        nb = stage_notebook(folder, stages, title, what, time_needed, needs)
+        (d / f"{folder}.ipynb").write_text(json.dumps(nb, indent=1), encoding="utf-8")
+        (d / "README.md").write_text(README.format(folder=folder, title=title, what=what,
+                                                   time_needed=time_needed, needs=needs,
+                                                   stages=stages), encoding="utf-8")
+        print("wrote", d)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

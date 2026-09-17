@@ -45,7 +45,7 @@ from mapguard.training.dataset import (
 
 GEOMETRY_EDIT_COLUMNS = (
     "centroid_shift_m", "hausdorff_m", "d_length_m", "d_area_m2",
-    "length_ratio", "area_ratio", "d_points",
+    "length_ratio", "area_ratio", "d_points", "d_refs", "geom_route",
 )
 TEXT_TABULAR_COLUMNS = ("text_chars", "n_text_edits")
 USER_FEATURES = ("num_changes", "gap_days", "comment_length", "bbox_diag_deg")
@@ -213,6 +213,11 @@ class Normaliser:
 
         us = self._z(signed_log1p(a["user_sequence"]), "user", USER_FEATURES)
         a["user_sequence"] = (us * a["user_mask"][:, :, None]).astype("float32")
+        # Same guard for B4. A fully masked row is legal, but on a GPU it knocks the whole
+        # batch off the cuDNN kernel onto the generic RNN loop, which is many times slower.
+        # The null step is all zeros; user_n_prior and user_history_known carry the fact.
+        umask, users_inserted = ensure_nonempty(a["user_mask"])
+        a["user_mask"] = umask.astype("float32")
 
         a["tabular"] = self._z(signed_log1p(a["tabular"]), "tabular",
                                prep.tabular_columns).astype("float32")
@@ -224,6 +229,9 @@ class Normaliser:
         notes = list(prep.notes)
         if inserted:
             notes.append(f"{inserted} changesets had no edits; a neutral null edit was inserted")
+        if users_inserted:
+            notes.append(f"{users_inserted} changesets had no user history; a null history step "
+                         "was inserted")
         return replace(prep, arrays=a, n_null_edits_inserted=inserted, notes=notes)
 
     def _z(self, x: np.ndarray, group: str, columns) -> np.ndarray:

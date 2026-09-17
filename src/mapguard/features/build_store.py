@@ -1,31 +1,42 @@
-"""Build the feature store: five SQLite sources in, three Parquet tables out.
+"""Build the feature store: raw SQLite stores in, three Parquet tables out.
 
-    sources                                  tables
-    -------                                  ------
-    corpus_a_meta.sqlite     metadata        changesets.parquet   one row per changeset
-    corpus_a.sqlite          osmChange XML   edits.parquet        one row per sampled edit
-    corpus_a_geom.sqlite     adiff geometry  user_seq.parquet     one row per history step
-    users.sqlite             account_created
-    user_histories.sqlite    prior changesets
+    sources (under MAPGUARD_DATA/raw)                      tables (under MAPGUARD_DATA/interim)
+    ---------------------------------                      ------------------------------------
+    corpus_a_meta.sqlite   A metadata                      changesets.parquet  one row per changeset
+    corpus_a.sqlite        A osmChange (table changeset)   edits.parquet       one row per sampled edit
+    corpus_a_geom.sqlite   A adiff geometry (subset)       user_seq.parquet    one row per history step
+    corpus_mn.sqlite       M/N selection, metadata, osmChange
+    prev_versions.sqlite   previous object versions        build_report.json   coverage, per corpus
+    users.sqlite           account_created
+    user_histories_pit.sqlite  point-in-time histories
 
-Two rules from PROJECT_PLAN section 5.4 are implemented here, and they are the reason
-this module exists rather than a notebook cell.
+Every source except the Corpus A metadata and contents is optional. A missing source is
+reported in `build_report.json` and shows up in the data as an explicit *known* flag,
+never as a silent zero. Unknown is not the same fact as zero: `user_n_prior = 0` with no
+history fetched would tell the model "brand-new account", and if coverage differed by
+class the model would learn the fetch, not the vandalism.
 
-**Rule 1 - nothing is zeroed.** Ovid discards the edit vector above a size threshold, so
-mass vandalism and broken imports fall through (gap G4). Here the changeset-level summary
-is computed over *every* edit - counts, op mix, tag-key histogram, geometry moments - and
-only the *per-edit detail* is sampled, to K = 256, stratified so the extremes survive.
-`sample_ratio` goes in as a feature so the model knows how much it is not seeing.
+**Rule 1 - nothing is zeroed.** Changeset-level summaries run over *every* edit; only the
+per-edit detail is sampled, to K = 256, stratified so the extremes survive. `sample_ratio`
+tells the model how much it is not seeing.
 
-**Rule 2 - user features are point-in-time.** Every user aggregate and every sequence step
-comes from `mapguard.features.user_history`, which filters to changesets strictly before
-the target. See tests/test_user_history.py.
+**Rule 2 - user features are point-in-time.** Histories come from
+`mapguard.data.corpora.history_for`, which only accepts a window that provably contains
+everything before the target, and `user_history.point_in_time` filters again.
 
-Memory: written with a ParquetWriter and flushed in row groups. The development laptop
-has under 1 GB free, and the edits table is a few million rows.
+**Geometry has two routes, and each edit records which one it got** (`geom_route`):
+
+    2  adiff         full before/after coordinates: length, area, shape, displacement
+    1  prev_version  previous object version from the API: tag diffs for every object,
+                     displacement for nodes, node-count change (`d_refs`) for ways
+    0  none          a created object, or a version that could not be fetched
+
+`comments_count` is deliberately **not** a feature. It is read when the metadata is
+fetched, years after the edit, and reviewers comment on exactly the changesets they
+revert, so it would leak the label.
 
     python -m mapguard.features.build_store
-    python -m mapguard.features.build_store --limit 500 --out data/interim
+    python -m mapguard.features.build_store --corpora A --limit 500 --out /tmp/fs
 """
 
 from __future__ import annotations
@@ -34,7 +45,6 @@ import argparse
 import json
 import sqlite3
 from collections import Counter
-from dataclasses import asdict
 from pathlib import Path
 
 import pyarrow as pa
@@ -48,14 +58,21 @@ from mapguard.config import (
     data_path,
     interim_dir,
 )
+from mapguard.data.corpora import (
+    CORPUS_MN_DB,
+    HISTORY_DB,
+    LEGACY_HISTORY_DB,
+    USERS_DB,
+    VERSIONS_DB,
+    history_for,
+    quarter_of,
+    valid_selection,
+)
 from mapguard.data.osmchange import Edit, parse_safe
 from mapguard.data.overpass import GeometryAction, GeometryState
 from mapguard.data.users import account_age_days
 from mapguard.features.geometry import features_for, summarise
 from mapguard.features.user_history import PriorChangeset, build as build_user
-
-USERS_DB = "raw/users.sqlite"
-HISTORY_DB = "raw/user_histories.sqlite"
 
 # Ovid tracks a "top-12" key list; these are those plus the keys vandalism actually lands
 # on. Presence indicators, not counts - a changeset either touches highways or it does not.
@@ -70,7 +87,22 @@ TEXT_KEYS = ("name", "description", "note", "comment", "operator", "brand", "ins
 
 SAMPLE_K = 256
 BATCH_ROWS = 2000
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+
+ROUTE_NONE, ROUTE_VERSION, ROUTE_ADIFF = 0, 1, 2
+
+# Every key `geometry.summarise` can return. A changeset with no geometry gets zeros for
+# all of them, so every row has the same columns (the Parquet schema is fixed by the first
+# batch) and "no geometry" is carried by geom_frac_* instead.
+GEOM_SUMMARY_KEYS = (
+    "n_geom_actions", "n_way", "n_node", "n_with_old", "max_centroid_shift_m",
+    "mean_centroid_shift_m", "p95_centroid_shift_m", "max_hausdorff_m", "total_d_area_m2",
+    "max_abs_d_area_m2", "max_area_ratio", "total_d_points", "n_deleted", "n_created",
+    "n_modified",
+)
+
+META_COLS = ["cid", "created_at", "closed_at", "uid", "user", "num_changes", "min_lat",
+             "min_lon", "max_lat", "max_lon", "comments_count", "comment", "editor"]
 
 
 def is_text_key(k: str) -> bool:
@@ -90,12 +122,15 @@ def load_labels() -> dict[int, int]:
     return out
 
 
-def open_ro(path: Path) -> sqlite3.Connection | None:
-    return sqlite3.connect(path) if path.exists() else None
+def open_ro(rel: str) -> sqlite3.Connection | None:
+    path = data_path(*rel.split("/"))
+    if not path.exists():
+        return None
+    return sqlite3.connect(f"file:{path}?mode=ro", uri=True)
 
 
 def geometry_actions(blob: str | None) -> list[GeometryAction]:
-    """Rebuild GeometryAction objects from the stored JSON."""
+    """Rebuild adiff GeometryAction objects from the stored JSON."""
     if not blob:
         return []
     try:
@@ -120,6 +155,48 @@ def geometry_actions(blob: str | None) -> list[GeometryAction]:
     return out
 
 
+def version_actions(
+    edits: list[Edit], vconn: sqlite3.Connection | None, skip: set[tuple[str, int]]
+) -> tuple[list[GeometryAction], dict[tuple[str, int], int], int]:
+    """GeometryActions from previous object versions, for edits adiff did not cover.
+
+    Returns the actions, the previous `n_refs` per object (for `d_refs`), and how many
+    edits were eligible (modify/delete of an existing version) so coverage is measurable.
+    """
+    actions: list[GeometryAction] = []
+    prev_refs: dict[tuple[str, int], int] = {}
+    eligible = 0
+    for e in edits:
+        if e.action not in ("modify", "delete") or not e.version or e.version <= 1:
+            continue
+        eligible += 1
+        key = (e.otype, e.oid)
+        if vconn is None or key in skip:
+            continue
+        row = vconn.execute(
+            "SELECT status, visible, lat, lon, n_refs, tags_json FROM versions"
+            " WHERE otype=? AND oid=? AND version=?", (e.otype, e.oid, e.version - 1)).fetchone()
+        if not row or row[0] != 200:
+            continue
+        _, visible, lat, lon, n_refs, tags_json = row
+        is_node = e.otype == "node"
+        old = GeometryState(
+            otype=e.otype, oid=e.oid, version=e.version - 1,
+            coords=[(lat, lon)] if is_node and visible and lat is not None else [],
+            tags=json.loads(tags_json) if tags_json else {},
+        )
+        new = None if e.action == "delete" else GeometryState(
+            otype=e.otype, oid=e.oid, version=e.version,
+            coords=[(e.lat, e.lon)] if is_node and e.lat is not None else [],
+            tags=dict(e.tags),
+        )
+        actions.append(GeometryAction(action=e.action, otype=e.otype, oid=e.oid,
+                                      changeset=None, old=old, new=new))
+        if n_refs is not None:
+            prev_refs[key] = n_refs
+    return actions, prev_refs, eligible
+
+
 def prior_changesets(blob: str | None) -> list[PriorChangeset]:
     if not blob:
         return []
@@ -137,8 +214,8 @@ def stratified_sample(edits: list[Edit], geom_by_key: dict, k: int = SAMPLE_K) -
     """Indices of the edits to encode per-edit, keeping the informative extremes.
 
     Priority: largest geometric displacement, largest area change, every edit carrying
-    free text, then random fill in commit order. Truncating by position instead would
-    drop exactly the objects a reviewer would look at first.
+    free text, then an even spread through commit order. Truncating by position instead
+    would drop exactly the objects a reviewer would look at first.
     """
     n = len(edits)
     if n <= k:
@@ -165,8 +242,6 @@ def stratified_sample(edits: list[Edit], geom_by_key: dict, k: int = SAMPLE_K) -
     add(i for _, i in sorted(shift, reverse=True)[: k // 4])
     add(i for _, i in sorted(area, reverse=True)[: k // 4])
     add(text[: k // 4])
-    # Deterministic fill: evenly spaced through commit order, so the sample still
-    # describes the shape of the changeset rather than only its extremes.
     if len(chosen) < k:
         step = max(1, n // max(1, (k - len(chosen))))
         add(range(0, n, step))
@@ -179,12 +254,16 @@ def stratified_sample(edits: list[Edit], geom_by_key: dict, k: int = SAMPLE_K) -
 
 def changeset_row(
     cid: int,
-    label: int | None,
+    label: int,
+    corpus: str,
     meta: dict,
     edits: list[Edit],
     actions: list[GeometryAction],
+    routes: dict[tuple[str, int], int],
     account_created: str | None,
     history: list[PriorChangeset],
+    history_known: bool,
+    uf=None,
 ) -> dict:
     """One row of changesets.parquet. Summaries here never truncate (Rule 1)."""
     acts = Counter(e.action for e in edits)
@@ -193,17 +272,19 @@ def changeset_row(
     keys: Counter[str] = Counter()
     for e in edits:
         keys.update(e.tags.keys())
-
-    text_values = [
-        v for e in edits for k, v in e.tags.items() if is_text_key(k) and v
-    ]
+    text_values = [v for e in edits for k, v in e.tags.items() if is_text_key(k) and v]
 
     geom = summarise(actions)
-    uf = build(meta.get("uid"), history, meta.get("created_at") or "")
+    uf = uf or build_user(meta.get("uid"), history, meta.get("created_at") or "")
+    age = account_age_days(account_created, meta.get("created_at"))
+    n = max(1, len(edits))
+    route_counts = Counter(routes.get((e.otype, e.oid), ROUTE_NONE) for e in edits)
 
     row = {
         "cid": cid,
         "label": label,
+        "corpus": corpus,
+        "quarter": quarter_of(meta.get("created_at")),
         "schema_version": SCHEMA_VERSION,
         # --- metadata
         "created_at": meta.get("created_at"),
@@ -212,7 +293,6 @@ def changeset_row(
         "comment": (meta.get("comment") or "")[:500],
         "comment_length": len(meta.get("comment") or ""),
         "editor": meta.get("editor") or "",
-        "comments_count": meta.get("comments_count"),
         "bbox_lat_span": (
             (meta["max_lat"] - meta["min_lat"])
             if meta.get("max_lat") is not None and meta.get("min_lat") is not None else None
@@ -221,13 +301,14 @@ def changeset_row(
             (meta["max_lon"] - meta["min_lon"])
             if meta.get("max_lon") is not None and meta.get("min_lon") is not None else None
         ),
-        "account_age_days": account_age_days(account_created, meta.get("created_at")),
+        "account_age_days": age,
+        "account_age_known": 1 if age is not None else 0,
         # --- exact edit statistics, over every edit
         "n_edits": len(edits),
         "n_create": acts.get("create", 0),
         "n_modify": acts.get("modify", 0),
         "n_delete": acts.get("delete", 0),
-        "frac_delete": round(acts.get("delete", 0) / max(1, len(edits)), 4),
+        "frac_delete": round(acts.get("delete", 0) / n, 4),
         "n_node": types.get("node", 0),
         "n_way": types.get("way", 0),
         "n_relation": types.get("relation", 0),
@@ -235,36 +316,40 @@ def changeset_row(
         "mean_version": round(sum(versions) / len(versions), 3) if versions else 0.0,
         "n_v1": sum(1 for v in versions if v == 1),
         "total_tags": sum(len(e.tags) for e in edits),
-        "mean_tags": round(sum(len(e.tags) for e in edits) / max(1, len(edits)), 3),
+        "mean_tags": round(sum(len(e.tags) for e in edits) / n, 3),
         "distinct_keys": len(keys),
         "n_text_edits": sum(1 for e in edits if any(is_text_key(k) for k in e.tags)),
         # --- sampling, so the model knows what it is not seeing
         "n_edits_seen": min(len(edits), SAMPLE_K),
-        "sample_ratio": round(min(1.0, SAMPLE_K / max(1, len(edits))), 4),
+        "sample_ratio": round(min(1.0, SAMPLE_K / n), 4),
         # --- text for B2
         "text_blob": " ".join(text_values)[:2000],
         "text_chars": sum(len(v) for v in text_values),
+        # --- geometry coverage, so absence of geometry is never read as "nothing moved"
+        "geom_frac_adiff": round(route_counts.get(ROUTE_ADIFF, 0) / n, 4),
+        "frac_edits_prev_version": round(route_counts.get(ROUTE_VERSION, 0) / n, 4),
+        "user_history_known": 1 if history_known else 0,
+        # not a model input: marks the rows B1 can be evaluated on with full geometry
+        "has_adiff": 1 if ROUTE_ADIFF in routes.values() else 0,
     }
     for key in WATCH_KEYS:
         row[f"key_{key.replace(':', '_')}"] = 1 if keys.get(key) else 0
-    for k, v in geom.items():
-        row[f"geom_{k}"] = v
+    for k in GEOM_SUMMARY_KEYS:
+        row[f"geom_{k}"] = float(geom.get(k, 0.0))
     for k, v in uf.as_dict().items():
         row[f"user_{k}"] = v
     row["user_seq_len"] = len(uf.sequence)
     return row
 
 
-def edit_rows(cid: int, edits: list[Edit], actions: list[GeometryAction]) -> list[dict]:
-    geom_by_key = {}
-    for a in actions:
-        geom_by_key[(a.otype, a.oid)] = features_for(a)
-
+def edit_rows(cid: int, edits: list[Edit], geom_by_key: dict, routes: dict,
+              prev_refs: dict) -> list[dict]:
     keep = stratified_sample(edits, geom_by_key)
     rows = []
     for pos in keep:
         e = edits[pos]
-        g = geom_by_key.get((e.otype, e.oid))
+        key = (e.otype, e.oid)
+        g = geom_by_key.get(key)
         text = " ".join(v for k, v in e.tags.items() if is_text_key(k) and v)
         rows.append({
             "cid": cid,
@@ -276,10 +361,12 @@ def edit_rows(cid: int, edits: list[Edit], actions: list[GeometryAction]) -> lis
             "is_new_object": 1 if e.version == 1 else 0,
             "n_tags": len(e.tags),
             "n_refs": e.n_refs,
+            "d_refs": (e.n_refs - prev_refs[key]) if key in prev_refs and e.action == "modify" else None,
             "lat": e.lat,
             "lon": e.lon,
             "text": text[:200],
             "has_geometry": 1 if g else 0,
+            "geom_route": routes.get(key, ROUTE_NONE),
             "centroid_shift_m": g.centroid_shift_m if g else None,
             "hausdorff_m": g.hausdorff_m if g else None,
             "d_length_m": g.d_length_m if g else None,
@@ -294,8 +381,7 @@ def edit_rows(cid: int, edits: list[Edit], actions: list[GeometryAction]) -> lis
     return rows
 
 
-def user_seq_rows(cid: int, uid: int | None, history: list[PriorChangeset], created_at: str) -> list[dict]:
-    uf = build_user(uid, history, created_at)
+def user_seq_rows(cid: int, uf) -> list[dict]:
     return [
         {"cid": cid, "step": i, "num_changes": a, "gap_days": b,
          "comment_length": c, "bbox_diag_deg": d}
@@ -303,20 +389,23 @@ def user_seq_rows(cid: int, uid: int | None, history: list[PriorChangeset], crea
     ]
 
 
-# We alias the import so `build` inside changeset_row means the user-feature builder.
-build = build_user
-
-
 # --------------------------------------------------------------------------- writer
 
 
 class TableWriter:
-    """ParquetWriter that infers its schema from the first batch and flushes in groups."""
+    """ParquetWriter that infers its schema from the first batch and flushes in groups.
 
-    def __init__(self, path: Path):
+    Columns that are None in the whole first batch would be typed `null` and break the
+    cast of every later batch, so known numeric columns are forced to float64/int64.
+    """
+
+    def __init__(self, path: Path, types: dict[str, pa.DataType] | None = None,
+                 float_prefixes: tuple[str, ...] = ()):
         self.path = path
+        self.float_prefixes = float_prefixes
         self.rows: list[dict] = []
         self.writer: pq.ParquetWriter | None = None
+        self.types = types or {}
         self.n = 0
 
     def add(self, rows: list[dict] | dict) -> None:
@@ -332,118 +421,196 @@ class TableWriter:
             return
         table = pa.Table.from_pylist(self.rows)
         if self.writer is None:
-            self.writer = pq.ParquetWriter(self.path, table.schema, compression="zstd")
+            fields = []
+            for f in table.schema:
+                t = self.types.get(f.name, f.type)
+                if f.name.startswith(self.float_prefixes) and (
+                        pa.types.is_integer(t) or pa.types.is_null(t) or pa.types.is_boolean(t)):
+                    t = pa.float64()
+                if pa.types.is_null(t):
+                    t = pa.float64()
+                fields.append(pa.field(f.name, t))
+            schema = pa.schema(fields)
+            table = table.cast(schema)
+            self.writer = pq.ParquetWriter(self.path, schema, compression="zstd")
         else:
-            table = table.cast(self.writer.schema)
+            table = table.select(self.writer.schema.names).cast(self.writer.schema)
         self.writer.write_table(table)
         self.n += len(self.rows)
         self.rows = []
 
-    def close(self) -> None:
+    def close(self, empty_schema: pa.Schema | None = None) -> None:
         self.flush()
         if self.writer is not None:
             self.writer.close()
+        elif empty_schema is not None:
+            # an empty table still has to exist: the training data contract requires the file
+            pq.write_table(empty_schema.empty_table(), self.path)
+
+
+FLOAT_EDIT = {c: pa.float64() for c in (
+    "centroid_shift_m", "hausdorff_m", "d_length_m", "d_area_m2", "length_ratio",
+    "area_ratio", "d_points", "tags_added", "tags_removed", "tags_changed", "d_refs",
+    "lat", "lon")}
+FLOAT_CS = {c: pa.float64() for c in (
+    "account_age_days", "bbox_lat_span", "bbox_lon_span", "num_changes_meta", "uid")}
+FLOAT_CS.update({"quarter": pa.string(), "created_at": pa.string(), "comment": pa.string(),
+                 "editor": pa.string(), "text_blob": pa.string()})
 
 
 # ----------------------------------------------------------------------------- main
 
 
-def main() -> int:
+def iter_corpus_a(labels: dict[int, int], limit: int | None):
+    meta_conn = open_ro(CORPUS_A_META_DB)
+    contents = open_ro(CORPUS_A_DB)
+    if meta_conn is None or contents is None:
+        raise SystemExit("Corpus A needs corpus_a_meta.sqlite and corpus_a.sqlite under "
+                         "MAPGUARD_DATA/raw - see RUNBOOK.md")
+    geom = open_ro(CORPUS_A_GEOM_DB)
+    q = f"SELECT {', '.join(META_COLS)} FROM meta WHERE status = 200 ORDER BY cid"
+    n = 0
+    for row in meta_conn.execute(q):
+        meta = dict(zip(META_COLS, row))
+        cid = meta["cid"]
+        if cid not in labels:
+            continue
+        got = contents.execute("SELECT xml FROM changeset WHERE id = ? AND status = 200",
+                               (cid,)).fetchone()
+        adiff = geom.execute("SELECT json FROM geometry WHERE cid = ? AND route = 'adiff'",
+                             (cid,)).fetchone() if geom else None
+        yield "A", labels[cid], meta, (got[0] if got else None), (adiff[0] if adiff else None)
+        n += 1
+        if limit and n >= limit:
+            return
+
+
+def iter_corpus_mn(limit: int | None):
+    conn = open_ro(CORPUS_MN_DB)
+    if conn is None:
+        return
+    try:
+        valid = valid_selection(conn)
+    except sqlite3.OperationalError:
+        return
+    q = f"SELECT {', '.join(META_COLS)} FROM meta WHERE status = 200 ORDER BY cid"
+    n = 0
+    for row in conn.execute(q):
+        meta = dict(zip(META_COLS, row))
+        cid = meta["cid"]
+        if cid not in valid:
+            continue
+        corpus, label = valid[cid]
+        got = conn.execute("SELECT xml FROM contents WHERE cid = ? AND status = 200",
+                           (cid,)).fetchone()
+        yield corpus, label, meta, (got[0] if got else None), None
+        n += 1
+        if limit and n >= limit:
+            return
+
+
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--corpora", default="A,MN", help="comma list of A and MN")
+    ap.add_argument("--limit", type=int, default=None, help="per corpus, for smoke tests")
     ap.add_argument("--out", default=None)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     out = Path(args.out) if args.out else interim_dir()
     out.mkdir(parents=True, exist_ok=True)
+    corpora = [c.strip().upper() for c in args.corpora.split(",") if c.strip()]
 
-    labels = load_labels()
-    meta_conn = open_ro(data_path(*CORPUS_A_META_DB.split("/")))
-    if meta_conn is None:
-        raise SystemExit("no metadata store - run scripts/fetch_corpus_a_meta.py first")
-    contents_conn = open_ro(data_path(*CORPUS_A_DB.split("/")))
-    geom_conn = open_ro(data_path(*CORPUS_A_GEOM_DB.split("/")))
-    users_conn = open_ro(data_path(*USERS_DB.split("/")))
-    hist_conn = open_ro(data_path(*HISTORY_DB.split("/")))
-
+    users_conn = open_ro(USERS_DB)
     account_created = (
-        dict(users_conn.execute("SELECT uid, account_created FROM users")) if users_conn else {}
+        dict(users_conn.execute("SELECT uid, account_created FROM users WHERE status = 200"))
+        if users_conn else {}
     )
-    histories = (
-        {r[0]: r[1] for r in hist_conn.execute("SELECT uid, json FROM histories")}
-        if hist_conn else {}
-    )
+    hist_conn = open_ro(HISTORY_DB)
+    legacy_conn = open_ro(LEGACY_HISTORY_DB)
+    vconn = open_ro(VERSIONS_DB)
 
-    cw = TableWriter(out / "changesets.parquet")
-    ew = TableWriter(out / "edits.parquet")
+    cw = TableWriter(out / "changesets.parquet", FLOAT_CS, float_prefixes=("geom_", "user_"))
+    ew = TableWriter(out / "edits.parquet", FLOAT_EDIT)
     sw = TableWriter(out / "user_seq.parquet")
 
-    q = (
-        "SELECT cid, created_at, closed_at, uid, user, num_changes, min_lat, min_lon,"
-        " max_lat, max_lon, comments_count, comment, editor FROM meta"
-        " WHERE status = 200 ORDER BY cid"
-    )
-    cols = ["cid", "created_at", "closed_at", "uid", "user", "num_changes", "min_lat",
-            "min_lon", "max_lat", "max_lon", "comments_count", "comment", "editor"]
+    cov: dict[str, Counter] = {}
 
-    seen = with_contents = with_geometry = with_history = 0
-    for row in meta_conn.execute(q):
-        meta = dict(zip(cols, row))
+    def sources():
+        if "A" in corpora:
+            yield from iter_corpus_a(load_labels(), args.limit)
+        if "MN" in corpora:
+            yield from iter_corpus_mn(args.limit)
+
+    seen = 0
+    for corpus, label, meta, xml, adiff_blob in sources():
+        c = cov.setdefault(corpus, Counter())
+        c["candidates"] += 1
+        if not xml:
+            c["dropped_no_contents"] += 1
+            continue
+        edits, err = parse_safe(xml)
+        if err:
+            c["dropped_bad_xml"] += 1
+            continue
         cid = meta["cid"]
-        if args.limit and seen >= args.limit:
-            break
-        seen += 1
+        c[f"label_{label}"] += 1
 
-        edits: list[Edit] = []
-        if contents_conn:
-            got = contents_conn.execute(
-                "SELECT xml FROM contents WHERE cid = ? AND status = 200", (cid,)
-            ).fetchone()
-            if got and got[0]:
-                edits, _ = parse_safe(got[0])
-                with_contents += 1
+        adiff = geometry_actions(adiff_blob)
+        routes: dict[tuple[str, int], int] = {}
+        geom_by_key = {}
+        for a in adiff:
+            routes[(a.otype, a.oid)] = ROUTE_ADIFF
+            geom_by_key[(a.otype, a.oid)] = features_for(a)
+        vacts, prev_refs, eligible = version_actions(edits, vconn, set(routes))
+        for a in vacts:
+            routes[(a.otype, a.oid)] = ROUTE_VERSION
+            geom_by_key[(a.otype, a.oid)] = features_for(a)
+        c["edits"] += len(edits)
+        c["edits_eligible_prev_version"] += eligible
+        c["edits_prev_version"] += len(vacts)
+        c["changesets_with_adiff"] += 1 if adiff else 0
 
-        actions: list[GeometryAction] = []
-        if geom_conn:
-            got = geom_conn.execute("SELECT json FROM geometry WHERE cid = ?", (cid,)).fetchone()
-            if got:
-                actions = geometry_actions(got[0])
-                if actions:
-                    with_geometry += 1
+        blob, rule = history_for(hist_conn, meta.get("uid"), meta.get("created_at"), legacy_conn)
+        c[f"history_{rule}"] += 1
+        c[f"history_{rule}_label_{label}"] += 1
+        history = prior_changesets(blob)
+        uf = build_user(meta.get("uid"), history, meta.get("created_at") or "")
+        created = account_created.get(meta.get("uid"))
+        c[f"account_age_known_label_{label}"] += 1 if created else 0
 
-        history = prior_changesets(histories.get(meta["uid"]))
-        if history:
-            with_history += 1
-
-        cw.add(changeset_row(
-            cid, labels.get(cid), meta, edits, actions,
-            account_created.get(meta["uid"]), history,
-        ))
+        cw.add(changeset_row(cid, label, corpus, meta, edits, adiff + vacts, routes,
+                             created, history, rule != "missing", uf))
         if edits:
-            ew.add(edit_rows(cid, edits, actions))
-        if history:
-            sw.add(user_seq_rows(cid, meta["uid"], history, meta["created_at"] or ""))
+            ew.add(edit_rows(cid, edits, geom_by_key, routes, prev_refs))
+        if uf.sequence:
+            sw.add(user_seq_rows(cid, uf))
 
+        seen += 1
         if seen % 1000 == 0:
-            print(f"{seen} changesets  (contents {with_contents}, geometry {with_geometry})",
-                  flush=True)
+            print(f"{seen} changesets  {dict(c)}", flush=True)
 
-    for w in (cw, ew, sw):
-        w.close()
+    cw.close()
+    ew.close()
+    sw.close(pa.schema([("cid", pa.int64()), ("step", pa.int64()), ("num_changes", pa.float64()),
+                        ("gap_days", pa.float64()), ("comment_length", pa.float64()),
+                        ("bbox_diag_deg", pa.float64())]))
 
     report = {
         "schema_version": SCHEMA_VERSION,
         "changesets": cw.n,
         "edits": ew.n,
         "user_seq_steps": sw.n,
-        "coverage": {
-            "with_contents": with_contents,
-            "with_geometry": with_geometry,
-            "with_user_history": with_history,
-            "labelled": sum(1 for c in labels if c),
-        },
         "sample_k": SAMPLE_K,
+        "sources_present": {
+            "users": users_conn is not None, "histories_pit": hist_conn is not None,
+            "histories_legacy": legacy_conn is not None, "prev_versions": vconn is not None,
+            "corpus_mn": open_ro(CORPUS_MN_DB) is not None,
+        },
+        "coverage_by_corpus": {k: dict(sorted(v.items())) for k, v in cov.items()},
         "out": str(out),
+        "note": ("coverage split by label on purpose: if history or account-age coverage "
+                 "differs between classes, the corresponding features measure the fetch "
+                 "and must not be reported as a signal"),
     }
     print(json.dumps(report, indent=2))
     (out / "build_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

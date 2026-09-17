@@ -122,11 +122,17 @@ def main() -> int:
             keras.callbacks.EarlyStopping(monitor="val_auc", mode="max",
                                           patience=int(p_cfg.get("patience", 4)),
                                           restore_best_weights=True),
+            keras.callbacks.ModelCheckpoint(str(run.path("best_contrast.weights.h5")),
+                                            monitor="val_auc", mode="max",
+                                            save_best_only=True, save_weights_only=True),
             keras.callbacks.CSVLogger(str(run.path("training_log.csv"))),
         ],
         verbose=int(p_cfg.get("verbose", 2)),
     )
 
+    # Keras 2 only restores best weights when early stopping fires; reload explicitly.
+    if run.path("best_contrast.weights.h5").exists():
+        model.load_weights(str(run.path("best_contrast.weights.h5")))
     p_va = model.predict(Xva, batch_size=4096, verbose=0).ravel()
     from mapguard.evaluation.metrics import roc_auc
 

@@ -23,6 +23,20 @@ this feature store, not per edit, so a per-edit text corruption would be corrupt
 that does not exist. Mass deletion is also changeset-level. Both are recorded as known gaps
 in the pretext task rather than faked.
 
+**Corruptions respect what was observable for that edit.** The feature store records which
+geometry route each edit got (`geom_route`: 0 none, 1 previous version, 2 adiff). A 400 km
+displacement written onto an edit that has no geometry at all, or an area blow-up on an edit
+whose route never measures area, produces a vector no real edit can have, and the encoder
+would learn "route and value disagree" instead of "this looks like damage". So:
+
+    displace          route >= 1   (nodes have displacement from the previous version)
+    area_blowup       route == 2   (only adiff measures area)
+    length_stretch    route == 2
+    mass_points       route == 2 -> d_points,  route == 1 -> d_refs
+    tag diffs         tags_added/removed only move when route >= 1; n_tags always can
+
+When `geom_route` is absent (an older store, or B1 switched off) the rules are not applied.
+
 A corruption that would leave the vector unchanged (e.g. tag_wipe on an edit with no tags)
 is replaced by another, so every "corrupted" sample really differs from its source.
 """
@@ -42,10 +56,15 @@ def corrupt_one(x: np.ndarray, kind: str, columns: list[str], rng: np.random.Gen
     """Return a corrupted copy of one raw edit vector, or None if `kind` cannot change it."""
     v = x.astype("float64").copy()
     c = lambda n: _col(columns, n)  # noqa: E731
+    r = c("geom_route")
+    route = None if r is None else int(round(v[r]))
+
+    def has_route(need: int) -> bool:
+        return route is None or route >= need
 
     if kind == "displace":
         idx = [i for i in (c("centroid_shift_m"), c("hausdorff_m")) if i is not None]
-        if not idx:
+        if not idx or not has_route(1):
             return None
         factor = 10 ** rng.uniform(2, 4)
         for i in idx:
@@ -53,7 +72,7 @@ def corrupt_one(x: np.ndarray, kind: str, columns: list[str], rng: np.random.Gen
             v[i] = max(abs(v[i]), 1.0) * factor
     elif kind == "area_blowup":
         idx = [i for i in (c("area_ratio"), c("d_area_m2")) if i is not None]
-        if not idx:
+        if not idx or not has_route(2):
             return None
         factor = rng.uniform(50, 500)
         if c("area_ratio") is not None:
@@ -62,7 +81,7 @@ def corrupt_one(x: np.ndarray, kind: str, columns: list[str], rng: np.random.Gen
             v[c("d_area_m2")] = max(abs(v[c("d_area_m2")]), 100.0) * factor
     elif kind == "length_stretch":
         idx = [i for i in (c("length_ratio"), c("d_length_m")) if i is not None]
-        if not idx:
+        if not idx or not has_route(2):
             return None
         factor = rng.uniform(20, 200)
         if c("length_ratio") is not None:
@@ -73,11 +92,12 @@ def corrupt_one(x: np.ndarray, kind: str, columns: list[str], rng: np.random.Gen
         n = c("n_tags")
         if n is None or v[n] <= 0:
             return None
-        if c("tags_removed") is not None:
-            v[c("tags_removed")] += v[n]
-        for name in ("tags_added", "tags_changed"):
-            if c(name) is not None:
-                v[c(name)] = 0.0
+        if has_route(1):
+            if c("tags_removed") is not None:
+                v[c("tags_removed")] += v[n]
+            for name in ("tags_added", "tags_changed"):
+                if c(name) is not None:
+                    v[c(name)] = 0.0
         v[n] = 0.0
     elif kind == "tag_spam":
         n = c("n_tags")
@@ -85,11 +105,11 @@ def corrupt_one(x: np.ndarray, kind: str, columns: list[str], rng: np.random.Gen
             return None
         k = float(rng.integers(10, 41))
         v[n] += k
-        if c("tags_added") is not None:
+        if c("tags_added") is not None and has_route(1):
             v[c("tags_added")] += k
     elif kind == "mass_points":
-        i = c("d_points")
-        if i is None:
+        i = c("d_refs") if route == 1 else c("d_points")
+        if i is None or not has_route(1):
             return None
         v[i] += float(rng.integers(200, 2001))
         if c("n_refs") is not None:

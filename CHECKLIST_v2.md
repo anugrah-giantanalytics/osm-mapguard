@@ -35,37 +35,59 @@ passed (103). Every training script byte-compiled. The feature builder was run o
 changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed for stages
 02, 03 and 04. All of this ran in an isolated copy, so no split or run was written to the repo.
 
-### A. Make Corpus A trainable (the `ovid` task) — blocks everything
-- [ ] Fix `build_store.py`: read table `changeset` keyed `id`, write `corpus="A"`, and fix
-  the `labelled` count in `build_report.json` (it counts cids, not labels).
-- [ ] Fetch `users.sqlite` (account creation dates) for the 8,768 Corpus A uids.
-  `account_age_days` is currently null everywhere, so B0 and B5 each lose a feature.
-- [ ] Fetch point-in-time histories for those 8,768 users (20 done). Without them B4
-  is empty on 99% of rows, and the B4 ablation row measures nothing.
-- [ ] Geometry decision: at 122 s per changeset, the full 5,972 subset needs ~160 more
-  hours. Either stop at a fixed count (e.g. 2,000) and report B1 only on that subset, or
-  run parallel streams against a mirror. Write the decision down.
-- [ ] Build the full store into `C:\osm-data\interim`, commit `build_report.json` to
-  `results/`, and write the schema manifest.
-- [ ] Change the default `task` in `train/*/config.json` from `T2` to `ovid` until
-  corpora M and N exist. T2 is unreachable today.
+### A. Code that makes the data trainable — done 2026-09-17, needs data runs at home
+- [x] `build_store.py` rewritten: reads the real table names, writes `corpus`/`quarter`,
+  builds A, M and N, and gives a per-corpus, per-label coverage report. It was verified on 400
+  real Corpus A changesets, and `tests/test_build_store.py` runs it on stores with the real schemas.
+- [x] `comments_count` removed from the features. It is read years after the edit, and
+  reviewers comment on the changesets they revert, so it leaked the label.
+- [x] Missing data is now explicit (`account_age_known`, `user_history_known`,
+  `frac_edits_prev_version`, `geom_frac_adiff`), never a silent zero that reads as
+  "new account" or "nothing moved".
+- [x] Previous-version geometry route (`scripts/fetch_osm.py versions`): tag diffs for every
+  modified or deleted object, node displacement, way node-count change. It needs one API call
+  per 725 objects, against ~122 s per changeset for adiff; the real duration is measured on the
+  first run. `geom_route` records which route each edit got.
+- [x] Point-in-time histories are fetched per target, and a truncated later window is never reused
+  (`mapguard.data.corpora.history_for`, tested).
+- [x] adiff geometry is fetched in hash order, so any stopping point is an unbiased sample.
+  The first 1,055 were fetched in id order and lean towards 2014; disclose that.
+- [x] Default task in every `train/*/config.json` is now `ovid`. The temporal cutoff for ovid is
+  2019-01-01, so 2014–2018 is train and 2019 is test.
+- [ ] **At home:** run RUNBOOK step 1 (fetch), then step 2 (build), and commit
+  `results/feature_store_build_report.json`.
+- [ ] Schema manifest (dtypes, units, missing policy). `build_report.json` plus
+  `data_contract.py` cover counts and required columns only.
 
-### B. Prove the TensorFlow code runs — blocks every neural result
-- [ ] Set up Python 3.11 or 3.12 with TensorFlow on the M4 or the cluster. This laptop is on
-  3.14 with no TensorFlow, so no line of the rewritten model has ever executed.
-- [ ] Run `train/00_wiring_check` on both Keras 2 (cluster) and Keras 3 (M4), and fix what fails.
-- [ ] Regenerate `cluster/` notebooks to call the `train/` scripts. `02_stage2_train.ipynb`
-  still fits the two-output model and saves `.keras` — the pattern that breaks.
+### B. Remote execution — done 2026-09-17, needs a first run on a TensorFlow machine
+- [x] `train/run_pipeline.py`: one command for every stage on any machine. It wires the Stage 1
+  encoder into 03/05 and the R1b run into 06, and finds runs from earlier jobs. `--quick` runs
+  are tagged and never reused by real runs.
+- [x] `cluster/` regenerated as one notebook per stage plus `99_full_pipeline`, each calling
+  run_pipeline. The stale two-output notebooks were deleted. `cluster/bundle.py` builds one
+  zip (code, feature store, splits, manifest). This was verified by unzipping in a clean
+  directory and running stage 01 from it.
+- [x] `train/setup_env.sh` sets up TensorFlow on the M4 or Linux and runs the wiring check.
+  `requirements-train.txt` added.
+- [x] Static review of the TensorFlow paths turned up three fixes:
+  - Keras 2 only restores the best weights when early stopping fires, so the checkpoint is
+    now reloaded explicitly.
+  - Fully masked user histories knocked whole batches off cuDNN, so a null step is inserted.
+  - Stage 1 corruptions could write geometry onto edits that had none, a shortcut the
+    encoder would learn. They now respect `geom_route`.
+- [ ] **On the M4 or cluster:** `00_wiring_check` PASS on Keras 3 (M4) and Keras 2 (cluster).
+  None of the TensorFlow code has executed yet; this remains the largest unverified risk.
+- [ ] `99_full_pipeline` with `QUICK = True` completes, then the real stages in RUNBOOK order.
 
-### C. Modern tasks T1/T2 and the temporal test — optional, decide now
-- [ ] No OSMCha changeset has contents fetched: 90,725 labels, 0 osmChange downloads.
-  Fetcher and builder for corpus M do not exist (4k contents at 3/s ≈ 25 min — cheap).
-- [ ] No corpus N sampler exists (random unreviewed changesets from the same window).
-- [ ] 318 OSMCha gap windows are unresolved (2023–2026, both classes).
-- [ ] 2026 labels are 8,209 harmful vs 1,187 cleared, so a 2026 temporal test is ~87%
-  positive. Report prevalence-corrected metrics, or move the cutoff earlier.
-- [ ] Modern geometry at 122 s per changeset is not achievable for 4k. T1/T2 would run
-  without B1.
+### C. Modern tasks T1/T2 — code done, data at home
+- [x] Corpus M selector: 4k harmful + 4k reviewed-clean, water-filled across quarters.
+- [x] Corpus N sampler: random ids inside each quarter's id range, date-matched to M's positives.
+  Empty and open changesets are rejected in hash order.
+- [ ] **At home:** finish the OSMCha harvest first. The store has no harmful labels for
+  2023Q4 and no cleared labels for 2025Q4–2026Q1, plus 318 gap windows.
+- [ ] 2026 cleared labels are scarce. The T1/T2 temporal cutoff is set to 2025-07-01 so the test
+  side holds both classes; report prevalence-corrected metrics.
+- [ ] N is "not flagged in our harvest", not "verified clean". Disclose it as presumed-negative.
 
 ### D. Claims that have to match the evidence
 - [ ] "Self-supervised": there is no unlabelled Corpus C. Stage 1 pretrains on training-fold

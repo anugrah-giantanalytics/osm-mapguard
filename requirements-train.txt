@@ -1,0 +1,11 @@
+# What the training stages under train/ need, on the M4, the cluster or any other machine.
+# TensorFlow is installed separately (train/setup_env.sh) because the right wheel depends on
+# the platform, and the cluster image already ships its own.
+#
+# Supported: Python 3.10 (cluster image) to 3.12. Keras 2 (TF 2.13) and Keras 3 (TF >= 2.16)
+# both work - train/00_wiring_check proves it on each machine.
+numpy>=1.23,<2.2
+pandas>=1.5
+pyarrow>=12
+scikit-learn>=1.2
+xgboost>=1.7

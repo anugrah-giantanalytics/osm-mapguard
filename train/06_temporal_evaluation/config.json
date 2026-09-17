@@ -1,13 +1,13 @@
 {
   "stage": "stage2_temporal",
-  "task": "T2",
+  "task": "ovid",
   "split": "temporal",
   "seed": 20260904,
   "device": "auto",
   "resplit": false,
   "reference_run": null,
   "temporal": {
-    "cutoff": "2026-01-01T00:00:00Z",
+    "cutoff": "2019-01-01T00:00:00Z",
     "exclude_test_users_from_train": true
   },
   "data": {

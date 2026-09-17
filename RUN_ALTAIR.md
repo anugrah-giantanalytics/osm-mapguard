@@ -70,16 +70,25 @@ working on both machines.
 
 ## Preparing a bundle
 
+One bundle serves every stage. Build it on the laptop after the feature store exists (see
+[RUNBOOK.md](RUNBOOK.md) steps 2-3):
+
 ```bash
-python cluster/bundle.py --task 02_stage2_train
+python cluster/make_notebooks.py
 ```
 
-That writes `cluster/_bundles/02_stage2_train.zip` containing the notebook, `src/`, the
-feature Parquet, and a manifest recording the git SHA, feature-schema version and row
-counts. Upload the zip through **Files → +Upload**, then unzip it in the first notebook
-cell.
+```bash
+python cluster/bundle.py
+```
 
-Bundles are gitignored. They are build artefacts, and some of them carry data.
+That writes `cluster/_bundles/mapguard_bundle.zip`: `src/`, `train/`, every notebook, the
+feature Parquet, the frozen splits, and a manifest with the git SHA, feature-schema version,
+row counts and sha256 of every data file. Upload the zip **and** the notebook for the stage
+through **Files -> +Upload**. The first cell unpacks it into `mapguard/` (again only when a
+newer bundle is uploaded, so earlier results survive) and installs anything missing without
+touching the image's numpy.
+
+Bundles are gitignored. They are build artefacts, and they carry data.
 
 ## Rules that still apply on the cluster
 
@@ -95,13 +104,20 @@ Bundles are gitignored. They are build artefacts, and some of them carry data.
 
 ## Task folders
 
-| Folder | What it runs | Needs |
-|---|---|---|
-| `00_env_check` | GPU visible, TF/Keras versions, model builds + trains + masking holds | nothing |
-| `01_baselines` | B0, logistic regression, XGBoost, Ovid reproduction | `changesets.parquet` |
-| `02_stage2_train` | the full five-branch model, R1a and R1b | all three Parquet tables |
-| `03_ablations` | six-row grid, two seeds | as above, plus a working 02 |
-| `04_stage1_pretrain` | corruption contrast, conditional on week 4 | Corpus C |
+Every notebook is four thin cells around one call to `train/run_pipeline.py`, so the
+cluster, the M4 and any other machine run exactly the same code.
 
-Run them in order. Each folder's `README.md` states its inputs, outputs and expected
-runtime.
+| Folder | Runs | Needs first |
+|---|---|---|
+| `00_wiring_check` | model builds, trains, masks, saves and transfers under this image's Keras | nothing - **run first, stop on FAIL** |
+| `01_baselines` | B0 tripwire, logistic regression, XGBoost; freezes the split | nothing |
+| `02_stage2_supervised` | the five-branch model on R1b (+ R1a for the ovid task) | 01 |
+| `03_stage2_ablations` | seven rows x two seeds | 04 for row 07 |
+| `04_stage1_pretrain` | corruption contrast + zero-shot transfer check | 01 |
+| `05_stage1_label_efficiency` | pretrained vs scratch at 10/25/50/100% of labels | 04 |
+| `06_temporal_evaluation` | train on the past, test on the future | 02 (reference, optional) |
+| `99_full_pipeline` | all of the above in dependency order | nothing - run with `QUICK = True` first |
+
+Each folder's `README.md` gives expected runtime. Later stages find earlier runs through
+`experiments/runs/index.jsonl`, so separate jobs chain as long as they run in the same
+`/data/<user>/` directory.

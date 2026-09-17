@@ -34,7 +34,17 @@ RUNS = REPO / "experiments" / "runs"
 
 
 def git_sha() -> str:
-    """Commit of the code that ran. On the cluster there may be no .git, but a bundle is."""
+    """Commit of the code that ran. On the cluster there may be no .git, but a bundle is.
+
+    An unpacked bundle is checked first: unzipped inside some other repository, `git
+    rev-parse` would happily report that repository's commit.
+    """
+    bundle = REPO / "BUNDLE_MANIFEST.json"
+    if bundle.exists():
+        try:
+            return json.loads(bundle.read_text()).get("git_sha", "unknown") + " (bundle)"
+        except Exception:
+            pass
     try:
         return subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=REPO, text=True, stderr=subprocess.DEVNULL

@@ -40,14 +40,16 @@ EDIT_FEATURES = (
     "centroid_shift_m", "hausdorff_m", "d_length_m", "d_area_m2",
     "length_ratio", "area_ratio", "d_points", "n_tags", "n_refs",
     "version", "is_new_object", "tags_added", "tags_removed", "tags_changed",
+    "d_refs", "geom_route",
 )
 
 TABULAR_FEATURES = (
     "n_edits", "n_create", "n_modify", "n_delete", "frac_delete",
     "n_node", "n_way", "n_relation", "max_version", "mean_version", "n_v1",
     "total_tags", "mean_tags", "distinct_keys", "n_text_edits",
-    "sample_ratio", "comment_length", "comments_count", "text_chars",
-    "bbox_lat_span", "bbox_lon_span", "account_age_days",
+    "sample_ratio", "comment_length", "text_chars",
+    "bbox_lat_span", "bbox_lon_span", "account_age_days", "account_age_known",
+    "frac_edits_prev_version", "user_history_known", "geom_frac_adiff",
     "geom_n_geom_actions", "geom_max_centroid_shift_m", "geom_p95_centroid_shift_m",
     "geom_max_hausdorff_m", "geom_max_abs_d_area_m2", "geom_max_area_ratio",
     "geom_total_d_points", "geom_n_deleted", "geom_n_created",

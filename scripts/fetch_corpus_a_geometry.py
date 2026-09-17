@@ -21,6 +21,7 @@ restart picks up where it stopped and the coverage number stays measured.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sqlite3
 import sys
@@ -132,6 +133,10 @@ def main() -> int:
             metas = metas[: args.limit]
         already = done_ids(conn, "geometry")
         todo = [m for m in metas if m.cid not in already]
+        # Fetch in hash order, not id order. Id order is time order, so a run stopped
+        # part-way leaves geometry only on the oldest changesets and "has geometry" becomes
+        # a proxy for date. In hash order every prefix is an unbiased random sample.
+        todo.sort(key=lambda m: hashlib.sha256(f"geom:{m.cid}".encode()).hexdigest())
 
         print(f"database : {geom_db}")
         print(f"to fetch : {len(todo)} ({len(already)} already stored)")

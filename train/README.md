@@ -4,9 +4,22 @@ Everything that fits a model, evaluates one, or produces a number for the paper 
 here. Library code (feature extraction, the model definition, metrics, splits) lives in
 `src/mapguard/`; these folders are the *runs* built on top of it.
 
-**Data is not wired yet.** Every stage reads the feature store through one contract,
-[`common/data_contract.py`](common/data_contract.py). When the dataset is finalised, the
-feature store has to satisfy that contract and nothing in here changes.
+Every stage reads the feature store through one contract,
+[`common/data_contract.py`](common/data_contract.py), which
+`python -m mapguard.features.build_store` writes to. Default task is `ovid` (Corpus A, the
+only corpus complete today); `T1`/`T2` need corpora M and N - see [RUNBOOK.md](../RUNBOOK.md).
+
+## One command
+
+```bash
+python train/run_pipeline.py --feature-store data/interim --task ovid --quick
+```
+
+runs 00 -> 01 -> 02 -> 04 -> 03 -> 05 -> 06, wiring each stage's output into the next (the
+Stage 1 encoder into 03 and 05, the R1b run into 06). `--stages 02,06` runs a subset;
+later stages find earlier runs from any session through `experiments/runs/index.jsonl`.
+`--quick` is a smoke test and tags every run directory `_quick`: never report those numbers.
+The cluster notebooks call exactly this.
 
 ## Folder names: execution order first, plan stage second
 

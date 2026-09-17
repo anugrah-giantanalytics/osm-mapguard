@@ -1,16 +1,23 @@
-"""Pack a cluster task into one uploadable zip.
+"""Pack everything a remote machine needs to train into one zip.
 
-The Altair portal takes files through a drag-and-drop box. Uploading a source tree file
-by file is how versions drift apart, so a task goes up as a single zip with a manifest
-recording exactly what was in it: git SHA, feature-schema version, row counts, and the
-sha256 of every data file.
+    python cluster/bundle.py                       # code + feature store from MAPGUARD_DATA/interim
+    python cluster/bundle.py --data D:/fs          # a feature store somewhere else
+    python cluster/bundle.py --no-data             # code only (e.g. for 00_wiring_check)
 
-That manifest is not bookkeeping for its own sake. Every result the paper reports has to
-name the commit and the data window it came from, and reconstructing that after the fact
-from a folder of uploads is not possible.
+Writes `cluster/_bundles/mapguard_bundle.zip`. The same zip serves the SVKM cluster (upload
+it next to any notebook in cluster/) and the M4 (unzip, run `train/setup_env.sh`, then
+`train/run_pipeline.py`).
 
-    python cluster/bundle.py --task 00_env_check
-    python cluster/bundle.py --task 02_stage2_train --data /c/osm-data/interim
+Contents:
+
+    src/ train/ cluster/*/*.ipynb      the code, exactly as committed
+    requirements-train.txt RUNBOOK.md
+    data/interim/*.parquet            the feature store + build_report.json
+    experiments/splits/*.json         frozen splits, so every machine trains on the same rows
+    BUNDLE_MANIFEST.json              git SHA, dirty flag, schema version, row counts, hashes
+
+Nothing is fetched on the remote side - ever. Every number a remote run produces can be
+traced back to this manifest.
 """
 
 from __future__ import annotations
@@ -24,50 +31,24 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-
 REPO = Path(__file__).resolve().parents[1]
-CLUSTER = REPO / "cluster"
-OUT = CLUSTER / "_bundles"
-
-# Which tasks need the feature store. 00_env_check deliberately needs nothing, so it can
-# be run the moment an image is available.
-NEEDS_DATA = {
-    "00_env_check": (),
-    "01_baselines": ("changesets.parquet",),
-    "02_stage2_train": ("changesets.parquet", "edits.parquet", "user_seq.parquet"),
-    "03_ablations": ("changesets.parquet", "edits.parquet", "user_seq.parquet"),
-    "04_stage1_pretrain": ("changesets.parquet", "edits.parquet"),
-}
+OUT = REPO / "cluster" / "_bundles"
+STORE_FILES = ("changesets.parquet", "edits.parquet", "user_seq.parquet")
 
 
-def git_sha() -> str:
+def git(*args: str) -> str:
     try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
-        ).strip()
+        return subprocess.check_output(["git", *args], cwd=REPO, text=True).strip()
     except Exception:
         return "unknown"
 
 
-def git_dirty() -> bool:
-    try:
-        return bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=REPO, text=True).strip())
-    except Exception:
-        return True
-
-
-def sha256(path: Path, limit: int = 64 * 1024 * 1024) -> str:
+def sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as fh:
-        read = 0
         while chunk := fh.read(1 << 20):
             h.update(chunk)
-            read += len(chunk)
-            if read >= limit:      # enough to detect a swap; full hash of GBs is wasteful
-                h.update(b"TRUNCATED")
-                break
-    return h.hexdigest()[:16]
+    return h.hexdigest()
 
 
 def parquet_rows(path: Path) -> int | None:
@@ -79,86 +60,83 @@ def parquet_rows(path: Path) -> int | None:
         return None
 
 
+def code_files() -> list[Path]:
+    out = []
+    for top in ("src", "train"):
+        for f in sorted((REPO / top).rglob("*")):
+            if f.is_file() and "__pycache__" not in f.parts and f.suffix != ".pyc":
+                out.append(f)
+    out += sorted((REPO / "cluster").glob("*/*.ipynb"))
+    out += sorted((REPO / "cluster").glob("*/README.md"))
+    for extra in ("requirements-train.txt", "RUNBOOK.md", "RUN_ALTAIR.md", "pyproject.toml"):
+        if (REPO / extra).exists():
+            out.append(REPO / extra)
+    return out
+
+
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--task", required=True, choices=sorted(NEEDS_DATA))
-    ap.add_argument("--data", default=None, help="feature store dir (default: MAPGUARD_DATA/interim)")
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--data", default=None, help="feature store dir (default MAPGUARD_DATA/interim)")
+    ap.add_argument("--no-data", action="store_true")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
-    task_dir = CLUSTER / args.task
-    if not task_dir.exists():
-        raise SystemExit(f"no such task folder: {task_dir}")
-
+    sys.path.insert(0, str(REPO / "src"))
     from mapguard.config import interim_dir
 
     data_dir = Path(args.data) if args.data else interim_dir()
     OUT.mkdir(parents=True, exist_ok=True)
-    zip_path = Path(args.out) if args.out else OUT / f"{args.task}.zip"
+    zip_path = Path(args.out) if args.out else OUT / "mapguard_bundle.zip"
 
     manifest = {
-        "task": args.task,
         "generated": datetime.now().isoformat(timespec="seconds"),
-        "git_sha": git_sha(),
-        "git_dirty": git_dirty(),
+        "git_sha": git("rev-parse", "HEAD"),
+        "git_dirty": bool(git("status", "--porcelain", "--", "src", "train", "cluster")),
         "python_packed_with": sys.version.split()[0],
-        "files": [],
+        "data_dir": None if args.no_data else str(data_dir),
         "data": {},
-        "missing_data": [],
+        "feature_schema": None,
+        "coverage": None,
+        "splits": [],
     }
 
+    if not args.no_data:
+        missing = [n for n in STORE_FILES if not (data_dir / n).exists()]
+        if missing:
+            raise SystemExit(f"feature store at {data_dir} is missing {missing}. Build it first "
+                             "(RUNBOOK.md step 2) or pass --no-data for a code-only bundle.")
+
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
-        # the notebook and its README
-        for f in sorted(task_dir.iterdir()):
-            if f.is_file():
-                z.write(f, f"{args.task}/{f.name}")
-                manifest["files"].append(f"{args.task}/{f.name}")
+        for f in code_files():
+            z.write(f, f.relative_to(REPO).as_posix())
 
-        # the library, so the notebook stays thin
-        for f in sorted((REPO / "src").rglob("*.py")):
-            rel = f.relative_to(REPO)
-            z.write(f, str(rel).replace("\\", "/"))
-            manifest["files"].append(str(rel).replace("\\", "/"))
+        splits = REPO / "experiments" / "splits"
+        for f in sorted(splits.glob("*.json")) if splits.exists() else []:
+            z.write(f, f"experiments/splits/{f.name}")
+            manifest["splits"].append(f.name)
 
-        # small tracked artefacts the notebooks read
-        for extra in ("requirements.txt", "data/labels/ovid_labels.tsv"):
-            f = REPO / extra
-            if f.exists():
-                z.write(f, extra)
-                manifest["files"].append(extra)
-        fixtures = REPO / "data" / "fixtures"
-        if fixtures.exists():
-            for f in sorted(fixtures.glob("*.json")):
-                z.write(f, f"data/fixtures/{f.name}")
+        if not args.no_data:
+            for name in STORE_FILES:
+                src = data_dir / name
+                # Parquet is already compressed; storing avoids minutes of pointless deflate.
+                z.write(src, f"data/interim/{name}", compress_type=zipfile.ZIP_STORED)
+                manifest["data"][name] = {"bytes": src.stat().st_size, "rows": parquet_rows(src),
+                                          "sha256": sha256(src)}
+            report = data_dir / "build_report.json"
+            if report.exists():
+                z.write(report, "data/interim/build_report.json")
+                rep = json.loads(report.read_text(encoding="utf-8"))
+                manifest["feature_schema"] = rep.get("schema_version")
+                manifest["coverage"] = rep.get("coverage_by_corpus")
 
-        # the feature store
-        for name in NEEDS_DATA[args.task]:
-            src = data_dir / name
-            if not src.exists():
-                manifest["missing_data"].append(name)
-                continue
-            z.write(src, f"data/interim/{name}")
-            manifest["data"][name] = {
-                "bytes": src.stat().st_size,
-                "rows": parquet_rows(src),
-                "sha256_16": sha256(src),
-            }
+        z.writestr("BUNDLE_MANIFEST.json", json.dumps(manifest, indent=2))
 
-        report = data_dir / "build_report.json"
-        if report.exists():
-            z.write(report, "data/interim/build_report.json")
-            manifest["feature_schema"] = json.loads(report.read_text()).get("schema_version")
-
-        z.writestr(f"{args.task}/BUNDLE_MANIFEST.json", json.dumps(manifest, indent=2))
-
-    size_mb = zip_path.stat().st_size / 1e6
-    print(json.dumps(manifest, indent=2)[:1200])
-    print(f"\n{zip_path}  ({size_mb:.1f} MB)")
-    if manifest["missing_data"]:
-        print(f"MISSING: {manifest['missing_data']} - build the feature store first")
+    print(json.dumps({k: manifest[k] for k in ("generated", "git_sha", "git_dirty",
+                                                "feature_schema", "data")}, indent=2))
+    print(f"\n{zip_path}  ({zip_path.stat().st_size / 1e6:.1f} MB)")
     if manifest["git_dirty"]:
-        print("WARNING: working tree is dirty, so git_sha does not fully describe this bundle")
-    print("\nUpload through the Altair portal: Files -> +Upload -> File")
+        print("WARNING: src/, train/ or cluster/ has uncommitted changes - commit first so "
+              "git_sha describes this bundle")
     return 0
 
 

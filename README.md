@@ -9,6 +9,7 @@ Deep Learning (702AI0C008) mini project · team of 4 · four-week build to 2026-
 | Plan | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
 | What the plan got wrong | [docs/PLAN_REVIEW.md](docs/PLAN_REVIEW.md) |
 | Build checklist | [CHECKLIST_v2.md](CHECKLIST_v2.md) |
+| Fetch -> build -> bundle -> train | [RUNBOOK.md](RUNBOOK.md) |
 | GPU cluster | [RUN_ALTAIR.md](RUN_ALTAIR.md) |
 
 ---
@@ -68,12 +69,12 @@ src/mapguard/          library - everything real lives here
 scripts/               local CLI - fetchers, gates, fixtures. Network-bound, no GPU.
 train/                 every training and evaluation entry point, one folder per stage,
                        named by run order and tagged with plan stage - see train/README.md
-cluster/               everything GPU-bound, one folder per task. See RUN_ALTAIR.md
-  00_env_check/        proves the model builds on the cluster image
-  01_baselines/        B0, logreg, XGBoost
-  02_stage2_train/     the research result
-  bundle.py            packs a task into one uploadable zip with a provenance manifest
-tests/                 80 tests, no network
+  run_pipeline.py      one command for every stage, on any machine
+  setup_env.sh         M4 / Linux training environment + wiring check
+cluster/               one generated notebook per train/ stage, plus 99_full_pipeline
+  make_notebooks.py    generates them
+  bundle.py            code + feature store + splits -> one zip for cluster or M4
+tests/                 111 tests, no network
 data/labels/           ovid_labels.tsv - 18,276 changesets (tracked)
 data/fixtures/         real changesets selected as awkward cases (tracked, small)
 results/               gate output and metrics (tracked)
