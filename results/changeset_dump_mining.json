@@ -1,0 +1,41 @@
+{
+ "source": {
+  "url": "https://osm-planet-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com/changesets/osm/2026/changesets-260914.osm.bz2",
+  "bytes": "8760181140",
+  "last_modified": "Thu, 17 Sep 2026 15:12:28 GMT",
+  "file": "changesets-260914.osm.bz2",
+  "start_offset": "4824943517",
+  "since": "2021-09-01",
+  "until": "2026-09-14",
+  "started_utc": "2026-09-18T09:02:06+00:00"
+ },
+ "chunks_done": [
+  2,
+  110535827,
+  110996000
+ ],
+ "reverts": 1443,
+ "reverts_by_kind": [
+  [
+   "comment",
+   1343
+  ],
+  [
+   "josm-reverter",
+   99
+  ],
+  [
+   "simple_revert",
+   1
+  ]
+ ],
+ "reverts_by_year": [
+  [
+   "2021",
+   1443
+  ]
+ ],
+ "partial_reverts": 5,
+ "sample": 1150,
+ "changesets_seen": 460283
+}

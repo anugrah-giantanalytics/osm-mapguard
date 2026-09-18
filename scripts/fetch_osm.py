@@ -2,14 +2,16 @@
 
 Subcommands, in run order (each is resumable and safe to re-run):
 
-    select     choose corpus M (OSMCha-reviewed) and corpus N (random unreviewed) changesets
+    select     choose corpus M (OSMCha-reviewed) and N (random unreviewed) changesets,
+               and/or corpus R (revert-derived, 2021-09..) from scripts/mine_changesets.py
     changesets fetch metadata and osmChange contents for M and N
     users      account creation dates for every author in A, M and N
     histories  point-in-time changeset history for every target changeset
     versions   the previous version of every modified/deleted object (tag diffs, node moves)
     status     progress of all of the above
 
-    python scripts/fetch_osm.py select
+    python scripts/fetch_osm.py select --corpora R        # after mine_changesets.py
+    python scripts/fetch_osm.py select --corpora MN       # after the OSMCha harvest
     python scripts/fetch_osm.py changesets --rate 2
     python scripts/fetch_osm.py users
     python scripts/fetch_osm.py histories --rate 1.5
@@ -63,6 +65,9 @@ from mapguard.data.corpora import (  # noqa: E402
     LABELS_DB,
     M_PER_CLASS,
     N_TOTAL,
+    R_CENSOR_DAYS,
+    R_OVERSAMPLE,
+    R_POSITIVES,
     SEED,
     USERS_DB,
     VERSIONS_DB,
@@ -70,7 +75,7 @@ from mapguard.data.corpora import (  # noqa: E402
     valid_selection,
 )
 from mapguard.data.http import PoliteSession  # noqa: E402
-from mapguard.data.osm_api import fetch_changeset_download, fetch_changeset_meta  # noqa: E402
+from mapguard.data.osm_api import fetch_changeset_download, parse_changeset_metas  # noqa: E402
 from mapguard.data.osmchange import parse_safe  # noqa: E402
 from mapguard.data.store import SCHEMA as STORE_SCHEMA  # noqa: E402
 from mapguard.features.user_history import HISTORY_LIMIT, fetch_user_history  # noqa: E402
@@ -138,7 +143,19 @@ CREATE TABLE IF NOT EXISTS planned (
     PRIMARY KEY (corpus, cid)
 ) WITHOUT ROWID;
 """
-MN_SCHEMA = SELECTION_SCHEMA + STORE_SCHEMA["meta"] + ";" + STORE_SCHEMA["contents"] + ";"
+R_SCHEMA = """
+CREATE TABLE IF NOT EXISTS r_targets (
+    cid              INTEGER PRIMARY KEY,   -- the reverted changeset
+    reverter_cid     INTEGER NOT NULL,      -- earliest whole-changeset revert of it
+    reverter_created TEXT NOT NULL,
+    reverter_uid     INTEGER,
+    kind             TEXT                   -- osm-revert | josm-reverter | simple_revert | comment
+);
+CREATE TABLE IF NOT EXISTS r_window (k TEXT PRIMARY KEY, v TEXT);
+"""
+MN_SCHEMA = (SELECTION_SCHEMA + STORE_SCHEMA["meta"] + ";" + STORE_SCHEMA["contents"] + ";"
+             + R_SCHEMA)
+DUMP_DB = "raw/changeset_dump.sqlite"
 
 
 def connect(rel: str, schema: str) -> sqlite3.Connection:
@@ -210,12 +227,116 @@ def run_pool(items, fn, write, *, label: str, workers: int, total: int | None = 
 
 
 def cmd_select(args) -> int:
-    labels = read_only(LABELS_DB)
     conn = connect(CORPUS_MN_DB, MN_SCHEMA)
-    if conn.execute("SELECT COUNT(*) FROM selection").fetchone()[0] and not args.force:
-        print("selection exists; pass --force to rebuild it (only before fetching)")
-        return 0
-    conn.execute("DELETE FROM selection")
+    corpora = {c.strip().upper() for c in args.corpora.split(",")}
+    if "R" in corpora:
+        select_r(conn, args)
+    if "MN" in corpora:
+        select_mn(conn, args)
+    return 0
+
+
+def select_r(conn: sqlite3.Connection, args) -> None:
+    """Corpus R candidates from the mined dump. Label rules are applied after metadata is
+    fetched, in mapguard.data.corpora._valid_r; this only picks candidates, by hash."""
+    import bisect
+    from datetime import datetime, timedelta
+
+    if conn.execute("SELECT COUNT(*) FROM selection WHERE corpus='R'").fetchone()[0] and not args.force:
+        print("corpus R selection exists; pass --force to rebuild it (only before fetching)")
+        return
+    conn.execute("DELETE FROM selection WHERE corpus='R'")
+    conn.execute("DELETE FROM r_targets")
+    dump = read_only(DUMP_DB)
+    src = dict(dump.execute("SELECT k, v FROM source"))
+    since = src["since"]
+    censor = (datetime.fromisoformat(src["until"]) - timedelta(days=R_CENSOR_DAYS)).strftime("%Y-%m-%d")
+    conn.executemany("INSERT OR REPLACE INTO r_window VALUES (?, ?)",
+                     [("since", since), ("censor", censor), ("dump_file", src["file"]),
+                      ("dump_last_modified", src["last_modified"])])
+
+    # cid -> date from the 1-in-400 sample: ids are monotone in time, so interpolation is
+    # accurate to hours. Used only to place candidates in quarters; exact dates come later.
+    sample = dump.execute("SELECT cid, created_at FROM sample ORDER BY cid").fetchall()
+    cids = [c for c, _ in sample]
+
+    def approx_date(cid: int) -> str | None:
+        i = bisect.bisect_left(cids, cid)
+        if i == 0 or i >= len(cids):
+            return None
+        return sample[i][1]
+
+    reverts = dump.execute("SELECT cid, created_at, uid, kind, targets, partial FROM reverts"
+                           " ORDER BY created_at").fetchall()
+    reverter_ids = {r[0] for r in reverts}
+    ever_reverted: set[int] = set()
+    first_revert: dict[int, tuple] = {}
+    for cid, created, uid, kind, targets, partial in reverts:
+        ts = json.loads(targets)
+        ever_reverted.update(ts)
+        if partial:
+            continue
+        for t in ts:
+            if t not in reverter_ids and t not in first_revert:
+                first_revert[t] = (cid, created, uid, kind)
+
+    pools: dict[str, list[int]] = defaultdict(list)
+    for t in first_revert:
+        d = approx_date(t)
+        if d and since <= d < censor:
+            pools[quarter_of(d)].append(t)
+    quarters = sorted(pools)
+    want = int(R_POSITIVES * R_OVERSAMPLE)
+    take = {q: 0 for q in quarters}
+    open_q = [q for q in quarters]
+    avail = {q: sorted(pools[q], key=rank) for q in quarters}
+    while want > 0 and open_q:
+        share = max(1, want // len(open_q))
+        for q in list(open_q):
+            add = min(share, len(avail[q]) - take[q], want)
+            take[q] += add
+            want -= add
+            if take[q] >= len(avail[q]):
+                open_q.remove(q)
+            if want <= 0:
+                break
+    pos_rows, tgt_rows = [], []
+    for q in quarters:
+        for t in avail[q][: take[q]]:
+            pos_rows.append((t, "R", 1, q, rank(t)))
+            r = first_revert[t]
+            tgt_rows.append((t, r[0], r[1], r[2], r[3]))
+    conn.executemany("INSERT INTO selection (cid,corpus,label,quarter,rank) VALUES (?,?,?,?,?)", pos_rows)
+    conn.executemany("INSERT INTO r_targets VALUES (?,?,?,?,?)", tgt_rows)
+
+    # negatives: sampled changesets nobody reverted, same quarters, ~1.2x positives each
+    neg_pool: dict[str, list[int]] = defaultdict(list)
+    for cid, created, closed, n in dump.execute(
+            "SELECT cid, created_at, closed_at, num_changes FROM sample"):
+        if (since <= created < censor and closed and (n or 0) > 0
+                and cid not in ever_reverted and cid not in reverter_ids):
+            neg_pool[quarter_of(created)].append(cid)
+    neg_rows = []
+    for q in quarters:
+        k = int(round(take[q] / R_OVERSAMPLE * 1.3))
+        neg_rows += [(c, "R", 0, q, rank(c)) for c in sorted(neg_pool.get(q, []), key=rank)[:k]]
+    conn.executemany("INSERT INTO selection (cid,corpus,label,quarter,rank) VALUES (?,?,?,?,?)", neg_rows)
+    print(json.dumps({
+        "corpus_R": {"window": [since, censor], "revert_changesets": len(reverts),
+                     "reverted_targets_in_window": sum(len(v) for v in pools.values()),
+                     "positive_candidates": len(pos_rows), "negative_candidates": len(neg_rows)},
+        "by_quarter": [list(r) for r in conn.execute(
+            "SELECT quarter, label, COUNT(*) FROM selection WHERE corpus='R' GROUP BY 1,2")],
+    }))
+
+
+def select_mn(conn: sqlite3.Connection, args) -> None:
+    labels = read_only(LABELS_DB)
+    if conn.execute("SELECT COUNT(*) FROM selection WHERE corpus IN ('M','N')").fetchone()[0] \
+            and not args.force:
+        print("corpus M/N selection exists; pass --force to rebuild it (only before fetching)")
+        return
+    conn.execute("DELETE FROM selection WHERE corpus IN ('M','N')")
 
     rows = labels.execute(
         "SELECT cid, harmful, date FROM labels WHERE checked = 1 AND harmful IS NOT NULL"
@@ -277,9 +398,9 @@ def cmd_select(args) -> int:
         "selection": [list(r) for r in conn.execute(
             "SELECT corpus, label, COUNT(*) FROM selection GROUP BY 1,2")],
         "by_quarter": [list(r) for r in conn.execute(
-            "SELECT quarter, corpus, label, COUNT(*) FROM selection GROUP BY 1,2,3")],
+            "SELECT quarter, corpus, label, COUNT(*) FROM selection WHERE corpus IN ('M','N')"
+            " GROUP BY 1,2,3")],
     }))
-    return 0
 
 
 # --------------------------------------------------------------------- changesets
@@ -292,22 +413,33 @@ def cmd_changesets(args) -> int:
     have_meta = {r[0] for r in conn.execute("SELECT cid FROM meta WHERE status IN (200, 404, 410)")}
     todo = [r[0] for r in conn.execute("SELECT cid FROM selection ORDER BY rank")
             if r[0] not in have_meta]
-    print(f"metadata: {len(todo)} to fetch", flush=True)
+    batches = [todo[i:i + 100] for i in range(0, len(todo), 100)]
+    print(f"metadata: {len(todo)} to fetch in {len(batches)} batch calls", flush=True)
 
-    def get_meta(cid):
-        meta, r = fetch_changeset_meta(sess, cid)
-        if meta is None:
-            return (cid, r.status) + (None,) * 13 + (round(r.seconds, 2), r.error)
-        return (cid, r.status, meta.created_at, meta.closed_at, meta.uid, meta.user,
-                meta.num_changes, meta.min_lat, meta.min_lon, meta.max_lat, meta.max_lon,
-                meta.comments_count, meta.comment, meta.editor,
-                json.dumps(meta.tags, ensure_ascii=False), round(r.seconds, 2), r.error)
+    def get_meta(batch):
+        # /changesets?changesets=... returns up to 100 per call; ids it omits do not exist
+        # (or are hidden), and are recorded as 404 so they are not asked for again.
+        r = sess.get(f"{OSM_API}/changesets", params={"changesets": ",".join(map(str, batch))})
+        if not r.ok:
+            return []                          # transient; retried on the next run
+        got = {m.cid: m for m in parse_changeset_metas(r.text)}
+        rows = []
+        for cid in batch:
+            meta = got.get(cid)
+            if meta is None:
+                rows.append((cid, 404) + (None,) * 13 + (round(r.seconds, 2), "absent from batch"))
+            else:
+                rows.append((cid, 200, meta.created_at, meta.closed_at, meta.uid, meta.user,
+                             meta.num_changes, meta.min_lat, meta.min_lon, meta.max_lat, meta.max_lon,
+                             meta.comments_count, meta.comment, meta.editor,
+                             json.dumps(meta.tags, ensure_ascii=False), round(r.seconds, 2), None))
+        return rows
 
-    run_pool(todo, get_meta, lambda row: conn.execute(
+    run_pool(batches, get_meta, lambda rows: conn.executemany(
         "INSERT OR REPLACE INTO meta (cid,status,created_at,closed_at,uid,user,num_changes,"
         "min_lat,min_lon,max_lat,max_lon,comments_count,comment,editor,tags_json,seconds,error)"
-        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", row),
-        label="meta", workers=args.workers, total=len(todo))
+        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows),
+        label="meta batches", workers=args.workers, total=len(batches))
 
     valid = valid_selection(conn)
     have = {r[0] for r in conn.execute("SELECT cid FROM contents WHERE status = 200")}
@@ -539,6 +671,8 @@ def cmd_status(args) -> int:
 
     print(json.dumps({
         "selection": q(CORPUS_MN_DB, "SELECT corpus, label, COUNT(*) FROM selection GROUP BY 1,2"),
+        "dump_mining": q(DUMP_DB, "SELECT COUNT(*), MAX(last_cid) FROM chunks"),
+        "dump_reverts": q(DUMP_DB, "SELECT substr(created_at,1,4), COUNT(*) FROM reverts GROUP BY 1"),
         "mn_meta": q(CORPUS_MN_DB, "SELECT status, COUNT(*) FROM meta GROUP BY 1"),
         "mn_contents": q(CORPUS_MN_DB, "SELECT status, COUNT(*), SUM(bytes) FROM contents GROUP BY 1"),
         "users": q(USERS_DB, "SELECT status, COUNT(*) FROM users GROUP BY 1"),
@@ -554,6 +688,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("select")
+    s.add_argument("--corpora", default="MN", help="MN, R or MN,R")
     s.add_argument("--since", default="2023-01-01")
     s.add_argument("--until", default="2026-09-17")
     s.add_argument("--force", action="store_true")

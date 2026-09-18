@@ -7,6 +7,20 @@ the feature store would quietly describe a different dataset from the one fetche
     A   Ovid benchmark, 2014-2019, revert-derived labels     corpus_a_meta + corpus_a
     M   OSMCha-reviewed, 2023-2026                           corpus_mn (corpus = M)
     N   random unreviewed changesets from M's quarters       corpus_mn (corpus = N)
+    R   revert-derived, 2021-09..2026-06, Ovid's definition  corpus_mn (corpus = R),
+        mined from the changeset dump by scripts/mine_changesets.py
+
+Corpus R label rules (applied in `valid_selection`, after metadata is fetched):
+
+    positive  reverted by a *different* account within R_MAX_DELAY_DAYS of being made,
+              by a whole-changeset revert (partial reverts and reworks are excluded)
+    negative  a hash-sampled changeset nobody reverted, from the same quarters, one per
+              positive per quarter (balanced, as in the Ovid benchmark)
+    both      closed, non-empty, created in [since, censor) where censor = dump date minus
+              R_CENSOR_DAYS, so every changeset had time to be reverted - otherwise the
+              newest negatives would be "not reverted *yet*"
+    both      at most R_PER_AUTHOR changesets per author per class, so one mass-reverted
+              account or one prolific mapper cannot define a class
 """
 
 from __future__ import annotations
@@ -24,6 +38,12 @@ VERSIONS_DB = "raw/prev_versions.sqlite"
 SEED = 20260904
 M_PER_CLASS = 4000
 N_TOTAL = 4000
+
+R_POSITIVES = 6000          # valid positives wanted; negatives match them per quarter
+R_OVERSAMPLE = 1.5          # candidates selected per wanted positive (self-reverts etc. drop out)
+R_MAX_DELAY_DAYS = 90
+R_CENSOR_DAYS = 90
+R_PER_AUTHOR = 5
 
 
 def quarter_of(date: str | None) -> str | None:
@@ -46,15 +66,79 @@ def valid_selection(conn: sqlite3.Connection, n_total: int = N_TOTAL) -> dict[in
     out: dict[int, tuple[str, int]] = {}
     rows = conn.execute(
         "SELECT s.cid, s.corpus, s.label, s.quarter, m.status, m.closed_at, m.num_changes,"
-        " m.created_at FROM selection s LEFT JOIN meta m ON m.cid = s.cid ORDER BY s.rank")
-    for cid, corpus, label, q, status, closed, n, created in rows:
+        " m.created_at, m.uid FROM selection s LEFT JOIN meta m ON m.cid = s.cid"
+        " ORDER BY s.rank").fetchall()
+    for cid, corpus, label, q, status, closed, n, created, _ in rows:
         if status != 200:
             continue
         if corpus == "M":
             out[cid] = ("M", int(label))
-        elif (closed and (n or 0) > 0 and quarter_of(created) == q and quota.get(q, 0) > 0):
+        elif corpus == "N" and (closed and (n or 0) > 0 and quarter_of(created) == q
+                                and quota.get(q, 0) > 0):
             quota[q] -= 1
             out[cid] = ("N", 0)
+    out.update(_valid_r(conn, rows))
+    return out
+
+
+def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    return conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                        (name,)).fetchone() is not None
+
+
+def _days(a: str, b: str) -> float:
+    from datetime import datetime
+
+    fa = datetime.fromisoformat(a.replace("Z", "+00:00"))
+    fb = datetime.fromisoformat(b.replace("Z", "+00:00"))
+    return (fb - fa).total_seconds() / 86400.0
+
+
+def _valid_r(conn: sqlite3.Connection, rows) -> dict[int, tuple[str, int]]:
+    """Corpus R rows that satisfy the label rules in the module docstring."""
+    if not _table_exists(conn, "r_targets") or not _table_exists(conn, "r_window"):
+        return {}
+    window = dict(conn.execute("SELECT k, v FROM r_window"))
+    since, censor = window.get("since"), window.get("censor")
+    reverter = {c: (created, uid) for c, created, uid in
+                conn.execute("SELECT cid, reverter_created, reverter_uid FROM r_targets")}
+    out: dict[int, tuple[str, int]] = {}
+    per_author: dict[tuple[int, int], int] = {}
+    quota: dict[str, int] = {}
+
+    def usable(status, closed, n, created, uid):
+        return (status == 200 and closed and (n or 0) > 0 and created
+                and since <= created < censor and uid is not None)
+
+    def take(cid, label, uid, q):
+        key = (uid, label)
+        if per_author.get(key, 0) >= R_PER_AUTHOR:
+            return False
+        per_author[key] = per_author.get(key, 0) + 1
+        out[cid] = ("R", label)
+        return True
+
+    wanted = R_POSITIVES
+    for cid, corpus, label, _, status, closed, n, created, uid in rows:
+        if corpus != "R" or label != 1 or wanted <= 0 or not usable(status, closed, n, created, uid):
+            continue
+        r_created, r_uid = reverter.get(cid, (None, None))
+        if r_created is None or r_uid == uid:            # self-reverts are the author's own fix
+            continue
+        delay = _days(created, r_created)
+        if not 0 <= delay <= R_MAX_DELAY_DAYS:
+            continue
+        if take(cid, 1, uid, quarter_of(created)):
+            q = quarter_of(created)
+            quota[q] = quota.get(q, 0) + 1
+            wanted -= 1
+
+    for cid, corpus, label, _, status, closed, n, created, uid in rows:
+        if corpus != "R" or label != 0 or not usable(status, closed, n, created, uid):
+            continue
+        q = quarter_of(created)
+        if quota.get(q, 0) > 0 and take(cid, 0, uid, q):
+            quota[q] -= 1
     return out
 
 

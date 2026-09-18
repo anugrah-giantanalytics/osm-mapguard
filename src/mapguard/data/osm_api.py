@@ -89,6 +89,19 @@ def parse_changeset_meta(xml: str) -> ChangesetMeta | None:
     el = root.find("changeset")
     if el is None:
         return None
+    return _meta_from_element(el)
+
+
+def parse_changeset_metas(xml: str) -> list[ChangesetMeta]:
+    """Parse a /changesets?changesets=<id,id,...> response: up to 100 changesets per call."""
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError:
+        return []
+    return [_meta_from_element(el) for el in root.findall("changeset")]
+
+
+def _meta_from_element(el) -> ChangesetMeta:
     a = el.attrib
     return ChangesetMeta(
         cid=int(a["id"]),

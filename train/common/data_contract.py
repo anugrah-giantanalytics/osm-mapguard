@@ -23,12 +23,18 @@ Task selection needs a `corpus` column on changesets:
     A  historical Ovid benchmark (revert-derived labels)
     M  modern OSMCha-reviewed changesets (label 1 = harmful, 0 = reviewed-and-cleared)
     N  random unreviewed changesets from the same window as M (presumed clean, label 0)
+    R  revert-derived changesets 2021-09..2026-06 (Ovid's label definition, mined from the
+       changeset dump; label 1 = reverted by someone else within 90 days)
 
 and the tasks are:
 
     T1   triage     corpus M only           harmful vs reviewed-and-cleared
     T2   detection  M positives + corpus N  harmful vs random unreviewed
     ovid benchmark  corpus A only           comparable with the published F1
+    revert          corpus R only           the same label definition, 2021-09..2026-06
+    ovid_modern     corpus A + R            for the temporal split: train on Ovid's years,
+                                            test on 2021+ under the *same* label definition,
+                                            so any drop is time, not a change of labeller
     all             everything, no filtering - exploration only, not reportable
 """
 
@@ -58,7 +64,7 @@ OPTIONAL = {
     "changesets": tuple(TABULAR_FEATURES) + ("corpus", "editor", "comment_length"),
 }
 
-CORPORA = ("A", "M", "N")
+CORPORA = ("A", "M", "N", "R")
 
 
 class ContractError(SystemExit):
@@ -176,6 +182,10 @@ def select_task(cs, task: str):
                                 "random unreviewed changesets and must be labelled 0")
     elif task == "ovid":
         mask = corpus == "A"
+    elif task == "revert":
+        mask = corpus == "R"
+    elif task == "ovid_modern":
+        mask = corpus.isin(["A", "R"])
     else:
         raise ContractError(f"unknown task {task!r}")
 

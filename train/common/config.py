@@ -15,7 +15,7 @@ import copy
 import json
 from pathlib import Path
 
-TASKS = ("T1", "T2", "ovid", "all")
+TASKS = ("T1", "T2", "ovid", "revert", "ovid_modern", "all")
 SPLITS = ("R1a", "R1b", "temporal")
 
 

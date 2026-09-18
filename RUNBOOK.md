@@ -12,7 +12,35 @@ Every command is resumable: stop with Ctrl+C, run it again, it continues.
 
 ---
 
-## Step 1 — fetch (laptop, at home)
+## Step 1 — fetch (laptop)
+
+Which source gives what, and why Geofabrik/OSMnx/QuickOSM are not used:
+[docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
+
+### Order at a glance
+
+| Step | Command | Gives | Time (measured or estimated) |
+|---|---|---|---|
+| 1-0 | `mine_changesets.py` | corpus R candidates: 5 years of reverts + a 1/400 sample | ~3 h at 0.4 MB/s for 3.9 GB |
+| 1a | `fetch_osmcha_labels.py` | corpus M labels (2023+) | osmcha.org-bound; it was overloaded on 2026-09-18 |
+| 1b | `fetch_osm.py select --corpora R` / `--corpora MN` | chosen rows | seconds |
+| 1c | `fetch_osm.py changesets` | metadata (100 per call) + osmChange | ~3–4 h for ~24k downloads |
+| 1d | `fetch_osm.py versions` | previous versions | Corpus A measured ~40 min (458k objects, 632 calls) |
+| 1e | `fetch_osm.py users`, `histories` | account age, point-in-time history | users minutes; histories ~1.5 h per 8k users |
+
+**The `ovid` task only needs Corpus A**, which is fully fetched. So Step 2 can run as soon
+as 1d and 1e have finished for Corpus A, and training can start while R and M are still
+being fetched. Rebuild and re-bundle when they finish.
+
+### 1-0. Mine five years of reverts from the changeset dump (~3 h)
+
+```bash
+python scripts/mine_changesets.py --since 2021-09-01 --until 2026-09-14
+```
+
+It reads only the byte range from 2021-09 onwards of `changesets-latest.osm.bz2`, in
+parallel range requests, and stores reverts, a hash sample and monthly counts in
+`raw/changeset_dump.sqlite`. It is resumable per 16 MB chunk. `--stats` shows progress.
 
 Needs `.env` with `OSMCHA_TOKEN` and `MAPGUARD_CONTACT` (see `.env.example`). Data goes to
 `MAPGUARD_DATA` (default `C:\osm-data`). Keep the laptop plugged in and awake.
@@ -38,10 +66,18 @@ python scripts/fetch_osmcha_labels.py --since 2023-01-01 --until 2026-09-16 --no
 Check `python scripts/fetch_osmcha_labels.py --stats`. If osmcha.org is returning HTTP 0/5xx
 for every window, it is down — stop and try later, do not hammer it.
 
-### 1b. Choose corpora M and N (seconds) — only after 1a is complete
+### 1b. Choose the rows (seconds)
+
+Corpus R, as soon as 1-0 has finished:
 
 ```bash
-python scripts/fetch_osm.py select
+python scripts/fetch_osm.py select --corpora R
+```
+
+Corpora M and N, only after 1a is complete:
+
+```bash
+python scripts/fetch_osm.py select --corpora MN
 ```
 
 4,000 harmful + 4,000 reviewed-clean (M), water-filled across quarters, plus ~6,400 random
