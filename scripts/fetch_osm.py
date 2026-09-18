@@ -82,6 +82,8 @@ from mapguard.features.user_history import HISTORY_LIMIT, fetch_user_history  # 
 
 N_OVERSAMPLE = 1.6
 VERSIONS_PER_CHANGESET = 2000     # cap per changeset; coverage is recorded, not assumed
+UNRESOLVED_GROUP = 32
+MAX_PARAM_CHARS = 5000            # the API answered 414 URI Too Long above ~8,000 URL characters (commas are sent as %2C)
 
 SELECTION_SCHEMA = """
 CREATE TABLE IF NOT EXISTS selection (
@@ -625,7 +627,18 @@ def cmd_versions(args) -> int:
                 if not rows:
                     break
                 last = tuple(rows[-1])
-                yield otype, rows
+                # 725 ten-digit node ids overflow the API's URL limit (HTTP 414, measured),
+                # so split by encoded length as well as by count.
+                batch, length = [], 0
+                for oid, version in rows:
+                    item = len(f"{oid}v{version},")
+                    if batch and length + item > MAX_PARAM_CHARS:
+                        yield otype, batch
+                        batch, length = [], 0
+                    batch.append((oid, version))
+                    length += item
+                if batch:
+                    yield otype, batch
 
     def fetch(otype, refs):
         r = sess.get(f"{OSM_API}/{plural[otype]}",
@@ -642,12 +655,23 @@ def cmd_versions(args) -> int:
                             float(el.attrib["lon"]) if "lon" in el.attrib else None,
                             n_refs, json.dumps(tags, ensure_ascii=False))
             return [got.get((i, v), (otype, i, v, 404, None, None, None, None, None)) for i, v in refs]
-        if r.status in (400, 403, 404, 410, 414) and len(refs) > 1:
-            # one redacted or missing version fails the whole batch: split and retry
+        if r.status == 414 and len(refs) > 1:
             mid = len(refs) // 2
             return fetch(otype, refs[:mid]) + fetch(otype, refs[mid:])
         if r.status in (400, 403, 404, 410):
-            return [(otype, refs[0][0], refs[0][1], r.status, None, None, None, None, None)]
+            # One redacted or missing version fails the whole batch (measured: node
+            # 4039437873 v1 is moderator-hidden - 403 alone, 404 inside a batch). Hidden
+            # versions come in runs of consecutive ids from one changeset, so a binary split
+            # costs ~2 log2(n) calls per hidden id. Split 8 ways instead, and give up on
+            # groups of <= UNRESOLVED_GROUP: they are stored as 499 (not fetched, counted in
+            # coverage) rather than queried one by one.
+            if len(refs) > UNRESOLVED_GROUP:
+                step = -(-len(refs) // 8)
+                out = []
+                for i in range(0, len(refs), step):
+                    out += fetch(otype, refs[i:i + step])
+                return out
+            return [(otype, i, v, 499, None, None, None, None, None) for i, v in refs]
         return []                             # transient; retried on the next run
 
     run_pool(batches(), lambda b: fetch(*b), lambda rows: conn.executemany(
