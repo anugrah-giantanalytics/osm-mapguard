@@ -1,9 +1,9 @@
 {
-  "generated": "2026-09-18T22:03:56",
+  "generated": "2026-09-18T23:54:14",
   "source": "osmcha.org/api/v1/changesets",
   "window": {
-    "since": "2024-11-01",
-    "until": "2024-12-01",
+    "since": "2023-10-01",
+    "until": "2024-01-01",
     "slice_days": 1
   },
   "available_in_window": {
@@ -12,39 +12,39 @@
     "note": "skipped; see results/gate2a_osmcha_coverage.json"
   },
   "stored_this_run": {
-    "harmful": 0,
+    "harmful": 3316,
     "clean": 0
   },
   "store_totals": {
-    "total": 122597,
+    "total": 129589,
     "by_label": {
-      "clean": 87914,
-      "harmful": 34683
+      "clean": 91590,
+      "harmful": 37999
     }
   },
   "fetch_gaps": {
-    "total": 1431,
-    "unresolved": 346,
+    "total": 1535,
+    "unresolved": 350,
     "by_status": {
-      "0": 335,
-      "200": 1085,
-      "429": 11
+      "0": 342,
+      "200": 1185,
+      "429": 8
     }
   },
-  "distinct_reviewers": 1500,
+  "distinct_reviewers": 1525,
   "top_harmful_reasons": {
-    "New mapper": 9131,
-    "New mapper,Review requested": 1990,
-    "User has multiple blocks": 879,
-    "Review requested": 796,
-    "New mapper,Crossing ways": 609,
-    "suspect_word,New mapper": 462,
-    "Crossing ways": 426,
-    "mass deletion,New mapper": 328,
-    "mass modification": 307,
-    "New mapper,Mapbox: Spam text": 290
+    "New mapper": 9873,
+    "New mapper,Review requested": 2106,
+    "User has multiple blocks": 985,
+    "Review requested": 813,
+    "New mapper,Crossing ways": 676,
+    "suspect_word,New mapper": 467,
+    "Crossing ways": 463,
+    "mass deletion,New mapper": 347,
+    "mass modification": 325,
+    "New mapper,Mapbox: Spam text": 307
   },
-  "seconds": 0.9,
+  "seconds": 3801.7,
   "database": "C:\\osm-data\\raw\\osmcha_labels.sqlite",
   "note": "harmful=True is a human calling a changeset damaging. harmful=False is sent with checked=True so negatives are reviewed, not merely unexamined - otherwise the negative class encodes reviewer attention."
 }

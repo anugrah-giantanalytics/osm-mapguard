@@ -163,6 +163,21 @@ def test_ovid_previous_version_features(stores, tmp_path):
     assert cs.loc[1001, "n_prev_authors"] == 1         # uid 55; the author himself not counted
 
 
+def test_edits_with_a_hidden_previous_version_are_dropped(stores, tmp_path):
+    root = stores
+    c = sqlite3.connect(root / "raw" / "prev_versions.sqlite")
+    c.execute("UPDATE versions SET status=499, lat=NULL, lon=NULL, tags_json=NULL, timestamp=NULL,"
+              " uid=NULL WHERE oid=20")
+    c.commit()
+    out = tmp_path / "fs"
+    build_store.main(["--corpora", "A", "--out", str(out)])
+    e = pd.read_parquet(out / "edits.parquet")
+    assert 20 not in set(e[e.cid == 1001].oid)            # hidden previous version: dropped
+    assert {10, 30} <= set(e[e.cid == 1001].oid)
+    report = json.loads((out / "build_report.json").read_text())
+    assert report["coverage_by_corpus"]["A"]["edits_dropped_hidden_prev_label_1"] == 1
+
+
 def test_point_in_time_history_uses_a_complete_later_window_but_only_the_past(stores, tmp_path):
     out = tmp_path / "fs"
     build_store.main(["--corpora", "A", "--out", str(out)])

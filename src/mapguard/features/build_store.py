@@ -159,6 +159,28 @@ def geometry_actions(blob: str | None) -> list[GeometryAction]:
     return out
 
 
+def drop_hidden(edits: list[Edit], vconn: sqlite3.Connection | None) -> tuple[list[Edit], int]:
+    """Remove edits whose previous version the API refuses to serve (moderator-hidden).
+
+    Hiding happens *after* the edit, and mostly to vandalism: in corpus R, 4.0% of positives'
+    modify/delete edits have a hidden previous version against 1.9% of negatives (measured
+    2026-09-18). Left in, "modified but no previous version" is a per-edit label leak. They
+    are dropped exactly like fully-hidden changesets are, and counted per label in the report.
+    """
+    if vconn is None:
+        return edits, 0
+    keep, dropped = [], 0
+    for e in edits:
+        if e.action in ("modify", "delete") and e.version and e.version > 1:
+            row = vconn.execute("SELECT status FROM versions WHERE otype=? AND oid=? AND version=?",
+                                (e.otype, e.oid, e.version - 1)).fetchone()
+            if row and row[0] in (403, 404, 410, 499):
+                dropped += 1
+                continue
+        keep.append(e)
+    return keep, dropped
+
+
 def _versions_has_meta(vconn: sqlite3.Connection | None) -> bool:
     if vconn is None:
         return False
@@ -609,6 +631,8 @@ def main(argv: list[str] | None = None) -> int:
         if err:
             c["dropped_bad_xml"] += 1
             continue
+        edits, hidden = drop_hidden(edits, vconn)
+        c[f"edits_dropped_hidden_prev_label_{label}"] += hidden
         if not edits:
             # Nothing downloadable: never opened, or every edit hidden later. In Corpus A these
             # are 226 rows, 224 of them negatives - a free "clean" signal that measures how
