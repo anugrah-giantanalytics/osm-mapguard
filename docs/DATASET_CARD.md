@@ -1,11 +1,18 @@
-# MapGuard dataset — v0.1.0
+# MapGuard dataset — v1.0.0-test
 
-Generated 2026-09-08T08:23:46+00:00 from commit `0a3bbdc1f7fc`.
+Generated 2026-09-18T16:55:06+00:00 from commit `fc8cd958590f`.
 
-**This is a partial release.** Corpus A is complete and verified. The modern OSMCha
-corpus is still being harvested and ships here only as far as it had progressed; see
-*Coverage and gaps* below. It is versioned `v0.1.x` for that reason — `v1.0.0` is
-reserved for the complete dataset.
+Training-ready: `feature_store/` is the exact input of `train/` (pseudonymised), with the
+frozen splits in `splits/`. Build provenance and per-label coverage are in
+`feature_store/build_report.json`; every column is documented in
+`feature_store/feature_schema.json`.
+
+| Corpus | Years | Label |
+|---|---|---|
+| A | 2014–2019 | reverted (Ovid benchmark) |
+| R | 2021-09 → 2026-06 | reverted by another account within 90 days, mined from the planet changeset dump; `revert_mentions_vandalism` marks Ovid's stricter rule |
+| M | 2023 → 2026 | OSMCha human review (harmful vs flagged-and-cleared) |
+| N | 2023 → 2026 | random unreviewed, presumed clean |
 
 ## What this is
 
@@ -16,9 +23,12 @@ vandalism-detection models. Two label sources with **different meanings** — se
 
 | File | Rows | Description |
 |---|---|---|
+| `feature_store/*.parquet` | 18,050 changesets | training input for `train/` - changesets, sampled edits, point-in-time user history |
+| `corpus_r_reverts.parquet` | 16,562 | which revert labelled each corpus R positive |
+| `splits/` | — | frozen train/val/test id lists |
 | `corpus_a_changesets.parquet` | 18,276 | Ovid-benchmark changesets, 2014–2019, with parsed edit counts |
-| `osmcha_labels.parquet` | 8,534 | OSMCha human review decisions, 2023 onward |
-| `fetch_coverage.json` | 12 | windows the harvest failed to retrieve |
+| `osmcha_labels.parquet` | 125,143 | OSMCha human review decisions, 2023 onward |
+| `fetch_coverage.json` | 1451 | windows the harvest failed to retrieve |
 | `results/` | — | gate artefacts: every measurement behind the design decisions |
 | `fixtures/` | — | real changesets selected as awkward cases |
 | `MANIFEST.json` | — | provenance, counts, git SHA |
@@ -56,7 +66,7 @@ sampling choice. Models evaluated on it are best evidenced on European edits.
 ## Coverage and gaps
 
 `fetch_coverage.json` lists every date window the harvest failed to retrieve, with
-status and retry count. Unresolved gaps at packaging time: **2**.
+status and retry count. Unresolved gaps at packaging time: **349**.
 A dataset that cannot say what it failed to collect cannot support a coverage claim, so
 the gaps ship with the data rather than being quietly dropped.
 

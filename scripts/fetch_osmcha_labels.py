@@ -52,6 +52,8 @@ def main() -> int:
                          "around page 30, so we walk dates instead")
     ap.add_argument("--retry-gaps", action="store_true",
                     help="second pass: re-fetch only the windows recorded as gaps")
+    ap.add_argument("--only", choices=("harmful", "clean"), default=None,
+                    help="fetch one class only - for filling a hole in that class")
     ap.add_argument("--stats", action="store_true")
     ap.add_argument("--no-count", action="store_true",
                     help="skip the upfront availability counts. Over a multi-year window "
@@ -90,7 +92,8 @@ def main() -> int:
         print(f"available: {totals}")
 
         stored = {"harmful": 0, "clean": 0}
-        for harmful in (True, False):
+        classes = (True, False) if not args.only else ((args.only == "harmful"),)
+        for harmful in classes:
             key = "harmful" if harmful else "clean"
             print(f"\nfetching {key}...")
             def note_gap(w_from, w_to, klass, status):

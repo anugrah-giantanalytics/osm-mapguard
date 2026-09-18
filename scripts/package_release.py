@@ -124,6 +124,77 @@ def scrub(obj, s: str):
     return out
 
 
+def pseudo_int(uid, s: str) -> int | None:
+    """Pseudonym as an integer, so training code that groups by uid (user-disjoint splits)
+    works unchanged on the released store. Same salt and digest as `pseudo`."""
+    if uid is None or uid != uid:          # None or NaN
+        return None
+    return int(hashlib.sha256(f"{s}:{int(uid)}".encode()).hexdigest()[:15], 16)
+
+
+def export_feature_store(out_dir: Path, s: str) -> dict:
+    """The training feature store exactly as built, with identities removed.
+
+    uid and user_uid become salted integer pseudonyms (grouping preserved, so R1b splits
+    still hold); the free-text changeset comment is dropped. Everything else is map data
+    or derived counts.
+    """
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    from mapguard.config import interim_dir
+
+    src = interim_dir()
+    dst = out_dir / "feature_store"
+    dst.mkdir(parents=True, exist_ok=True)
+    stats = {}
+    for name in ("changesets", "edits", "user_seq"):
+        table = pq.read_table(src / f"{name}.parquet")
+        if name == "changesets":
+            for col in ("uid", "user_uid"):
+                if col in table.column_names:
+                    vals = [pseudo_int(u, s) for u in table.column(col).to_pylist()]
+                    idx = table.column_names.index(col)
+                    table = table.set_column(idx, col, pa.array(vals, type=pa.int64()))
+            if "comment" in table.column_names:
+                table = table.drop(["comment"])
+        pq.write_table(table, dst / f"{name}.parquet", compression="zstd")
+        stats[name] = table.num_rows
+    for extra in ("build_report.json",):
+        if (src / extra).exists():
+            (dst / extra).write_bytes((src / extra).read_bytes())
+    schema = REPO / "results" / "feature_schema.json"
+    if schema.exists():
+        (dst / "feature_schema.json").write_bytes(schema.read_bytes())
+    return stats
+
+
+def export_corpus_r(out_dir: Path, s: str) -> dict:
+    """Corpus R label provenance: which revert labelled each positive. No comments (they
+    often name the reverted account), reverter ids pseudonymised."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    db = RAW / "corpus_mn.sqlite"
+    if not db.exists():
+        return {"n": 0}
+    c = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    has = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if "r_targets" not in has:
+        return {"n": 0}
+    rows = [dict(zip(("changeset_id", "reverter_changeset_id", "reverter_created_at",
+                      "reverter_pseudonym", "revert_tool", "revert_mentions_vandalism"), r))
+            for r in c.execute("SELECT cid, reverter_cid, reverter_created, reverter_uid, kind,"
+                               " COALESCE(vandal, 0) FROM r_targets")]
+    for r in rows:
+        r["reverter_pseudonym"] = pseudo(r["reverter_pseudonym"], s)
+    window = dict(c.execute("SELECT k, v FROM r_window"))
+    c.close()
+    pq.write_table(pa.Table.from_pylist(rows), out_dir / "corpus_r_reverts.parquet",
+                   compression="zstd")
+    return {"n": len(rows), "window": window}
+
+
 def sha256_file(p: Path) -> str:
     h = hashlib.sha256()
     with p.open("rb") as fh:
@@ -262,6 +333,9 @@ def main() -> int:
     ap.add_argument("--version", required=True, help="e.g. v0.1.0")
     ap.add_argument("--publish", action="store_true", help="create the GitHub release")
     ap.add_argument("--notes-only", action="store_true")
+    ap.add_argument("--notes", default=None, help="release notes file (default: the card)")
+    ap.add_argument("--extra-asset", action="append", default=[],
+                    help="another file to attach, e.g. the training bundle")
     args = ap.parse_args()
 
     s = salt()
@@ -277,6 +351,18 @@ def main() -> int:
     print("exporting OSMCha labels (pseudonymised)...")
     l_stats = export_labels(stage, s)
     print(f"  {l_stats['n']:,} label rows")
+
+    print("exporting the training feature store (pseudonymised)...")
+    fs_stats = export_feature_store(stage, s)
+    print(f"  {fs_stats}")
+
+    print("exporting corpus R revert provenance (pseudonymised)...")
+    r_stats = export_corpus_r(stage, s)
+    print(f"  {r_stats.get('n', 0):,} reverted targets")
+
+    (stage / "splits").mkdir(parents=True, exist_ok=True)
+    for f in (REPO / "experiments" / "splits").glob("*.json"):
+        stage.joinpath("splits", f.name).write_bytes(f.read_bytes())
 
     geo = geography(stage / "corpus_a_changesets.parquet")
 
@@ -301,6 +387,8 @@ def main() -> int:
         "git_sha": git_sha(),
         "corpus_a": a_stats,
         "osmcha_labels": l_stats,
+        "feature_store": fs_stats,
+        "corpus_r": r_stats,
         "geography_corpus_a": geo,
         "pseudonymisation": "salted SHA-256 of uid, first 16 hex chars; usernames and "
                             "reviewer names removed; salt not published",
@@ -332,8 +420,9 @@ def main() -> int:
         print("\ncreating GitHub release...")
         subprocess.run(
             ["gh", "release", "create", args.version, str(zip_path), str(sums),
+             *[str(x) for x in args.extra_asset],
              "--title", f"MapGuard dataset {args.version}",
-             "--notes-file", str(notes)],
+             "--notes-file", str(args.notes or notes)],
             cwd=REPO, check=True)
         print("published")
     else:
@@ -351,10 +440,17 @@ def build_card(m: dict, version: str) -> str:
 
 Generated {m['generated_utc']} from commit `{m['git_sha'][:12]}`.
 
-**This is a partial release.** Corpus A is complete and verified. The modern OSMCha
-corpus is still being harvested and ships here only as far as it had progressed; see
-*Coverage and gaps* below. It is versioned `v0.1.x` for that reason — `v1.0.0` is
-reserved for the complete dataset.
+Training-ready: `feature_store/` is the exact input of `train/` (pseudonymised), with the
+frozen splits in `splits/`. Build provenance and per-label coverage are in
+`feature_store/build_report.json`; every column is documented in
+`feature_store/feature_schema.json`.
+
+| Corpus | Years | Label |
+|---|---|---|
+| A | 2014–2019 | reverted (Ovid benchmark) |
+| R | 2021-09 → 2026-06 | reverted by another account within 90 days, mined from the planet changeset dump; `revert_mentions_vandalism` marks Ovid's stricter rule |
+| M | 2023 → 2026 | OSMCha human review (harmful vs flagged-and-cleared) |
+| N | 2023 → 2026 | random unreviewed, presumed clean |
 
 ## What this is
 
@@ -365,6 +461,9 @@ vandalism-detection models. Two label sources with **different meanings** — se
 
 | File | Rows | Description |
 |---|---|---|
+| `feature_store/*.parquet` | {m['feature_store'].get('changesets', 0):,} changesets | training input for `train/` - changesets, sampled edits, point-in-time user history |
+| `corpus_r_reverts.parquet` | {m['corpus_r'].get('n', 0):,} | which revert labelled each corpus R positive |
+| `splits/` | — | frozen train/val/test id lists |
 | `corpus_a_changesets.parquet` | {a['n']:,} | Ovid-benchmark changesets, 2014–2019, with parsed edit counts |
 | `osmcha_labels.parquet` | {lab['n']:,} | OSMCha human review decisions, 2023 onward |
 | `fetch_coverage.json` | {lab.get('gaps', 0)} | windows the harvest failed to retrieve |

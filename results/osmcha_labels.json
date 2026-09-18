@@ -1,40 +1,50 @@
 {
-  "generated": "2026-09-04T21:20:43",
+  "generated": "2026-09-18T22:03:56",
   "source": "osmcha.org/api/v1/changesets",
   "window": {
-    "since": "2026-06-01",
-    "until": "2026-06-15",
-    "slice_days": 7
+    "since": "2024-11-01",
+    "until": "2024-12-01",
+    "slice_days": 1
   },
   "available_in_window": {
     "harmful": null,
-    "clean": null
+    "clean": null,
+    "note": "skipped; see results/gate2a_osmcha_coverage.json"
   },
   "stored_this_run": {
-    "harmful": 334,
-    "clean": 887
+    "harmful": 0,
+    "clean": 0
   },
   "store_totals": {
-    "total": 4654,
+    "total": 122597,
     "by_label": {
-      "clean": 1187,
-      "harmful": 3467
+      "clean": 87914,
+      "harmful": 34683
     }
   },
-  "distinct_reviewers": 226,
-  "top_harmful_reasons": {
-    "New mapper": 1627,
-    "New mapper,Review requested": 179,
-    "User has multiple blocks": 150,
-    "suspect_word,New mapper": 80,
-    "New mapper,Crossing ways": 63,
-    "Review requested": 53,
-    "Crossing ways": 49,
-    "suspect_word,New mapper,Review requested": 45,
-    "suspect_word": 28,
-    "mass deletion,New mapper": 28
+  "fetch_gaps": {
+    "total": 1431,
+    "unresolved": 346,
+    "by_status": {
+      "0": 335,
+      "200": 1085,
+      "429": 11
+    }
   },
-  "seconds": 35974.4,
+  "distinct_reviewers": 1500,
+  "top_harmful_reasons": {
+    "New mapper": 9131,
+    "New mapper,Review requested": 1990,
+    "User has multiple blocks": 879,
+    "Review requested": 796,
+    "New mapper,Crossing ways": 609,
+    "suspect_word,New mapper": 462,
+    "Crossing ways": 426,
+    "mass deletion,New mapper": 328,
+    "mass modification": 307,
+    "New mapper,Mapbox: Spam text": 290
+  },
+  "seconds": 0.9,
   "database": "C:\\osm-data\\raw\\osmcha_labels.sqlite",
   "note": "harmful=True is a human calling a changeset damaging. harmful=False is sent with checked=True so negatives are reviewed, not merely unexamined - otherwise the negative class encodes reviewer attention."
 }
