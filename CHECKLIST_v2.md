@@ -56,8 +56,8 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   2019-01-01, so 2014–2018 is train and 2019 is test.
 - [ ] **At home:** run RUNBOOK step 1 (fetch), then step 2 (build), and commit
   `results/feature_store_build_report.json`.
-- [ ] Schema manifest (dtypes, units, missing policy). `build_report.json` plus
-  `data_contract.py` cover counts and required columns only.
+- [x] Schema manifest: `scripts/schema_manifest.py` writes `results/feature_schema.json`
+  (dtype, unit, meaning and null rate for every column), generated from the built store.
 
 ### B. Remote execution — done 2026-09-17, needs a first run on a TensorFlow machine
 - [x] `train/run_pipeline.py`: one command for every stage on any machine. It wires the Stage 1
@@ -88,6 +88,26 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [ ] 2026 cleared labels are scarce. The T1/T2 temporal cutoff is set to 2025-07-01 so the test
   side holds both classes; report prevalence-corrected metrics.
 - [ ] N is "not flagged in our harvest", not "verified clean". Disclose it as presumed-negative.
+
+### C2. Five years of recent labels — corpus R (added 2026-09-18)
+- [x] Measured: OSMCha has no reviewed changesets before 2023, so human labels cannot cover
+  4–5 years. Revert-derived labels can, with the same definition as the Ovid benchmark
+  (`docs/DATA_SOURCES.md`).
+- [x] `scripts/mine_changesets.py` reads the 2021-09 onwards byte range of the planet changeset
+  dump (multistream bzip2, parallel ranges, nothing stored but the results). A test that splits the
+  file 2, 3 and 7 ways counts every changeset exactly once, and it caught a boundary bug before
+  the full run.
+- [x] Corpus R label rules: reverted by another account within 90 days, whole changeset only,
+  90-day censoring at the dump date, at most 5 per author per class, and negatives matched
+  per quarter.
+- [x] New tasks: `revert` (R only) and `ovid_modern` (train on Ovid 2014–19, test on R 2021–26,
+  same label rule, so a drop means time rather than a change of labeller).
+- [~] Mining the dump for 2021-09 → 2026-09 (running), then `select --corpora R`, then
+  changesets, versions, users and histories for R.
+- [x] Corpus A carries adiff geometry and R does not, so `ovid_modern` drops the adiff-only
+  columns automatically (`model.exclude_columns=adiff_only`, tested).
+- [ ] The Ovid published-protocol reproduction is still missing. Without it, do not claim
+  "beats Ovid".
 
 ### D. Claims that have to match the evidence
 - [ ] "Self-supervised": there is no unlabelled Corpus C. Stage 1 pretrains on training-fold

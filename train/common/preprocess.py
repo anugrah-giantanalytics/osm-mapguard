@@ -260,13 +260,42 @@ class Normaliser:
         return n
 
 
+# Columns that only the adiff route can fill. Corpus A has adiff on a subset; corpora M, N
+# and R have none. Training on A and testing on R with these columns in would show the model
+# a feature shift the training data never had, so `ovid_modern` drops them.
+ADIFF_ONLY_COLUMNS = (
+    "d_length_m", "d_area_m2", "length_ratio", "area_ratio", "d_points",
+    "geom_frac_adiff", "geom_total_d_area_m2", "geom_max_abs_d_area_m2", "geom_max_area_ratio",
+    "geom_total_d_points",
+)
+
+
+def exclude_columns(prep: Prepared, names) -> Prepared:
+    """Remove named edit/tabular columns. Unknown names are ignored so one list serves every
+    branch set."""
+    names = set(names or ())
+    if not names:
+        return prep
+    edit_keep = [c for c in prep.edit_columns if c not in names]
+    tab_keep = [c for c in prep.tabular_columns if c not in names]
+    arrays = dict(prep.arrays)
+    arrays["edit_features"] = arrays["edit_features"][:, :, [prep.edit_columns.index(c) for c in edit_keep]]
+    arrays["tabular"] = arrays["tabular"][:, [prep.tabular_columns.index(c) for c in tab_keep]]
+    return replace(prep, arrays=arrays, edit_columns=tuple(edit_keep), tabular_columns=tuple(tab_keep))
+
+
 def prepare(store, cfg: dict) -> Prepared:
-    """assemble + branch selection. Normalisation is applied later, once splits exist."""
+    """assemble + branch selection + column exclusion. Normalisation comes later, once
+    splits exist. `model.exclude_columns` takes a list of names, or "adiff_only"."""
     m = cfg.get("model", {})
     prep = assemble(store,
                     max_edits=int(m.get("max_edits", MAX_EDITS)),
                     user_steps=int(m.get("user_steps", MAX_USER_STEPS)))
-    return select_branches(prep, m.get("branches", ("B1", "B2", "B3", "B4", "B5")))
+    prep = select_branches(prep, m.get("branches", ("B1", "B2", "B3", "B4", "B5")))
+    excl = m.get("exclude_columns")
+    if excl == "adiff_only":
+        excl = ADIFF_ONLY_COLUMNS
+    return exclude_columns(prep, excl)
 
 
 def text_len() -> int:

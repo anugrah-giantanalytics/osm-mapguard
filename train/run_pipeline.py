@@ -92,6 +92,9 @@ class Pipeline:
         s = ["--set", f"task={self.args.task}",
              "--set", f"data.feature_store={json.dumps(str(self.args.feature_store))}",
              "--set", f"device={self.args.device}"]
+        if self.args.task == "ovid_modern":
+            # train on A, test on R: R has no adiff geometry, so neither may the model
+            s += ["--set", "model.exclude_columns=adiff_only"]
         if self.args.quick:
             s += ["--set", "tag=quick"]
         return s

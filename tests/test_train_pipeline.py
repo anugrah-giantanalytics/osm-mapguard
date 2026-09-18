@@ -273,6 +273,19 @@ def test_corruptions_never_write_geometry_the_edit_could_not_have():
     assert m[cols.index("d_refs")] >= 200 and m[cols.index("d_points")] == 0
 
 
+def test_adiff_only_columns_can_be_excluded_everywhere():
+    from common.preprocess import ADIFF_ONLY_COLUMNS, exclude_columns
+
+    prep = small_prepared(n=20)
+    out = exclude_columns(prep, ADIFF_ONLY_COLUMNS)
+    assert not set(ADIFF_ONLY_COLUMNS) & set(out.edit_columns + out.tabular_columns)
+    assert out.arrays["edit_features"].shape[2] == len(out.edit_columns)
+    assert out.arrays["tabular"].shape[1] == len(out.tabular_columns)
+    kept = prep.edit_columns.index("centroid_shift_m")
+    assert np.array_equal(out.arrays["edit_features"][:, :, out.edit_columns.index("centroid_shift_m")],
+                          prep.arrays["edit_features"][:, :, kept])
+
+
 def test_user_history_rows_are_never_fully_masked_after_normalisation():
     prep = small_prepared(n=40)
     prep.arrays["user_mask"][:5] = 0.0
