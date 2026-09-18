@@ -60,10 +60,11 @@ class Split:
 def random_split(
     n: int, seed: int = DEFAULT_SEED, fractions: tuple[float, float, float] = DEFAULT_FRACTIONS
 ) -> Split:
-    """R1a - Ovid's protocol.
+    """R1a - random, user-leaky.
 
-    **This split is user-leaky.** Every table and figure built on it must say so; it
-    exists for comparability with published numbers, not as our result.
+    **This split is user-leaky.** Every table and figure built on it must say so. It is NOT
+    Ovid's protocol: Ovid's split is user-disjoint (Tempelmeier & Demidova 2021, section 4.1),
+    which is R1b. R1a only measures how much recognising authors inflates a score.
     """
     rng = np.random.default_rng(seed)
     order = rng.permutation(n)

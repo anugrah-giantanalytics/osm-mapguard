@@ -111,7 +111,7 @@ cluster, the M4 and any other machine run exactly the same code.
 |---|---|---|
 | `00_wiring_check` | model builds, trains, masks, saves and transfers under this image's Keras | nothing - **run first, stop on FAIL** |
 | `01_baselines` | B0 tripwire, logistic regression, XGBoost; freezes the split | nothing |
-| `02_stage2_supervised` | the five-branch model on R1b (+ R1a for the ovid task) | 01 |
+| `02_stage2_supervised` | the five-branch model on R1b, plus the Ovid reproduction (ovid task) | 01 |
 | `03_stage2_ablations` | seven rows x two seeds | 04 for row 07 |
 | `04_stage1_pretrain` | corruption contrast + zero-shot transfer check | 01 |
 | `05_stage1_label_efficiency` | pretrained vs scratch at 10/25/50/100% of labels | 04 |

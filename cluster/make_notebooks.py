@@ -41,9 +41,9 @@ STAGES = [
      "metadata and nothing downstream can be trusted.",
      "a few minutes, CPU", "nothing"),
     ("02_stage2_supervised", "02", "Stage 2 - the supervised five-branch classifier",
-     "The headline R1 result on the user-disjoint split (R1b). For the ovid task it also trains "
-     "on the random split (R1a) for comparison with Ovid's published number - R1a is "
-     "user-leaky and must be labelled so wherever it appears.",
+     "The headline R1 result on the user-disjoint split (R1b), which is also Ovid's own "
+     "protocol. For the ovid task it also trains the Ovid-equivalent model (ovid_repro.json) "
+     "on the same split, the reproduction row to set beside Ovid's published F1 of 81.66.",
      "30-90 min on one MIG slice", "01 (for the frozen split; created automatically if absent)"),
     ("03_stage2_ablations", "03", "Stage 2 ablation grid",
      "Seven rows x two seeds through the same training core as stage 02. Row 07 (pretrained "

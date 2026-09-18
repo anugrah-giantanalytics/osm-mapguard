@@ -156,8 +156,11 @@ size signal is exact.
 
 - **F5.** R1 uses a user-disjoint split; Ovid does not. Comparing 81.66 against a
   user-disjoint number is comparing a harder task to an easier one and calling it a win.
-  Fix: report **R1a** (Ovid's protocol, for comparability, flagged as user-leaky) and
-  **R1b** (user-disjoint, the honest number). The gap between them is itself a result.
+  Fix: report **R1a** (random, user-leaky) and **R1b** (user-disjoint). The gap between
+  them is itself a result.
+  **Correction 2026-09-18, from reading the paper:** Ovid's split *is* user-disjoint
+  ("training, validation, and test sets are disjoint concerning OSM users", §4.1). So R1b is
+  the apples-to-apples comparison with 81.66, and R1a is only a leaky upper bound.
 - **F8.** Corpus C (pretraining) is drawn from the same window as Corpus B (evaluation).
   Pretraining on the test set makes R4 — the single most important figure — meaningless.
   Fix: Corpus C excludes every changeset id **and every uid** appearing in Corpus B/D eval splits.

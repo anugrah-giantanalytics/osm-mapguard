@@ -527,8 +527,8 @@ The methodological contribution. Five regimes; **R3a was dropped with Corpus B**
 
 | Regime | Setup | Purpose | Closes |
 |---|---|---|---|
-| **R1a Balanced, Ovid protocol** | 9,138 / 9,138, **random** 70/10/20 | apples-to-apples with the Ovid F1 of 81.66. **Flagged as user-leaky** | — |
-| **R1b Balanced, user-disjoint** | same data, **no uid crosses splits** | the honest number. The R1a–R1b gap is itself a result | — |
+| **R1b Balanced, user-disjoint — Ovid's protocol** | 70/10/20, **no uid crosses splits** | the headline number, apples-to-apples with Ovid's F1 of 81.66: Ovid's own split is user-disjoint (Tempelmeier & Demidova 2021, §4.1; corrected 2026-09-18 — v3 wrongly called the random split Ovid's protocol) | — |
+| **R1a Random, user-leaky** | same data, random 70/10/20 | an upper bound only: how much a model gains from recognising authors. The R1a–R1b gap is itself a result | — |
 | **R2 Realistic prevalence** | prevalence-corrected PR curves at 1% and 0.1%; the sampled 1:100 set is a stretch goal | operational truth. **PR-AUC and precision@k, never F1** | **G5** |
 | **R3b Temporal — live 2026** | train Corpus A, test Corpus D, OSMCha-labelled | drift to today. Nobody has published this | **G6** |
 | **R4 Label efficiency** | 10/25/50/100% of labels, pretrained vs scratch | does pretraining help? **Conditional on Stage 1 surviving the timeline (§13)** | core claim |
@@ -581,8 +581,8 @@ only helps the geometric subclass, that is a precise finding, not a null result.
 
 | Regime | Expectation | Confidence |
 |---|---|---|
-| R1a balanced, Ovid protocol | +2 to +6 F1 over 81.66 | medium |
-| R1b user-disjoint | **below R1a**, possibly well below | high — that gap is the point |
+| R1b user-disjoint (Ovid's protocol) | compared directly with 81.66 | medium |
+| R1a random, user-leaky | **above R1b** | high — that gap is the point |
 | R2 realistic | F1 collapses for everyone to roughly 0.2–0.4; PR-AUC becomes the real metric | high that it collapses; the number is the finding |
 | R3b temporal, live 2026 | measurable drop, and a label-source shift on top of it — OSMCha review is not revert history | high that it drops; disentangling the two effects is the interesting part |
 | R4 label efficiency | pretrained above scratch, gap widest at 10% | medium-high, **if Stage 1 runs at all** |

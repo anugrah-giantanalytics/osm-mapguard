@@ -4,12 +4,14 @@ Run order 2 of 6. Plan stage: Stage 2. Produces the headline R1 result for one t
 
     python train/02_stage2_supervised/stage2_train.py
     python train/02_stage2_supervised/stage2_train.py --set task=T1
-    python train/02_stage2_supervised/stage2_train.py --set split=R1a --set tag=ovid_protocol
+    python train/02_stage2_supervised/stage2_train.py --config train/02_stage2_supervised/ovid_repro.json
     python train/02_stage2_supervised/stage2_train.py --dry-run
 
-R1a (random split) is Ovid's protocol and is user-leaky; it exists only for comparison
-with published numbers. R1b (user-disjoint) is the honest result. Run both, report both,
-and label R1a as leaky wherever it appears.
+R1b (user-disjoint) is both the honest result and Ovid's own protocol (their section 4.1), so
+it is the split to compare with Ovid's F1 of 81.66. R1a (random) is user-leaky and exists only
+to show how much recognising authors inflates a score. `ovid_repro.json` trains the
+Ovid-equivalent model (changeset + user + attention over edits, no geometry, no text) for the
+reproduction row. If R1a is ever run, label it leaky wherever it appears.
 
 Writes experiments/runs/stage2_supervised/<timestamp>_<task>_<split>/.
 """

@@ -221,7 +221,9 @@ or `--task T2` (needs step 1b–1e done).
 ## What to report, and what not to
 
 - Report runs **without** `_quick` in the directory name only.
-- R1b is the result. R1a is user-leaky and exists only to compare with Ovid; label it so.
+- R1b is the result, and it is Ovid's own protocol (user-disjoint, their section 4.1): compare
+  `ovid_table` F1/accuracy with Ovid's 81.66 / 81.37 on R1b. R1a is user-leaky; if you run it,
+  label it so.
 - `03` ablation deltas for B1 on the full corpus mix edits with and without full geometry;
   the build report says how many changesets have adiff.
 - `04` zero-shot AUC: report it whatever it is.

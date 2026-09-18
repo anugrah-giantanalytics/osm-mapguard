@@ -10,7 +10,7 @@ training logic of its own - and wires one stage's output into the next:
 
     00 wiring_check            proves TensorFlow and the model work here; stops if it fails
     01 baselines               also freezes the split every later stage reuses
-    02 stage2_supervised       R1b (the honest result), plus R1a for Ovid comparability
+    02 stage2_supervised       R1b full model, plus the Ovid-equivalent reproduction (ovid task)
     04 stage1_pretrain         runs before 03 so the ablation grid can include row 07
        stage1_zero_shot        on the encoder 04 just wrote
     03 stage2_ablations        7 rows x 2 seeds, row 07 uses the stage 04 encoder
@@ -183,8 +183,10 @@ def main() -> int:
                 break
             ref_run = newest_run("stage2_supervised", quick=args.quick, task=t, split="R1b")
             if t == "ovid":
-                p.run("02 stage2 R1a (Ovid protocol, user-leaky)", "02_stage2_supervised/stage2_train.py",
-                      *p.common(), "--set", "split=R1a", *q)
+                p.run("02 Ovid reproduction (R1b, Ovid's features and architecture)",
+                      "02_stage2_supervised/stage2_train.py",
+                      "--config", str(TRAIN / "02_stage2_supervised" / "ovid_repro.json"),
+                      *p.common(), *q)
         elif s == "04":
             q = p.quick("pretrain.epochs=1", "pretrain.max_edits=20000")
             if stop(p.run("04 stage1 pretrain", "04_stage1_pretrain/stage1_pretrain.py", *p.common(), *q)):
