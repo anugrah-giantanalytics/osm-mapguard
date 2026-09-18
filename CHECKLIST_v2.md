@@ -82,9 +82,15 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   - Fully masked user histories knocked whole batches off cuDNN, so a null step is inserted.
   - Stage 1 corruptions could write geometry onto edits that had none, a shortcut the
     encoder would learn. They now respect `geom_route`.
-- [ ] **On the M4 or cluster:** `00_wiring_check` PASS on Keras 3 (M4) and Keras 2 (cluster).
-  None of the TensorFlow code has executed yet; this remains the largest unverified risk.
-- [ ] `99_full_pipeline` with `QUICK = True` completes, then the real stages in RUNBOOK order.
+- [x] `00_wiring_check` PASS on **Keras 3.15** (TF 2.18, Python 3.12) and on **Keras 2.13.1**
+  (TF 2.13, Python 3.10, the cluster image's versions), both CPU, 2026-09-18. It found and fixed
+  two bugs no test could see:
+  - an argument named `mask` broke the Keras 3 build;
+  - `tf.keras` 2.13 has no `__version__`.
+- [x] The full `--quick` pipeline (00→01→02→Ovid-repro→04→zero-shot→03→05→06) completes on
+  the real Corpus A store under both Keras versions. Masking delta was 0.0 before and after
+  training, and there were no NaNs.
+- [ ] Real (non-quick) runs on the cluster or M4, in RUNBOOK order.
 
 ### C. Modern tasks T1/T2 — code done, data at home
 - [x] Corpus M selector: 4k harmful + 4k reviewed-clean, water-filled across quarters.
@@ -117,8 +123,15 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   rebuild with `--corpora A,MN` and re-bundle.
 - [x] Corpus A carries adiff geometry and R does not, so `ovid_modern` drops the adiff-only
   columns automatically (`model.exclude_columns=adiff_only`, tested).
-- [ ] The Ovid published-protocol reproduction is still missing. Without it, do not claim
-  "beats Ovid".
+- [x] Ovid paper read (arXiv 2203.11087). Its split is **user-disjoint**, so R1b is Ovid's
+  protocol; the plan wrongly said R1a, and that is corrected. Its labels are reverts whose comment
+  mentions vandalism, so corpus R now has that flag and the task `revert_vandalism`.
+- [x] Ovid's remaining features were added: time since the previous version, previous-author
+  change, distinct previous authors, imagery use and user active weeks. `ovid_repro.json` is the
+  Ovid-equivalent model on R1b. `ovid_table` reports P/R/F1/accuracy beside Ovid's 80.35 / 83.02 /
+  81.66 / 81.37.
+- [x] Reference numbers: XGBoost on R1b gives F1 79.2 and accuracy 78.3 against Ovid's
+  81.66 / 81.37, so the data reproduces Ovid's range. The neural model has to beat 81.66.
 
 ### D. Claims that have to match the evidence
 - [ ] "Self-supervised": there is no unlabelled Corpus C. Stage 1 pretrains on training-fold
