@@ -21,12 +21,12 @@ Which source gives what, and why Geofabrik/OSMnx/QuickOSM are not used:
 
 | Step | Command | Gives | Time (measured or estimated) |
 |---|---|---|---|
-| 1-0 | `mine_changesets.py` | corpus R candidates: 5 years of reverts + a 1/400 sample | ~3 h at 0.4 MB/s for 3.9 GB |
+| 1-0 | `mine_changesets.py` | corpus R candidates: 5 years of reverts + a 1/400 sample | measured 2 h 10 min at 0.45 MB/s for 3.9 GB |
 | 1a | `fetch_osmcha_labels.py` | corpus M labels (2023+) | osmcha.org-bound; it was overloaded on 2026-09-18 |
 | 1b | `fetch_osm.py select --corpora R` / `--corpora MN` | chosen rows | seconds |
 | 1c | `fetch_osm.py changesets` | metadata (100 per call) + osmChange | ~3–4 h for ~24k downloads |
-| 1d | `fetch_osm.py versions` | previous versions | Corpus A measured ~40 min (458k objects, 632 calls) |
-| 1e | `fetch_osm.py users`, `histories` | account age, point-in-time history | users minutes; histories ~1.5 h per 8k users |
+| 1d | `fetch_osm.py versions` | previous versions | Corpus A measured ~1 h (458k objects) |
+| 1e | `fetch_osm.py users`, `histories` | account age, point-in-time history | Corpus A measured: users 2 min; histories 14,924 calls ~2 h |
 
 **The `ovid` task only needs Corpus A**, which is fully fetched. So Step 2 can run as soon
 as 1d and 1e have finished for Corpus A, and training can start while R and M are still

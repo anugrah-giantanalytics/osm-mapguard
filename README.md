@@ -30,16 +30,21 @@ claimed that has no artefact.
 | **1d** framework spike | **PASS** — masking delta 0.0 (Keras 3, local) | `gate1d_framework_spike.json` |
 | **1d** re-verify on cluster Keras 2 | not yet run | `cluster/00_env_check` |
 
-### Data collected
+### Data collected (2026-09-18)
 
-| Corpus | Status |
-|---|---|
-| **A** metadata (2014–2019 labelled) | **18,276 / 18,276** complete |
-| **A** contents (osmChange) | fetching, ~3/s, zero failures so far |
-| **A** geometry (adiff) | 32.8% id-sampled subset planned — see the Gate 1b decision |
-| **A** user histories | point-in-time, fetched per user |
-| **D** live 2026 | 1,362 changesets from the replication stream |
-| **D** OSMCha labels | 4,654 stored; 8,298 harmful + 19,002 reviewed-clean available for 2026 |
+Sources and why: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Coverage per label:
+`results/feature_store_build_report.json`. Every column: `results/feature_schema.json`.
+
+| Corpus | Years | Label | Status |
+|---|---|---|---|
+| **A** Ovid benchmark | 2014–2019 | reverted | **feature store built: 18,050 changesets** (226 empty dropped), 100% point-in-time history, 456k previous object versions, adiff on 1,007 |
+| **R** revert-mined | 2021-09 → 2026-06 | reverted by another account ≤ 90 days | 78.4 M changesets scanned from the dump, 113,559 reverts found; **11,444 selected (5,722 / 5,722)**; contents, versions and histories fetching |
+| **M** OSMCha | 2023-01 → 2026-09 | human review | 90,725 labels stored; harvest holes remain (osmcha.org overloaded) |
+| **N** random | 2023 → 2026 | presumed clean | sampler ready, waits on M |
+
+**First results** (Corpus A, user-disjoint split R1b, test n = 3,611, `results/baselines_ovid_R1b.json`):
+B0 metadata tripwire ROC-AUC 0.657 (weak prior, not a leak) · logistic regression PR-AUC 0.804 ·
+XGBoost PR-AUC **0.852** [0.837, 0.867]. The neural model has to beat 0.852.
 
 ### Two things the original plan had wrong
 

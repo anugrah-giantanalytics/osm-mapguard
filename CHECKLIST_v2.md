@@ -54,8 +54,15 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   The first 1,055 were fetched in id order and lean towards 2014; disclose that.
 - [x] Default task in every `train/*/config.json` is now `ovid`. The temporal cutoff for ovid is
   2019-01-01, so 2014–2018 is train and 2019 is test.
-- [ ] **At home:** run RUNBOOK step 1 (fetch), then step 2 (build), and commit
-  `results/feature_store_build_report.json`.
+- [x] Corpus A fetched and built (2026-09-18). 18,050 changesets, 100% point-in-time history,
+  and 456,422 of 458,126 previous versions; 1,704 are moderator-hidden or missing and are stored
+  as unresolved. The report is `results/feature_store_build_report.json`.
+- [x] Two more future leaks were found in the built data and removed:
+  - Account age: 97 deleted accounts own 599 changesets, 83% of them damaging, so it is no
+    longer a model input. B0 fell from 0.711 to 0.657 once it went.
+  - Empty changesets: 226 rows, 224 of them clean, a free "clean" signal. They are now dropped.
+- [x] Baselines on the real store (R1b): XGBoost PR-AUC 0.852, LogReg 0.804, B0 0.657. The
+  frozen split `experiments/splits/ovid_R1b_seed20260904.json` is committed.
 - [x] Schema manifest: `scripts/schema_manifest.py` writes `results/feature_schema.json`
   (dtype, unit, meaning and null rate for every column), generated from the built store.
 
@@ -102,8 +109,12 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   per quarter.
 - [x] New tasks: `revert` (R only) and `ovid_modern` (train on Ovid 2014–19, test on R 2021–26,
   same label rule, so a drop means time rather than a change of labeller).
-- [~] Mining the dump for 2021-09 → 2026-09 (running), then `select --corpora R`, then
-  changesets, versions, users and histories for R.
+- [x] Dump mined: all 246 chunks with 0 failures. That is 78.4 M changesets and 113,559 reverts
+  (67k osm-revert, 24k JOSM reverter, 22k comment, 1k simple_revert).
+- [x] Corpus R selected: 5,722 positives and 5,722 negatives, matched per quarter over 20
+  quarters; 610 self-reverts excluded.
+- [~] Corpus R contents, versions, users and histories are fetching (chained). After that,
+  rebuild with `--corpora A,MN` and re-bundle.
 - [x] Corpus A carries adiff geometry and R does not, so `ovid_modern` drops the adiff-only
   columns automatically (`model.exclude_columns=adiff_only`, tested).
 - [ ] The Ovid published-protocol reproduction is still missing. Without it, do not claim
