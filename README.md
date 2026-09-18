@@ -42,9 +42,17 @@ Sources and why: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Coverage per labe
 | **M** OSMCha | 2023-01 → 2026-09 | human review | 90,725 labels stored; harvest holes remain (osmcha.org overloaded) |
 | **N** random | 2023 → 2026 | presumed clean | sampler ready, waits on M |
 
-**First results** (Corpus A, user-disjoint split R1b, test n = 3,611, `results/baselines_ovid_R1b.json`):
-B0 metadata tripwire ROC-AUC 0.657 (weak prior, not a leak) · logistic regression PR-AUC 0.804 ·
-XGBoost PR-AUC **0.852** [0.837, 0.867]. The neural model has to beat 0.852.
+**First results** (Corpus A, user-disjoint split R1b = Ovid's own protocol, test n = 3,611,
+`results/baselines_ovid_R1b.json`):
+
+| Model | PR-AUC | Precision | Recall | F1 | Accuracy |
+|---|---|---|---|---|---|
+| B0 metadata tripwire | ROC-AUC 0.657 | 57.6 | 89.8 | 70.2 | 62.2 |
+| Logistic regression | 0.807 | 71.0 | 83.5 | 76.7 | 74.9 |
+| XGBoost | **0.864** [0.849, 0.878] | 75.4 | 83.5 | **79.2** | 78.3 |
+| *Ovid, published (WWW'22 / SIGSPATIAL'21)* | — | 80.35 | 83.02 | *81.66* | 81.37 |
+
+The neural model has to beat F1 81.66 on this split to claim an improvement.
 
 ### Two things the original plan had wrong
 

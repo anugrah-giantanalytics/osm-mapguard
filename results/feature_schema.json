@@ -264,6 +264,20 @@
      "null_fraction": 0.0
     },
     {
+     "name": "n_prev_authors",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "distinct other authors of the previous versions of touched objects (Ovid)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "imagery_used",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset has an imagery_used tag (Ovid)",
+     "null_fraction": 0.0
+    },
+    {
      "name": "has_adiff",
      "dtype": "int64",
      "unit": "0/1",
@@ -551,11 +565,32 @@
      "null_fraction": 0.0
     },
     {
+     "name": "user_active_weeks",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
      "name": "user_seq_len",
      "dtype": "double",
      "unit": "count",
      "meaning": "history steps in user_seq",
      "null_fraction": 0.0
+    },
+    {
+     "name": "r_stratum",
+     "dtype": "string",
+     "unit": "random|vandal_supplement",
+     "meaning": "corpus R sampling stratum; selects task rows, not an input",
+     "null_fraction": 1.0
+    },
+    {
+     "name": "revert_mentions_vandalism",
+     "dtype": "double",
+     "unit": "0/1",
+     "meaning": "corpus R positive whose revert comment mentions vandalism (Ovid's label rule); not an input",
+     "null_fraction": 1.0
     }
    ]
   },
@@ -631,6 +666,20 @@
      "unit": "count",
      "meaning": "n_refs change against the previous version (modify only)",
      "null_fraction": 0.7697
+    },
+    {
+     "name": "days_since_prev_version",
+     "dtype": "double",
+     "unit": "days",
+     "meaning": "time since the previous version of the object (Ovid)",
+     "null_fraction": 0.651
+    },
+    {
+     "name": "prev_same_author",
+     "dtype": "double",
+     "unit": "0/1",
+     "meaning": "previous version made by the same author (Ovid)",
+     "null_fraction": 0.6502
     },
     {
      "name": "lat",
@@ -804,7 +853,9 @@
    "tags_removed",
    "tags_changed",
    "d_refs",
-   "geom_route"
+   "geom_route",
+   "days_since_prev_version",
+   "prev_same_author"
   ],
   "tabular": [
    "n_edits",
@@ -848,12 +899,15 @@
    "user_distinct_editors",
    "user_frac_prior_with_comment",
    "user_max_bbox_diag_deg",
-   "user_history_truncated"
+   "user_history_truncated",
+   "user_active_weeks",
+   "n_prev_authors",
+   "imagery_used"
   ]
  },
  "missing_policy": "null -> 0 at assembly; *_known flags and geom_route carry whether a value was measured, so 0 is never ambiguous",
  "build_report": {
-  "schema_version": 2,
+  "schema_version": 3,
   "changesets": 18050,
   "edits": 826275,
   "user_seq_steps": 1188118,
@@ -875,7 +929,7 @@
     "dropped_empty_label_1": 2,
     "edits": 2065047,
     "edits_eligible_prev_version": 656864,
-    "edits_prev_version": 431041,
+    "edits_prev_version": 430989,
     "history_complete_later_window": 3352,
     "history_complete_later_window_label_0": 5,
     "history_complete_later_window_label_1": 3347,

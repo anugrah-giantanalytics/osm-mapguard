@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "changesets": 18050,
   "edits": 826275,
   "user_seq_steps": 1188118,
@@ -21,7 +21,7 @@
       "dropped_empty_label_1": 2,
       "edits": 2065047,
       "edits_eligible_prev_version": 656864,
-      "edits_prev_version": 431041,
+      "edits_prev_version": 430989,
       "history_complete_later_window": 3352,
       "history_complete_later_window_label_0": 5,
       "history_complete_later_window_label_1": 3347,
