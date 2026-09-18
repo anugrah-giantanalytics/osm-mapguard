@@ -444,6 +444,9 @@ def select_mn(conn: sqlite3.Connection, args) -> None:
         print("corpus M/N selection exists; pass --force to rebuild it (only before fetching)")
         return
     conn.execute("DELETE FROM selection WHERE corpus IN ('M','N')")
+    # A changeset can be both reverted (corpus R) and reviewed on OSMCha. One row per id:
+    # R keeps it, and M/N draw from the rest - by id, so the choice ignores content.
+    owned = {r[0] for r in conn.execute("SELECT cid FROM selection")}
 
     rows = labels.execute(
         "SELECT cid, harmful, date FROM labels WHERE checked = 1 AND harmful IS NOT NULL"
@@ -456,7 +459,8 @@ def select_mn(conn: sqlite3.Connection, args) -> None:
     cid_range: dict[str, list[int]] = {}
     for cid, harmful, date in rows:
         q = quarter_of(date)
-        pools[(q, int(harmful))].append(cid)
+        if cid not in owned:
+            pools[(q, int(harmful))].append(cid)
         lo_hi = cid_range.setdefault(q, [cid, cid])
         lo_hi[0], lo_hi[1] = min(lo_hi[0], cid), max(lo_hi[1], cid)
     quarters = sorted(cid_range)
@@ -487,7 +491,7 @@ def select_mn(conn: sqlite3.Connection, args) -> None:
     # corpus N: random ids inside each quarter's id range, date-matched to M's positives
     n_harm = sum(len(chosen_m[(q, 1)]) for q in quarters)
     rng = random.Random(SEED)
-    taken = set(labelled)
+    taken = set(labelled) | owned
     for q in quarters:
         want = int(round(N_TOTAL * len(chosen_m[(q, 1)]) / max(1, n_harm) * N_OVERSAMPLE))
         lo, hi = cid_range[q]
