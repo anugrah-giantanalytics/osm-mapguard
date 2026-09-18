@@ -8,7 +8,8 @@ Run order 1 of 6. Plan stage: baselines. CPU only - no TensorFlow needed.
 
 Three models, three jobs:
 
-  B0        comment length + editor string + account age, and nothing about what was
+  B0        comment length + editor string + time since the author's first earlier
+            changeset (point-in-time), and nothing about what was
             edited. The tripwire: if this separates the classes well, the labels are
             readable from metadata and every later number is suspect. Gate 1c measured
             AUC 0.656 on Corpus A; that is a weak prior, not a leak.
@@ -37,7 +38,10 @@ def b0_features(store, rows_all):
     cs = store.changesets
     used, missing = [], []
     blocks = []
-    for col in ("comment_length", "account_age_days"):
+    # account_age_days was replaced by the point-in-time user_days_active_span: account age is
+    # read from today's account, and deleted accounts (mostly vandals) made its missingness a
+    # leak. See the note above TABULAR_FEATURES in mapguard/training/dataset.py.
+    for col in ("comment_length", "user_days_active_span"):
         if col in cs.columns:
             v = cs[col].to_numpy(dtype="float64", na_value=np.nan)
             blocks.append(np.nan_to_num(np.sign(v) * np.log1p(np.abs(v)), nan=-1.0)[:, None])

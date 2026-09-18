@@ -43,12 +43,17 @@ EDIT_FEATURES = (
     "d_refs", "geom_route",
 )
 
+# account_age_days is deliberately NOT a model input. It comes from the account as it is
+# *today*, and accounts are deleted after vandalism: in Corpus A, 97 deleted accounts own
+# 599 changesets, 83% of them damaging (measured 2026-09-18). "Account unknown" is therefore
+# a label leak from the future. user_days_active_span gives the same prior from
+# point-in-time history, which a deletion cannot touch.
 TABULAR_FEATURES = (
     "n_edits", "n_create", "n_modify", "n_delete", "frac_delete",
     "n_node", "n_way", "n_relation", "max_version", "mean_version", "n_v1",
     "total_tags", "mean_tags", "distinct_keys", "n_text_edits",
     "sample_ratio", "comment_length", "text_chars",
-    "bbox_lat_span", "bbox_lon_span", "account_age_days", "account_age_known",
+    "bbox_lat_span", "bbox_lon_span",
     "frac_edits_prev_version", "user_history_known", "geom_frac_adiff",
     "geom_n_geom_actions", "geom_max_centroid_shift_m", "geom_p95_centroid_shift_m",
     "geom_max_hausdorff_m", "geom_max_abs_d_area_m2", "geom_max_area_ratio",

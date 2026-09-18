@@ -31,6 +31,9 @@ everything before the target, and `user_history.point_in_time` filters again.
                      displacement for nodes, node-count change (`d_refs`) for ways
     0  none          a created object, or a version that could not be fetched
 
+`account_age_days` / `account_age_known` are stored for analysis but are **not** model
+inputs: the account is read as it is today, and deleted accounts are mostly vandals'.
+
 `comments_count` is deliberately **not** a feature. It is read when the metadata is
 fetched, years after the edit, and reviewers comment on exactly the changesets they
 revert, so it would leak the label.
@@ -551,6 +554,12 @@ def main(argv: list[str] | None = None) -> int:
         edits, err = parse_safe(xml)
         if err:
             c["dropped_bad_xml"] += 1
+            continue
+        if not edits:
+            # Nothing downloadable: never opened, or every edit hidden later. In Corpus A these
+            # are 226 rows, 224 of them negatives - a free "clean" signal that measures how
+            # the benchmark was sampled, not vandalism. Dropped and counted per label.
+            c[f"dropped_empty_label_{label}"] += 1
             continue
         cid = meta["cid"]
         c[f"label_{label}"] += 1
