@@ -1,0 +1,894 @@
+{
+ "store": "C:\\osm-data\\interim",
+ "tables": {
+  "changesets": {
+   "rows": 18050,
+   "columns": [
+    {
+     "name": "cid",
+     "dtype": "int64",
+     "unit": "id",
+     "meaning": "changeset id",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "label",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "1 = damaging under the corpus's label rule (see corpus)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "corpus",
+     "dtype": "string",
+     "unit": "A|M|N|R",
+     "meaning": "label source: A Ovid 2014-19, M OSMCha review, N random unreviewed, R revert-mined 2021-26",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "quarter",
+     "dtype": "string",
+     "unit": "YYYYQn",
+     "meaning": "quarter of created_at",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "schema_version",
+     "dtype": "int64",
+     "unit": "int",
+     "meaning": "feature-store schema version that built this row",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "created_at",
+     "dtype": "string",
+     "unit": "ISO-8601 UTC",
+     "meaning": "changeset creation time",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "uid",
+     "dtype": "double",
+     "unit": "id",
+     "meaning": "author account id; used for user-disjoint splits, never as a feature",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "num_changes_meta",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "edit count reported by changeset metadata (cross-check of n_edits)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "comment",
+     "dtype": "string",
+     "unit": "text",
+     "meaning": "changeset comment, truncated to 500 chars; not a model input",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "comment_length",
+     "dtype": "int64",
+     "unit": "chars",
+     "meaning": "length of the changeset comment",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "editor",
+     "dtype": "string",
+     "unit": "text",
+     "meaning": "created_by tag; B0 tripwire only",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "bbox_lat_span",
+     "dtype": "double",
+     "unit": "degrees",
+     "meaning": "changeset bbox height",
+     "null_fraction": 0.0005
+    },
+    {
+     "name": "bbox_lon_span",
+     "dtype": "double",
+     "unit": "degrees",
+     "meaning": "changeset bbox width",
+     "null_fraction": 0.0005
+    },
+    {
+     "name": "account_age_days",
+     "dtype": "double",
+     "unit": "days",
+     "meaning": "edit time minus account creation. NOT a model input: missing when the account was deleted later, which leaks the label",
+     "null_fraction": 0.0332
+    },
+    {
+     "name": "account_age_known",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "1 if account_age_days was measured. NOT a model input (same leak)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_edits",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "objects touched, over every edit",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_create",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "created objects",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_modify",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "modified objects",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_delete",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "deleted objects",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "frac_delete",
+     "dtype": "double",
+     "unit": "ratio",
+     "meaning": "n_delete / n_edits",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_node",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "nodes touched",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_way",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "ways touched",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_relation",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "relations touched",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "max_version",
+     "dtype": "int64",
+     "unit": "version",
+     "meaning": "highest object version touched",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "mean_version",
+     "dtype": "double",
+     "unit": "version",
+     "meaning": "mean object version touched",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_v1",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "objects at version 1 (new)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "total_tags",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "tags on all touched objects after the edit",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "mean_tags",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "tags per touched object",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "distinct_keys",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "distinct tag keys touched",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_text_edits",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "objects carrying free-text tags (name, description, ...)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_edits_seen",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "edits in the per-edit sample (<= 256)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "sample_ratio",
+     "dtype": "double",
+     "unit": "ratio",
+     "meaning": "n_edits_seen / n_edits",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "text_blob",
+     "dtype": "string",
+     "unit": "text",
+     "meaning": "free-text tag values, B2 char-CNN input",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "text_chars",
+     "dtype": "int64",
+     "unit": "chars",
+     "meaning": "total free-text characters",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_frac_adiff",
+     "dtype": "double",
+     "unit": "ratio",
+     "meaning": "fraction of edits with full adiff geometry",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "frac_edits_prev_version",
+     "dtype": "double",
+     "unit": "ratio",
+     "meaning": "fraction of edits with a fetched previous version",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_history_known",
+     "dtype": "double",
+     "unit": "0/1",
+     "meaning": "1 if a point-in-time history was available",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "has_adiff",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset has adiff geometry; marks the B1 evaluation subset; not an input",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_highway",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_building",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_name",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_amenity",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_natural",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_place",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_landuse",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_source",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_waterway",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_barrier",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_surface",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "key_addr_housenumber",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "changeset touches this tag key",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_geom_actions",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_way",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_node",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_with_old",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_max_centroid_shift_m",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_mean_centroid_shift_m",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_p95_centroid_shift_m",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_max_hausdorff_m",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_total_d_area_m2",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_max_abs_d_area_m2",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_max_area_ratio",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_total_d_points",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_deleted",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_created",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_n_modified",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "changeset-level geometry summary over every edit (see features/geometry.summarise)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_uid",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_n_prior",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_history_truncated",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_days_since_prev",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0557
+    },
+    {
+     "name": "user_days_active_span",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_changesets_per_active_day",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_mean_prior_changes",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_max_prior_changes",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_total_prior_changes",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_distinct_editors",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_frac_prior_with_comment",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_mean_bbox_diag_deg",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_max_bbox_diag_deg",
+     "dtype": "double",
+     "unit": "mixed",
+     "meaning": "point-in-time user aggregate, from changesets strictly before this one",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "user_seq_len",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "history steps in user_seq",
+     "null_fraction": 0.0
+    }
+   ]
+  },
+  "edits": {
+   "rows": 826275,
+   "columns": [
+    {
+     "name": "cid",
+     "dtype": "int64",
+     "unit": "id",
+     "meaning": "changeset id",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "position",
+     "dtype": "int64",
+     "unit": "index",
+     "meaning": "edit position in commit order",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "action",
+     "dtype": "string",
+     "unit": "create|modify|delete",
+     "meaning": "osmChange action",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "otype",
+     "dtype": "string",
+     "unit": "node|way|relation",
+     "meaning": "object type",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "oid",
+     "dtype": "int64",
+     "unit": "id",
+     "meaning": "object id",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "version",
+     "dtype": "int64",
+     "unit": "version",
+     "meaning": "object version after the edit",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "is_new_object",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "version == 1",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_tags",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "tags on the object after the edit",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "n_refs",
+     "dtype": "int64",
+     "unit": "count",
+     "meaning": "way nodes or relation members after the edit",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "d_refs",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "n_refs change against the previous version (modify only)",
+     "null_fraction": 0.7697
+    },
+    {
+     "name": "lat",
+     "dtype": "double",
+     "unit": "degrees",
+     "meaning": "node latitude after the edit",
+     "null_fraction": 0.2678
+    },
+    {
+     "name": "lon",
+     "dtype": "double",
+     "unit": "degrees",
+     "meaning": "node longitude after the edit",
+     "null_fraction": 0.2678
+    },
+    {
+     "name": "text",
+     "dtype": "string",
+     "unit": "text",
+     "meaning": "free-text tag values of this object",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "has_geometry",
+     "dtype": "int64",
+     "unit": "0/1",
+     "meaning": "any geometry route available",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "geom_route",
+     "dtype": "int64",
+     "unit": "0|1|2",
+     "meaning": "0 none, 1 previous version (nodes, tags), 2 adiff (full way geometry)",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "centroid_shift_m",
+     "dtype": "double",
+     "unit": "metres",
+     "meaning": "how far the object's centroid moved",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "hausdorff_m",
+     "dtype": "double",
+     "unit": "metres",
+     "meaning": "shape change, symmetric Hausdorff",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "d_length_m",
+     "dtype": "double",
+     "unit": "metres",
+     "meaning": "way length change (adiff only)",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "d_area_m2",
+     "dtype": "double",
+     "unit": "m^2",
+     "meaning": "closed-way area change (adiff only)",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "length_ratio",
+     "dtype": "double",
+     "unit": "ratio",
+     "meaning": "new/old length, capped at 1e6 (adiff only)",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "area_ratio",
+     "dtype": "double",
+     "unit": "ratio",
+     "meaning": "new/old area, capped at 1e6 (adiff only)",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "d_points",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "vertex count change (adiff only)",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "tags_added",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "tag keys added against the previous version",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "tags_removed",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "tag keys removed against the previous version",
+     "null_fraction": 0.6187
+    },
+    {
+     "name": "tags_changed",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "tag values changed against the previous version",
+     "null_fraction": 0.6187
+    }
+   ]
+  },
+  "user_seq": {
+   "rows": 1188118,
+   "columns": [
+    {
+     "name": "cid",
+     "dtype": "int64",
+     "unit": "id",
+     "meaning": "changeset id",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "step",
+     "dtype": "int64",
+     "unit": "index",
+     "meaning": "position in the point-in-time history, oldest first",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "num_changes",
+     "dtype": "double",
+     "unit": "count",
+     "meaning": "edits in that earlier changeset",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "gap_days",
+     "dtype": "double",
+     "unit": "days",
+     "meaning": "time since the previous earlier changeset",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "comment_length",
+     "dtype": "double",
+     "unit": "chars",
+     "meaning": "length of the changeset comment",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "bbox_diag_deg",
+     "dtype": "double",
+     "unit": "degrees",
+     "meaning": "bbox diagonal of that earlier changeset",
+     "null_fraction": 0.0
+    }
+   ]
+  }
+ },
+ "model_inputs": {
+  "edit_features": [
+   "centroid_shift_m",
+   "hausdorff_m",
+   "d_length_m",
+   "d_area_m2",
+   "length_ratio",
+   "area_ratio",
+   "d_points",
+   "n_tags",
+   "n_refs",
+   "version",
+   "is_new_object",
+   "tags_added",
+   "tags_removed",
+   "tags_changed",
+   "d_refs",
+   "geom_route"
+  ],
+  "tabular": [
+   "n_edits",
+   "n_create",
+   "n_modify",
+   "n_delete",
+   "frac_delete",
+   "n_node",
+   "n_way",
+   "n_relation",
+   "max_version",
+   "mean_version",
+   "n_v1",
+   "total_tags",
+   "mean_tags",
+   "distinct_keys",
+   "n_text_edits",
+   "sample_ratio",
+   "comment_length",
+   "text_chars",
+   "bbox_lat_span",
+   "bbox_lon_span",
+   "frac_edits_prev_version",
+   "user_history_known",
+   "geom_frac_adiff",
+   "geom_n_geom_actions",
+   "geom_max_centroid_shift_m",
+   "geom_p95_centroid_shift_m",
+   "geom_max_hausdorff_m",
+   "geom_max_abs_d_area_m2",
+   "geom_max_area_ratio",
+   "geom_total_d_points",
+   "geom_n_deleted",
+   "geom_n_created",
+   "user_n_prior",
+   "user_days_since_prev",
+   "user_days_active_span",
+   "user_changesets_per_active_day",
+   "user_mean_prior_changes",
+   "user_max_prior_changes",
+   "user_distinct_editors",
+   "user_frac_prior_with_comment",
+   "user_max_bbox_diag_deg",
+   "user_history_truncated"
+  ]
+ },
+ "missing_policy": "null -> 0 at assembly; *_known flags and geom_route carry whether a value was measured, so 0 is never ambiguous",
+ "build_report": {
+  "schema_version": 2,
+  "changesets": 18050,
+  "edits": 826275,
+  "user_seq_steps": 1188118,
+  "sample_k": 256,
+  "sources_present": {
+   "users": true,
+   "histories_pit": true,
+   "histories_legacy": true,
+   "prev_versions": true,
+   "corpus_mn": true
+  },
+  "coverage_by_corpus": {
+   "A": {
+    "account_age_known_label_0": 8810,
+    "account_age_known_label_1": 8641,
+    "candidates": 18276,
+    "changesets_with_adiff": 1007,
+    "dropped_empty_label_0": 224,
+    "dropped_empty_label_1": 2,
+    "edits": 2065047,
+    "edits_eligible_prev_version": 656864,
+    "edits_prev_version": 431041,
+    "history_complete_later_window": 3352,
+    "history_complete_later_window_label_0": 5,
+    "history_complete_later_window_label_1": 3347,
+    "history_exact": 14698,
+    "history_exact_label_0": 8909,
+    "history_exact_label_1": 5789,
+    "label_0": 8914,
+    "label_1": 9136
+   }
+  },
+  "out": "C:\\osm-data\\interim",
+  "note": "coverage split by label on purpose: if history or account-age coverage differs between classes, the corresponding features measure the fetch and must not be reported as a signal"
+ },
+ "model_inputs_missing_from_store": [],
+ "undocumented_columns": []
+}

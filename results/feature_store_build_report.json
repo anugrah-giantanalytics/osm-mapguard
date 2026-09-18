@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "changesets": 18050,
+  "edits": 826275,
+  "user_seq_steps": 1188118,
+  "sample_k": 256,
+  "sources_present": {
+    "users": true,
+    "histories_pit": true,
+    "histories_legacy": true,
+    "prev_versions": true,
+    "corpus_mn": true
+  },
+  "coverage_by_corpus": {
+    "A": {
+      "account_age_known_label_0": 8810,
+      "account_age_known_label_1": 8641,
+      "candidates": 18276,
+      "changesets_with_adiff": 1007,
+      "dropped_empty_label_0": 224,
+      "dropped_empty_label_1": 2,
+      "edits": 2065047,
+      "edits_eligible_prev_version": 656864,
+      "edits_prev_version": 431041,
+      "history_complete_later_window": 3352,
+      "history_complete_later_window_label_0": 5,
+      "history_complete_later_window_label_1": 3347,
+      "history_exact": 14698,
+      "history_exact_label_0": 8909,
+      "history_exact_label_1": 5789,
+      "label_0": 8914,
+      "label_1": 9136
+    }
+  },
+  "out": "C:\\osm-data\\interim",
+  "note": "coverage split by label on purpose: if history or account-age coverage differs between classes, the corresponding features measure the fetch and must not be reported as a signal"
+}

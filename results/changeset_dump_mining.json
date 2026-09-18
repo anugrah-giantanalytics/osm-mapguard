@@ -10,32 +10,56 @@
   "started_utc": "2026-09-18T09:02:06+00:00"
  },
  "chunks_done": [
-  2,
+  246,
   110535827,
-  110996000
+  188985899
  ],
- "reverts": 1443,
+ "reverts": 113559,
  "reverts_by_kind": [
   [
-   "comment",
-   1343
+   "osm-revert",
+   67091
   ],
   [
    "josm-reverter",
-   99
+   23588
+  ],
+  [
+   "comment",
+   21766
   ],
   [
    "simple_revert",
-   1
+   1114
   ]
  ],
  "reverts_by_year": [
   [
    "2021",
-   1443
+   12143
+  ],
+  [
+   "2022",
+   8945
+  ],
+  [
+   "2023",
+   50368
+  ],
+  [
+   "2024",
+   13647
+  ],
+  [
+   "2025",
+   16487
+  ],
+  [
+   "2026",
+   11969
   ]
  ],
- "partial_reverts": 5,
- "sample": 1150,
- "changesets_seen": 460283
+ "partial_reverts": 4050,
+ "sample": 196122,
+ "changesets_seen": 78448532
 }
