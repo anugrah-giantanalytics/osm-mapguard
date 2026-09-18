@@ -109,6 +109,19 @@ def configure_device(device: str) -> list[str]:
     return [d.name for d in tf.config.get_visible_devices()]
 
 
+def keras_version() -> str:
+    """Keras version under both majors. TF 2.13's `tf.keras` has no __version__ (measured),
+    so reading it crashed Keras 2 runs; the standalone package always has one."""
+    try:
+        import keras
+
+        return str(keras.__version__)
+    except Exception:
+        import tensorflow as tf
+
+        return f"tf.keras (tensorflow {tf.__version__})"
+
+
 def library_versions() -> dict:
     out = {"python": platform.python_version(), "numpy": np.__version__}
     for name in ("tensorflow", "keras", "sklearn", "xgboost", "pandas", "pyarrow"):
@@ -129,8 +142,11 @@ class Run:
         stage = cfg["stage"]
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         parts = [stamp, cfg.get("task") or "na", cfg.get("split") or "na"]
-        if tag or cfg.get("tag"):
-            parts.append(str(tag or cfg.get("tag")))
+        # Both tags survive: a stage's own tag (an ablation row, a budget) and the config tag
+        # (e.g. "quick"), so a smoke-test run can never be mistaken for a real one.
+        tags = [str(x) for x in (tag, cfg.get("tag")) if x]
+        if tags:
+            parts.append("_".join(dict.fromkeys(tags)))
         self.dir = self.root / stage / "_".join(parts)
         self.dir.mkdir(parents=True, exist_ok=False)
         self.started = datetime.now(timezone.utc)

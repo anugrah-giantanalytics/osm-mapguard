@@ -42,7 +42,7 @@ OSMCHA_RATE = 0.5
 # minutes and a run of them collapses throughput entirely. Harvesting fails fast and
 # records the gap; gaps get their own retry pass afterwards, when the service has calmed.
 OSMCHA_TIMEOUT = 180
-OSMCHA_PAGE_TIMEOUT = 25
+OSMCHA_PAGE_TIMEOUT = 90          # measured 2026-09-18: a 1-day page took 35 s
 OSMCHA_PAGE_RETRIES = 2
 PAGE_SIZE = 100
 

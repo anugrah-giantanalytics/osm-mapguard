@@ -33,6 +33,7 @@ sys.path[:0] = [str(HERE), str(TRAIN), str(TRAIN.parent / "src")]
 import numpy as np  # noqa: E402
 
 from common import stage  # noqa: E402
+from common.run import keras_version  # noqa: E402
 from common.fit import ENCODER_FILE  # noqa: E402
 from common.preprocess import Normaliser, signed_log1p  # noqa: E402
 from corruptions import CORRUPTIONS, make_contrast_set  # noqa: E402
@@ -164,7 +165,7 @@ def main() -> int:
         "known_gaps": ["no text corruption - tag text is changeset-level in this feature store",
                        "no mass-deletion corruption - deletion volume is changeset-level"],
         "encoder": {"file": ENCODER_FILE, "embed": embed, "edit_columns": cols},
-        "tensorflow": tf.__version__, "keras": keras.__version__,
+        "tensorflow": tf.__version__, "keras": keras_version(),
         "next": "run stage1_zero_shot.py on this directory before using it to fine-tune",
     })
     print(f"\npretext val AUC {val_auc}. A near-perfect pretext score says nothing about "

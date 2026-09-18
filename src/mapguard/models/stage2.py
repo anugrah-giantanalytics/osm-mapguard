@@ -42,8 +42,10 @@ ALL_BRANCHES = ("B1", "B2", "B3", "B4", "B5")
 class ToBool(layers.Layer):
     """float mask -> bool mask, as a layer so Keras 3 accepts it."""
 
-    def call(self, mask):
-        return tf.cast(mask, tf.bool)
+    # The argument must not be called `mask`: Keras reserves that name for mask propagation,
+    # and Keras 3 then passes nothing as the input (measured: wiring check, Keras 3.15).
+    def call(self, inputs):
+        return tf.cast(inputs, tf.bool)
 
     def compute_output_shape(self, input_shape):
         return input_shape
@@ -56,8 +58,8 @@ class PairwiseMask(layers.Layer):
     direction still lets padding leak in through the softmax denominator.
     """
 
-    def call(self, mask):
-        m = tf.cast(mask, tf.bool)
+    def call(self, inputs):
+        m = tf.cast(inputs, tf.bool)
         return tf.logical_and(m[:, :, None], m[:, None, :])
 
     def compute_output_shape(self, input_shape):

@@ -72,6 +72,8 @@ def newest_run(stage: str, *, quick: bool, **match) -> Path | None:
             continue
         d = Path(e["run_dir"])
         d = d if d.is_absolute() else REPO / d
+        if "ovid_repro" in d.name:            # the reproduction row is never a reference
+            continue
         if d.name.endswith("_quick") == quick and d.exists():
             return d
     return None
@@ -97,7 +99,8 @@ class Pipeline:
             # train on A, test on R: R has no adiff geometry, so neither may the model
             s += ["--set", "model.exclude_columns=adiff_only"]
         if self.args.quick:
-            s += ["--set", "tag=quick"]
+            # smoke test only: short sequences so the whole chain runs on a laptop CPU
+            s += ["--set", "tag=quick", "--set", "model.max_edits=64", "--set", "model.user_steps=50"]
         return s
 
     def quick(self, *pairs: str) -> list[str]:
@@ -186,7 +189,8 @@ def main() -> int:
                 p.run("02 Ovid reproduction (R1b, Ovid's features and architecture)",
                       "02_stage2_supervised/stage2_train.py",
                       "--config", str(TRAIN / "02_stage2_supervised" / "ovid_repro.json"),
-                      *p.common(), *q)
+                      *p.common(), *q,
+                      "--set", "tag=ovid_repro_quick" if args.quick else "tag=ovid_repro")
         elif s == "04":
             q = p.quick("pretrain.epochs=1", "pretrain.max_edits=20000")
             if stop(p.run("04 stage1 pretrain", "04_stage1_pretrain/stage1_pretrain.py", *p.common(), *q)):

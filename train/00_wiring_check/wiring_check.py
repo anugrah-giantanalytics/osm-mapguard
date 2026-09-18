@@ -41,7 +41,7 @@ from common.preprocess import (  # noqa: E402
     select_branches,
     signed_log1p,
 )
-from common.run import Run, configure_device, seed_everything  # noqa: E402
+from common.run import Run, configure_device, keras_version, seed_everything  # noqa: E402
 from mapguard.training.dataset import EDIT_FEATURES, TABULAR_FEATURES, VOCAB_SIZE  # noqa: E402
 
 N, K, S, T = 240, 16, 12, 256
@@ -214,7 +214,7 @@ def main() -> int:
     ok = all(c["ok"] for c in checks)
     summary = {
         "verdict": "PASS" if ok else "FAIL",
-        "tensorflow": tf.__version__, "keras": keras.__version__,
+        "tensorflow": tf.__version__, "keras": keras_version(),
         "devices": devices, "checks": checks,
         "note": "random tensors, wiring only - not a result, nothing written outside a temp dir",
     }

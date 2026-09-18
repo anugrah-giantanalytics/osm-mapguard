@@ -32,6 +32,7 @@ import numpy as np
 from . import scoring
 from .attribution import branch_attribution, top_examples
 from .preprocess import Normaliser
+from .run import keras_version
 
 ENCODER_FILE = "edit_encoder.npz"
 
@@ -237,7 +238,7 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
             "n_val": int(val_rows.sum()), "n_test": int(test_rows.sum()),
             "class_weight": class_weight, "loss": loss_name,
             "params": int(model.count_params()),
-            "tensorflow": tf.__version__, "keras": keras.__version__,
+            "tensorflow": tf.__version__, "keras": keras_version(),
         },
         "branches": kwargs["branches"],
         "pretrained_encoder": encoder_info,
