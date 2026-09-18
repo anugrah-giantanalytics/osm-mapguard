@@ -49,6 +49,7 @@ ORDER = ["00", "01", "02", "04", "03", "05", "06"]
 #   ovid_modern: train 2014-2019 (Ovid), test 2021-09..2026-06 (corpus R) - same label rule
 CUTOFFS = {"ovid": "2019-01-01T00:00:00Z", "T1": "2025-07-01T00:00:00Z",
            "T2": "2025-07-01T00:00:00Z", "revert": "2025-01-01T00:00:00Z",
+           "revert_vandalism": "2025-01-01T00:00:00Z",
            "ovid_modern": "2020-01-01T00:00:00Z", "all": "2019-01-01T00:00:00Z"}
 
 
@@ -142,7 +143,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--feature-store", required=True,
                     help="directory holding changesets/edits/user_seq.parquet")
-    ap.add_argument("--task", default="ovid", choices=("ovid", "revert", "ovid_modern", "T1", "T2"))
+    ap.add_argument("--task", default="ovid",
+                    choices=("ovid", "revert", "revert_vandalism", "ovid_modern", "T1", "T2"))
     ap.add_argument("--stages", default=",".join(ORDER),
                     help="comma list from 00,01,02,03,04,05,06 (always run in pipeline order)")
     ap.add_argument("--device", default="auto", choices=("auto", "cpu"))

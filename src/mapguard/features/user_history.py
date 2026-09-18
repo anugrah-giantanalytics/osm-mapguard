@@ -62,6 +62,12 @@ def _epoch(iso: str | None) -> float | None:
     return dt.timestamp()
 
 
+def _iso_week(iso: str) -> str:
+    ts = _epoch(iso) or 0.0
+    y, w, _ = datetime.fromtimestamp(ts, tz=timezone.utc).isocalendar()
+    return f"{y}-W{w:02d}"
+
+
 def parse_changeset_list(xml: str) -> list[PriorChangeset]:
     try:
         root = ET.fromstring(xml)
@@ -140,6 +146,7 @@ class UserFeatures:
     frac_prior_with_comment: float
     mean_bbox_diag_deg: float
     max_bbox_diag_deg: float
+    active_weeks: int = 0          # Ovid: distinct ISO weeks with an earlier changeset
     sequence: list[tuple[float, float, float, float]] = field(default_factory=list)
 
     def as_dict(self) -> dict:
@@ -201,5 +208,6 @@ def build(
         ),
         mean_bbox_diag_deg=round(sum(p.bbox_diag_deg for p in prior) / len(prior), 6),
         max_bbox_diag_deg=round(max(p.bbox_diag_deg for p in prior), 6),
+        active_weeks=len({_iso_week(p.created_at) for p in prior if p.created_at}),
         sequence=seq,
     )

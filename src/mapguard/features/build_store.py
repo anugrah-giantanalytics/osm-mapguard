@@ -63,6 +63,7 @@ from mapguard.config import (
 )
 from mapguard.data.corpora import (
     CORPUS_MN_DB,
+    r_row_info,
     HISTORY_DB,
     LEGACY_HISTORY_DB,
     USERS_DB,
@@ -90,7 +91,7 @@ TEXT_KEYS = ("name", "description", "note", "comment", "operator", "brand", "ins
 
 SAMPLE_K = 256
 BATCH_ROWS = 2000
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 ROUTE_NONE, ROUTE_VERSION, ROUTE_ADIFF = 0, 1, 2
 
@@ -105,7 +106,7 @@ GEOM_SUMMARY_KEYS = (
 )
 
 META_COLS = ["cid", "created_at", "closed_at", "uid", "user", "num_changes", "min_lat",
-             "min_lon", "max_lat", "max_lon", "comments_count", "comment", "editor"]
+             "min_lon", "max_lat", "max_lon", "comments_count", "comment", "editor", "tags_json"]
 
 
 def is_text_key(k: str) -> bool:
@@ -158,30 +159,45 @@ def geometry_actions(blob: str | None) -> list[GeometryAction]:
     return out
 
 
+def _versions_has_meta(vconn: sqlite3.Connection | None) -> bool:
+    if vconn is None:
+        return False
+    return "timestamp" in {r[1] for r in vconn.execute("PRAGMA table_info(versions)")}
+
+
 def version_actions(
-    edits: list[Edit], vconn: sqlite3.Connection | None, skip: set[tuple[str, int]]
+    edits: list[Edit], vconn: sqlite3.Connection | None, skip: set[tuple[str, int]],
+    prev_meta: dict | None = None,
 ) -> tuple[list[GeometryAction], dict[tuple[str, int], int], int]:
     """GeometryActions from previous object versions, for edits adiff did not cover.
 
     Returns the actions, the previous `n_refs` per object (for `d_refs`), and how many
     edits were eligible (modify/delete of an existing version) so coverage is measurable.
+    `prev_meta`, when given, is filled with (timestamp, uid) of every previous version found -
+    including adiff-covered objects - for Ovid's "time to previous version" and "previous
+    authors" features.
     """
     actions: list[GeometryAction] = []
     prev_refs: dict[tuple[str, int], int] = {}
     eligible = 0
+    with_meta = _versions_has_meta(vconn)
+    cols = "status, visible, lat, lon, n_refs, tags_json" + (", timestamp, uid" if with_meta else "")
     for e in edits:
         if e.action not in ("modify", "delete") or not e.version or e.version <= 1:
             continue
         eligible += 1
         key = (e.otype, e.oid)
-        if vconn is None or key in skip:
+        if vconn is None:
             continue
-        row = vconn.execute(
-            "SELECT status, visible, lat, lon, n_refs, tags_json FROM versions"
-            " WHERE otype=? AND oid=? AND version=?", (e.otype, e.oid, e.version - 1)).fetchone()
+        row = vconn.execute(f"SELECT {cols} FROM versions WHERE otype=? AND oid=? AND version=?",
+                            (e.otype, e.oid, e.version - 1)).fetchone()
         if not row or row[0] != 200:
             continue
-        _, visible, lat, lon, n_refs, tags_json = row
+        if prev_meta is not None and with_meta:
+            prev_meta[key] = (row[6], row[7])
+        if key in skip:
+            continue
+        _, visible, lat, lon, n_refs, tags_json = row[:6]
         is_node = e.otype == "node"
         old = GeometryState(
             otype=e.otype, oid=e.oid, version=e.version - 1,
@@ -267,6 +283,8 @@ def changeset_row(
     history: list[PriorChangeset],
     history_known: bool,
     uf=None,
+    prev_meta: dict | None = None,
+    extra: dict | None = None,
 ) -> dict:
     """One row of changesets.parquet. Summaries here never truncate (Rule 1)."""
     acts = Counter(e.action for e in edits)
@@ -332,6 +350,10 @@ def changeset_row(
         "geom_frac_adiff": round(route_counts.get(ROUTE_ADIFF, 0) / n, 4),
         "frac_edits_prev_version": round(route_counts.get(ROUTE_VERSION, 0) / n, 4),
         "user_history_known": 1 if history_known else 0,
+        # --- Ovid: previous authors of the touched objects, and imagery use
+        "n_prev_authors": len({u for _, u in (prev_meta or {}).values()
+                               if u is not None and u != meta.get("uid")}),
+        "imagery_used": 1 if "imagery_used" in _tags(meta) else 0,
         # not a model input: marks the rows B1 can be evaluated on with full geometry
         "has_adiff": 1 if ROUTE_ADIFF in routes.values() else 0,
     }
@@ -342,11 +364,34 @@ def changeset_row(
     for k, v in uf.as_dict().items():
         row[f"user_{k}"] = v
     row["user_seq_len"] = len(uf.sequence)
+    row.update(extra or {})
     return row
 
 
+def _tags(meta: dict) -> dict:
+    try:
+        return json.loads(meta.get("tags_json") or "{}")
+    except ValueError:
+        return {}
+
+
+def _days_between(a: str | None, b: str | None) -> float | None:
+    from datetime import datetime
+
+    if not a or not b:
+        return None
+    try:
+        fa = datetime.fromisoformat(a.replace("Z", "+00:00"))
+        fb = datetime.fromisoformat(b.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    d = (fb - fa).total_seconds() / 86400.0
+    return round(d, 4) if d >= 0 else None
+
+
 def edit_rows(cid: int, edits: list[Edit], geom_by_key: dict, routes: dict,
-              prev_refs: dict) -> list[dict]:
+              prev_refs: dict, prev_meta: dict | None = None) -> list[dict]:
+    prev_meta = prev_meta or {}
     keep = stratified_sample(edits, geom_by_key)
     rows = []
     for pos in keep:
@@ -365,6 +410,10 @@ def edit_rows(cid: int, edits: list[Edit], geom_by_key: dict, routes: dict,
             "n_tags": len(e.tags),
             "n_refs": e.n_refs,
             "d_refs": (e.n_refs - prev_refs[key]) if key in prev_refs and e.action == "modify" else None,
+            # Ovid: time to the previous version, and whether its author was someone else
+            "days_since_prev_version": _days_between(prev_meta.get(key, (None, None))[0], e.timestamp),
+            "prev_same_author": (None if prev_meta.get(key, (None, None))[1] is None or e.uid is None
+                                 else int(prev_meta[key][1] == e.uid)),
             "lat": e.lat,
             "lon": e.lon,
             "text": text[:200],
@@ -454,11 +503,12 @@ class TableWriter:
 FLOAT_EDIT = {c: pa.float64() for c in (
     "centroid_shift_m", "hausdorff_m", "d_length_m", "d_area_m2", "length_ratio",
     "area_ratio", "d_points", "tags_added", "tags_removed", "tags_changed", "d_refs",
-    "lat", "lon")}
+    "lat", "lon", "days_since_prev_version", "prev_same_author")}
 FLOAT_CS = {c: pa.float64() for c in (
     "account_age_days", "bbox_lat_span", "bbox_lon_span", "num_changes_meta", "uid")}
 FLOAT_CS.update({"quarter": pa.string(), "created_at": pa.string(), "comment": pa.string(),
-                 "editor": pa.string(), "text_blob": pa.string()})
+                 "editor": pa.string(), "text_blob": pa.string(), "r_stratum": pa.string(),
+                 "revert_mentions_vandalism": pa.float64()})
 
 
 # ----------------------------------------------------------------------------- main
@@ -494,6 +544,7 @@ def iter_corpus_mn(limit: int | None):
         return
     try:
         valid = valid_selection(conn)
+        info = r_row_info(conn)
     except sqlite3.OperationalError:
         return
     q = f"SELECT {', '.join(META_COLS)} FROM meta WHERE status = 200 ORDER BY cid"
@@ -506,6 +557,9 @@ def iter_corpus_mn(limit: int | None):
         corpus, label = valid[cid]
         got = conn.execute("SELECT xml FROM contents WHERE cid = ? AND status = 200",
                            (cid,)).fetchone()
+        meta["_extra"] = ({"r_stratum": info[cid][0],
+                           "revert_mentions_vandalism": float(info[cid][1]) if label == 1 else None}
+                          if corpus == "R" and cid in info else {})
         yield corpus, label, meta, (got[0] if got else None), None
         n += 1
         if limit and n >= limit:
@@ -570,7 +624,8 @@ def main(argv: list[str] | None = None) -> int:
         for a in adiff:
             routes[(a.otype, a.oid)] = ROUTE_ADIFF
             geom_by_key[(a.otype, a.oid)] = features_for(a)
-        vacts, prev_refs, eligible = version_actions(edits, vconn, set(routes))
+        prev_meta: dict = {}
+        vacts, prev_refs, eligible = version_actions(edits, vconn, set(routes), prev_meta)
         for a in vacts:
             routes[(a.otype, a.oid)] = ROUTE_VERSION
             geom_by_key[(a.otype, a.oid)] = features_for(a)
@@ -587,10 +642,15 @@ def main(argv: list[str] | None = None) -> int:
         created = account_created.get(meta.get("uid"))
         c[f"account_age_known_label_{label}"] += 1 if created else 0
 
+        extra = meta.pop("_extra", {})
+        if corpus == "A":
+            extra = {"r_stratum": None, "revert_mentions_vandalism": None}
         cw.add(changeset_row(cid, label, corpus, meta, edits, adiff + vacts, routes,
-                             created, history, rule != "missing", uf))
+                             created, history, rule != "missing", uf, prev_meta,
+                             {"r_stratum": extra.get("r_stratum"),
+                              "revert_mentions_vandalism": extra.get("revert_mentions_vandalism")}))
         if edits:
-            ew.add(edit_rows(cid, edits, geom_by_key, routes, prev_refs))
+            ew.add(edit_rows(cid, edits, geom_by_key, routes, prev_refs, prev_meta))
         if uf.sequence:
             sw.add(user_seq_rows(cid, uf))
 

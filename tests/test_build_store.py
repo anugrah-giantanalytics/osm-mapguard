@@ -27,10 +27,10 @@ from mapguard.features import build_store  # noqa: E402
 # Node 10 moves ~111 m north; way 20 gains a node and a name; node 30 is created.
 XML_A = """<osmChange version="0.6">
   <modify>
-    <node id="10" version="3" lat="10.001" lon="20.0" timestamp="2016-05-01T00:00:00Z">
+    <node id="10" version="3" lat="10.001" lon="20.0" timestamp="2016-05-01T00:00:00Z" uid="7">
       <tag k="amenity" v="bench"/>
     </node>
-    <way id="20" version="5" timestamp="2016-05-01T00:00:00Z">
+    <way id="20" version="5" timestamp="2016-05-01T00:00:00Z" uid="7">
       <nd ref="1"/><nd ref="2"/><nd ref="3"/>
       <tag k="highway" v="residential"/><tag k="name" v="Main Street"/>
     </way>
@@ -75,10 +75,11 @@ def stores(tmp_path, monkeypatch):
 
     c = _db(root, "raw/prev_versions.sqlite")
     c.execute("CREATE TABLE versions (otype TEXT, oid INTEGER, version INTEGER, status INTEGER,"
-              " visible INTEGER, lat REAL, lon REAL, n_refs INTEGER, tags_json TEXT)")
-    c.execute("INSERT INTO versions VALUES ('node',10,2,200,1,10.0,20.0,0,?)",
+              " visible INTEGER, lat REAL, lon REAL, n_refs INTEGER, tags_json TEXT,"
+              " timestamp TEXT, uid INTEGER, changeset INTEGER)")
+    c.execute("INSERT INTO versions VALUES ('node',10,2,200,1,10.0,20.0,0,?,'2016-04-21T00:00:00Z',55,900)",
               (json.dumps({"amenity": "bench"}),))
-    c.execute("INSERT INTO versions VALUES ('way',20,4,200,1,NULL,NULL,2,?)",
+    c.execute("INSERT INTO versions VALUES ('way',20,4,200,1,NULL,NULL,2,?,'2016-04-30T00:00:00Z',7,901)",
               (json.dumps({"highway": "residential"}),))
     c.commit()
 
@@ -147,6 +148,19 @@ def test_prev_version_route_gives_displacement_tag_diffs_and_ref_change(stores, 
     assert e.loc[30, "geom_route"] == 0                # created: no previous version
     cs = pd.read_parquet(out / "changesets.parquet").set_index("cid")
     assert cs.loc[1001, "frac_edits_prev_version"] == pytest.approx(2 / 3, abs=1e-3)
+
+
+def test_ovid_previous_version_features(stores, tmp_path):
+    out = tmp_path / "fs"
+    build_store.main(["--corpora", "A", "--out", str(out)])
+    e = pd.read_parquet(out / "edits.parquet")
+    e = e[e.cid == 1001].set_index("oid")
+    assert e.loc[10, "days_since_prev_version"] == pytest.approx(10.0)
+    assert e.loc[10, "prev_same_author"] == 0          # uid 55 made v2, uid 7 made v3
+    assert e.loc[20, "prev_same_author"] == 1
+    assert pd.isna(e.loc[30, "days_since_prev_version"])   # created: no previous version
+    cs = pd.read_parquet(out / "changesets.parquet").set_index("cid")
+    assert cs.loc[1001, "n_prev_authors"] == 1         # uid 55; the author himself not counted
 
 
 def test_point_in_time_history_uses_a_complete_later_window_but_only_the_past(stores, tmp_path):

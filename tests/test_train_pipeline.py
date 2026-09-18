@@ -286,6 +286,34 @@ def test_adiff_only_columns_can_be_excluded_everywhere():
                           prep.arrays["edit_features"][:, :, kept])
 
 
+def test_revert_vandalism_task_is_flagged_and_balanced_per_quarter():
+    rows = []
+    cid = 1
+    for q in ("2024Q1", "2024Q2"):
+        for i in range(6):
+            rows.append({"cid": cid, "label": 1, "corpus": "R", "quarter": q,
+                         "r_stratum": "random", "revert_mentions_vandalism": 1.0 if i < 3 else 0.0})
+            cid += 1
+        for i in range(10):
+            rows.append({"cid": cid, "label": 0, "corpus": "R", "quarter": q,
+                         "r_stratum": "random" if i < 5 else "vandal_supplement",
+                         "revert_mentions_vandalism": None})
+            cid += 1
+    rows.append({"cid": cid, "label": 1, "corpus": "A", "quarter": "2016Q1",
+                 "r_stratum": None, "revert_mentions_vandalism": None})
+    rows.append({"cid": cid + 1, "label": 0, "corpus": "A", "quarter": "2016Q1",
+                 "r_stratum": None, "revert_mentions_vandalism": None})
+    cs = pd.DataFrame(rows)
+    v = data_contract.select_task(cs, "revert_vandalism")
+    for q, g in v.groupby("quarter"):
+        assert (g.label == 1).sum() == (g.label == 0).sum() == 3
+    assert (v[v.label == 1].revert_mentions_vandalism == 1).all()
+    om = data_contract.select_task(cs, "ovid_modern")
+    assert set(om.corpus) == {"A", "R"} and len(om) == len(v) + 2
+    r = data_contract.select_task(cs, "revert")
+    assert set(r.r_stratum) == {"random"}
+
+
 def test_user_history_rows_are_never_fully_masked_after_normalisation():
     prep = small_prepared(n=40)
     prep.arrays["user_mask"][:5] = 0.0

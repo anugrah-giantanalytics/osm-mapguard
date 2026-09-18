@@ -21,12 +21,25 @@ Corpus R label rules (applied in `valid_selection`, after metadata is fetched):
               newest negatives would be "not reverted *yet*"
     both      at most R_PER_AUTHOR changesets per author per class, so one mass-reverted
               account or one prolific mapper cannot define a class
+
+Two strata, because Ovid's rule is narrower than "reverted":
+
+    random             positives drawn uniformly from all reverted changesets (task `revert`)
+    vandal_supplement  extra positives whose revert comment *mentions vandalism* - Ovid's own
+                       rule (Tempelmeier & Demidova 2021, section 4.1) - plus matching
+                       negatives. `revert_vandalism` and `ovid_modern` use every positive with
+                       the vandalism flag, from both strata.
 """
 
 from __future__ import annotations
 
 import sqlite3
+import re
 from collections import defaultdict
+
+# Ovid kept only reverts whose comment mentions vandalism. The mined comments are
+# multilingual, so the stem is matched in the scripts it actually appears in.
+VANDAL_MENTION = re.compile(r"vandal|wandal|вандал|vandál|βανδαλ", re.I)
 
 CORPUS_MN_DB = "raw/corpus_mn.sqlite"
 LABELS_DB = "raw/osmcha_labels.sqlite"
@@ -44,6 +57,7 @@ R_OVERSAMPLE = 1.5          # candidates selected per wanted positive (self-reve
 R_MAX_DELAY_DAYS = 90
 R_CENSOR_DAYS = 90
 R_PER_AUTHOR = 5
+R_VANDAL_POSITIVES = 6000   # vandalism-flagged positives wanted across both strata
 
 
 def quarter_of(date: str | None) -> str | None:
@@ -64,11 +78,13 @@ def valid_selection(conn: sqlite3.Connection, n_total: int = N_TOTAL) -> dict[in
     total_harm = sum(m_harm.values()) or 1
     quota = {q: int(round(n_total * n / total_harm)) for q, n in m_harm.items()}
     out: dict[int, tuple[str, int]] = {}
+    has_stratum = any(r[1] == "stratum" for r in conn.execute("PRAGMA table_info(selection)"))
+    stratum = "COALESCE(s.stratum, 'random')" if has_stratum else "'random'"
     rows = conn.execute(
         "SELECT s.cid, s.corpus, s.label, s.quarter, m.status, m.closed_at, m.num_changes,"
-        " m.created_at, m.uid FROM selection s LEFT JOIN meta m ON m.cid = s.cid"
+        f" m.created_at, m.uid, {stratum} FROM selection s LEFT JOIN meta m ON m.cid = s.cid"
         " ORDER BY s.rank").fetchall()
-    for cid, corpus, label, q, status, closed, n, created, _ in rows:
+    for cid, corpus, label, q, status, closed, n, created, _, _ in rows:
         if status != 200:
             continue
         if corpus == "M":
@@ -95,7 +111,11 @@ def _days(a: str, b: str) -> float:
 
 
 def _valid_r(conn: sqlite3.Connection, rows) -> dict[int, tuple[str, int]]:
-    """Corpus R rows that satisfy the label rules in the module docstring."""
+    """Corpus R rows that satisfy the label rules in the module docstring.
+
+    Each stratum is validated on its own: positives first (in hash order), then negatives up
+    to one per valid positive per quarter. The per-author cap is shared across strata.
+    """
     if not _table_exists(conn, "r_targets") or not _table_exists(conn, "r_window"):
         return {}
     window = dict(conn.execute("SELECT k, v FROM r_window"))
@@ -104,13 +124,12 @@ def _valid_r(conn: sqlite3.Connection, rows) -> dict[int, tuple[str, int]]:
                 conn.execute("SELECT cid, reverter_created, reverter_uid FROM r_targets")}
     out: dict[int, tuple[str, int]] = {}
     per_author: dict[tuple[int, int], int] = {}
-    quota: dict[str, int] = {}
 
     def usable(status, closed, n, created, uid):
         return (status == 200 and closed and (n or 0) > 0 and created
                 and since <= created < censor and uid is not None)
 
-    def take(cid, label, uid, q):
+    def take(cid, label, uid):
         key = (uid, label)
         if per_author.get(key, 0) >= R_PER_AUTHOR:
             return False
@@ -118,28 +137,50 @@ def _valid_r(conn: sqlite3.Connection, rows) -> dict[int, tuple[str, int]]:
         out[cid] = ("R", label)
         return True
 
-    wanted = R_POSITIVES
-    for cid, corpus, label, _, status, closed, n, created, uid in rows:
-        if corpus != "R" or label != 1 or wanted <= 0 or not usable(status, closed, n, created, uid):
-            continue
-        r_created, r_uid = reverter.get(cid, (None, None))
-        if r_created is None or r_uid == uid:            # self-reverts are the author's own fix
-            continue
-        delay = _days(created, r_created)
-        if not 0 <= delay <= R_MAX_DELAY_DAYS:
-            continue
-        if take(cid, 1, uid, quarter_of(created)):
-            q = quarter_of(created)
-            quota[q] = quota.get(q, 0) + 1
-            wanted -= 1
+    def stratum_of(row):
+        return row[9] if len(row) > 9 else "random"
 
-    for cid, corpus, label, _, status, closed, n, created, uid in rows:
-        if corpus != "R" or label != 0 or not usable(status, closed, n, created, uid):
-            continue
-        q = quarter_of(created)
-        if quota.get(q, 0) > 0 and take(cid, 0, uid, q):
-            quota[q] -= 1
+    for stratum, wanted in (("random", R_POSITIVES), ("vandal_supplement", None)):
+        quota: dict[str, int] = {}
+        for row in rows:
+            cid, corpus, label, _, status, closed, n, created, uid = row[:9]
+            if (corpus != "R" or label != 1 or stratum_of(row) != stratum
+                    or (wanted is not None and wanted <= 0)
+                    or not usable(status, closed, n, created, uid)):
+                continue
+            r_created, r_uid = reverter.get(cid, (None, None))
+            if r_created is None or r_uid == uid:        # self-reverts are the author's own fix
+                continue
+            if not 0 <= _days(created, r_created) <= R_MAX_DELAY_DAYS:
+                continue
+            if take(cid, 1, uid):
+                q = quarter_of(created)
+                quota[q] = quota.get(q, 0) + 1
+                if wanted is not None:
+                    wanted -= 1
+        for row in rows:
+            cid, corpus, label, _, status, closed, n, created, uid = row[:9]
+            if (corpus != "R" or label != 0 or stratum_of(row) != stratum
+                    or not usable(status, closed, n, created, uid)):
+                continue
+            q = quarter_of(created)
+            if quota.get(q, 0) > 0 and take(cid, 0, uid):
+                quota[q] -= 1
     return out
+
+
+def r_row_info(conn: sqlite3.Connection) -> dict[int, tuple[str, int]]:
+    """cid -> (stratum, revert_mentions_vandalism) for corpus R selection rows."""
+    if not _table_exists(conn, "r_targets"):
+        return {}
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(r_targets)")}
+    has_stratum = any(r[1] == "stratum" for r in conn.execute("PRAGMA table_info(selection)"))
+    vandal = (dict(conn.execute("SELECT cid, COALESCE(vandal, 0) FROM r_targets"))
+              if "vandal" in cols else {})
+    strata = (dict(conn.execute("SELECT cid, COALESCE(stratum, 'random') FROM selection WHERE corpus='R'"))
+              if has_stratum else {c: "random" for (c,) in conn.execute(
+                  "SELECT cid FROM selection WHERE corpus='R'")})
+    return {c: (s, int(vandal.get(c, 0))) for c, s in strata.items()}
 
 
 def history_for(conn: sqlite3.Connection | None, uid: int | None, created_at: str | None,

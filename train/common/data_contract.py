@@ -31,10 +31,11 @@ and the tasks are:
     T1   triage     corpus M only           harmful vs reviewed-and-cleared
     T2   detection  M positives + corpus N  harmful vs random unreviewed
     ovid benchmark  corpus A only           comparable with the published F1
-    revert          corpus R only           the same label definition, 2021-09..2026-06
-    ovid_modern     corpus A + R            for the temporal split: train on Ovid's years,
-                                            test on 2021+ under the *same* label definition,
-                                            so any drop is time, not a change of labeller
+    revert            corpus R, random stratum   any whole-changeset revert, 2021-09..2026-06
+    revert_vandalism  corpus R, vandalism-flagged positives + negatives, balanced per quarter
+                      - Ovid's own label rule (the revert comment mentions vandalism)
+    ovid_modern       corpus A + revert_vandalism: train on Ovid's years, test on 2021+ under
+                      the *same* rule, so any drop is time, not a change of labeller
     all             everything, no filtering - exploration only, not reportable
 """
 
@@ -183,9 +184,13 @@ def select_task(cs, task: str):
     elif task == "ovid":
         mask = corpus == "A"
     elif task == "revert":
-        mask = corpus == "R"
-    elif task == "ovid_modern":
-        mask = corpus.isin(["A", "R"])
+        mask = (corpus == "R") & (_col(cs, "r_stratum") == "random")
+    elif task in ("revert_vandalism", "ovid_modern"):
+        vandal = (corpus == "R") & (((label == 1) & (_col(cs, "revert_mentions_vandalism") == 1))
+                                    | (label == 0))
+        mask = balance_per_quarter(cs, vandal)
+        if task == "ovid_modern":
+            mask = mask | (corpus == "A")
     else:
         raise ContractError(f"unknown task {task!r}")
 
@@ -194,6 +199,35 @@ def select_task(cs, task: str):
     if (y == 1).sum() == 0 or (y == 0).sum() == 0:
         raise ContractError(f"task {task!r} selects {len(out)} rows with only one class present")
     return out
+
+
+def _col(cs, name):
+    import pandas as pd
+
+    if name not in cs.columns:
+        raise ContractError(f"this task needs column {name!r}; rebuild the feature store "
+                            "(schema_version >= 3)")
+    return cs[name] if name != "r_stratum" else cs[name].fillna("")
+
+
+def balance_per_quarter(cs, mask):
+    """Keep min(pos, neg) of each class per quarter, chosen by an id hash - Ovid's test set is
+    balanced, so a comparable one must be too."""
+    import hashlib
+
+    import pandas as pd
+
+    keep = pd.Series(False, index=cs.index)
+    sub = cs[mask]
+    rank = sub["cid"].map(lambda c: hashlib.sha256(f"balance:{int(c)}".encode()).hexdigest())
+    for q, grp in sub.groupby("quarter"):
+        pos = grp[grp["label"] == 1].index
+        neg = grp[grp["label"] == 0].index
+        k = min(len(pos), len(neg))
+        for idx in (pos, neg):
+            chosen = rank.loc[idx].sort_values().index[:k]
+            keep.loc[chosen] = True
+    return keep
 
 
 def labels(store: FeatureStore) -> np.ndarray:

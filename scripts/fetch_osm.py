@@ -68,6 +68,8 @@ from mapguard.data.corpora import (  # noqa: E402
     R_CENSOR_DAYS,
     R_OVERSAMPLE,
     R_POSITIVES,
+    R_VANDAL_POSITIVES,
+    VANDAL_MENTION,
     SEED,
     USERS_DB,
     VERSIONS_DB,
@@ -134,6 +136,9 @@ CREATE TABLE IF NOT EXISTS versions (
     lon       REAL,
     n_refs    INTEGER,
     tags_json TEXT,
+    timestamp TEXT,       -- when the previous version was made (Ovid: time to previous version)
+    uid       INTEGER,    -- who made it (Ovid: previous authors); absent for deleted accounts
+    changeset INTEGER,
     PRIMARY KEY (otype, oid, version)
 ) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS planned (
@@ -151,7 +156,8 @@ CREATE TABLE IF NOT EXISTS r_targets (
     reverter_cid     INTEGER NOT NULL,      -- earliest whole-changeset revert of it
     reverter_created TEXT NOT NULL,
     reverter_uid     INTEGER,
-    kind             TEXT                   -- osm-revert | josm-reverter | simple_revert | comment
+    kind             TEXT,                  -- osm-revert | josm-reverter | simple_revert | comment
+    vandal           INTEGER DEFAULT 0      -- a revert of it mentions vandalism (Ovid's rule)
 );
 CREATE TABLE IF NOT EXISTS r_window (k TEXT PRIMARY KEY, v TEXT);
 """
@@ -233,6 +239,7 @@ def cmd_select(args) -> int:
     corpora = {c.strip().upper() for c in args.corpora.split(",")}
     if "R" in corpora:
         select_r(conn, args)
+        select_r_vandal(conn)
     if "MN" in corpora:
         select_mn(conn, args)
     return 0
@@ -330,6 +337,104 @@ def select_r(conn: sqlite3.Connection, args) -> None:
         "by_quarter": [list(r) for r in conn.execute(
             "SELECT quarter, label, COUNT(*) FROM selection WHERE corpus='R' GROUP BY 1,2")],
     }))
+
+
+def _ensure_r_columns(conn: sqlite3.Connection) -> None:
+    if not any(r[1] == "stratum" for r in conn.execute("PRAGMA table_info(selection)")):
+        conn.execute("ALTER TABLE selection ADD COLUMN stratum TEXT")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(r_targets)")}
+    if "vandal" not in cols:
+        conn.execute("ALTER TABLE r_targets ADD COLUMN vandal INTEGER DEFAULT 0")
+
+
+def select_r_vandal(conn: sqlite3.Connection) -> None:
+    """Flag every corpus R target whose revert mentions vandalism (Ovid's rule), then add a
+    supplement of such targets, and matching negatives, until R_VANDAL_POSITIVES candidates
+    carry the flag. Add-only: existing rows and their fetched data are kept.
+    """
+    import bisect
+    from datetime import datetime
+
+    _ensure_r_columns(conn)
+    dump = read_only(DUMP_DB)
+    window = dict(conn.execute("SELECT k, v FROM r_window"))
+    since, censor = window["since"], window["censor"]
+    sample = dump.execute("SELECT cid, created_at FROM sample ORDER BY cid").fetchall()
+    cids = [c for c, _ in sample]
+
+    def approx_date(cid):
+        i = bisect.bisect_left(cids, cid)
+        return sample[i][1] if 0 < i < len(cids) else None
+
+    reverts = dump.execute("SELECT cid, created_at, uid, kind, targets, partial, comment FROM reverts"
+                           " ORDER BY created_at").fetchall()
+    reverter_ids = {r[0] for r in reverts}
+    ever_reverted: set[int] = set()
+    vandal_revert: dict[int, tuple] = {}
+    for cid, created, uid, kind, targets, partial, comment in reverts:
+        ts = json.loads(targets)
+        ever_reverted.update(ts)
+        if partial or not VANDAL_MENTION.search(comment or ""):
+            continue
+        for t in ts:
+            if t not in reverter_ids and t not in vandal_revert:
+                vandal_revert[t] = (cid, created, uid, kind)
+
+    # 1. flag existing targets; a vandalism revert also becomes the reverter of record
+    existing = {c for (c,) in conn.execute("SELECT cid FROM r_targets")}
+    for t in existing & set(vandal_revert):
+        r = vandal_revert[t]
+        conn.execute("UPDATE r_targets SET vandal=1, reverter_cid=?, reverter_created=?,"
+                     " reverter_uid=?, kind=? WHERE cid=?", (r[0], r[1], r[2], r[3], t))
+    conn.execute("UPDATE selection SET stratum='random' WHERE corpus='R' AND stratum IS NULL")
+    have = conn.execute("SELECT COUNT(*) FROM r_targets WHERE vandal=1").fetchone()[0]
+
+    # 2. supplement, water-filled across quarters
+    taken = {c for (c,) in conn.execute("SELECT cid FROM selection")}
+    pools: dict[str, list[int]] = defaultdict(list)
+    for t in vandal_revert:
+        d = approx_date(t)
+        if t not in taken and d and since <= d < censor:
+            pools[quarter_of(d)].append(t)
+    want = max(0, int(R_VANDAL_POSITIVES * R_OVERSAMPLE) - have)
+    quarters = sorted(pools)
+    avail = {q: sorted(pools[q], key=rank) for q in quarters}
+    take = {q: 0 for q in quarters}
+    open_q = list(quarters)
+    while want > 0 and open_q:
+        share = max(1, want // len(open_q))
+        for q in list(open_q):
+            add = min(share, len(avail[q]) - take[q], want)
+            take[q] += add
+            want -= add
+            if take[q] >= len(avail[q]):
+                open_q.remove(q)
+            if want <= 0:
+                break
+    pos, tgt = [], []
+    for q in quarters:
+        for t in avail[q][: take[q]]:
+            r = vandal_revert[t]
+            pos.append((t, "R", 1, q, rank(t), "vandal_supplement"))
+            tgt.append((t, r[0], r[1], r[2], r[3], 1))
+    conn.executemany("INSERT INTO selection (cid,corpus,label,quarter,rank,stratum) VALUES (?,?,?,?,?,?)", pos)
+    conn.executemany("INSERT INTO r_targets (cid,reverter_cid,reverter_created,reverter_uid,kind,vandal)"
+                     " VALUES (?,?,?,?,?,?)", tgt)
+
+    neg_pool: dict[str, list[int]] = defaultdict(list)
+    for cid, created, closed, n in dump.execute("SELECT cid, created_at, closed_at, num_changes FROM sample"):
+        if (since <= created < censor and closed and (n or 0) > 0 and cid not in taken
+                and cid not in ever_reverted and cid not in reverter_ids):
+            neg_pool[quarter_of(created)].append(cid)
+    neg = []
+    for q in quarters:
+        k = int(round(take[q] / R_OVERSAMPLE * 1.3))
+        neg += [(c, "R", 0, q, rank(c), "vandal_supplement") for c in sorted(neg_pool.get(q, []), key=rank)[:k]]
+    conn.executemany("INSERT INTO selection (cid,corpus,label,quarter,rank,stratum) VALUES (?,?,?,?,?,?)", neg)
+    print(json.dumps({"vandal_flag": {"targets_with_vandalism_revert_in_dump": len(vandal_revert),
+                                      "already_selected_flagged": have,
+                                      "supplement_positives": len(pos), "supplement_negatives": len(neg)},
+                      "supplement_by_quarter": {q: take[q] for q in quarters if take[q]}}))
 
 
 def select_mn(conn: sqlite3.Connection, args) -> None:
@@ -602,6 +707,12 @@ def plan_versions(conn: sqlite3.Connection) -> None:
 
 def cmd_versions(args) -> int:
     conn = connect(VERSIONS_DB, VERSIONS_SCHEMA)
+    have = {r[1] for r in conn.execute("PRAGMA table_info(versions)")}
+    for col, typ in (("timestamp", "TEXT"), ("uid", "INTEGER"), ("changeset", "INTEGER")):
+        if col not in have:
+            # stores fetched before 2026-09-18 lack these; rows without a timestamp are
+            # fetched again below, so every stored version ends up complete
+            conn.execute(f"ALTER TABLE versions ADD COLUMN {col} {typ}")
     plan_versions(conn)
     if args.plan_only:
         return 0
@@ -609,8 +720,7 @@ def cmd_versions(args) -> int:
     sess = PoliteSession(args.rate)
     reader = sqlite3.connect(data_path(*VERSIONS_DB.split("/")), timeout=120, check_same_thread=False)
     todo_n = reader.execute(
-        "SELECT COUNT(*) FROM wanted w WHERE NOT EXISTS (SELECT 1 FROM versions v"
-        " WHERE v.otype=w.otype AND v.oid=w.oid AND v.version=w.version)").fetchone()[0]
+        "SELECT COUNT(*) FROM wanted w WHERE NOT EXISTS (SELECT 1 FROM versions v WHERE v.otype=w.otype AND v.oid=w.oid AND v.version=w.version AND (v.status != 200 OR v.timestamp IS NOT NULL))").fetchone()[0]
     calls = todo_n // MULTIFETCH_MAX + 1
     print(f"versions: {todo_n} to fetch (~{calls} calls)", flush=True)
     plural = {"node": "nodes", "way": "ways", "relation": "relations"}
@@ -621,8 +731,7 @@ def cmd_versions(args) -> int:
             while True:
                 rows = reader.execute(
                     "SELECT oid, version FROM wanted w WHERE otype=? AND (oid, version) > (?, ?)"
-                    " AND NOT EXISTS (SELECT 1 FROM versions v WHERE v.otype=w.otype"
-                    " AND v.oid=w.oid AND v.version=w.version)"
+                    " AND NOT EXISTS (SELECT 1 FROM versions v WHERE v.otype=w.otype AND v.oid=w.oid AND v.version=w.version AND (v.status != 200 OR v.timestamp IS NOT NULL))"
                     " ORDER BY oid, version LIMIT ?", (otype, *last, MULTIFETCH_MAX)).fetchall()
                 if not rows:
                     break
@@ -653,8 +762,11 @@ def cmd_versions(args) -> int:
                             0 if el.attrib.get("visible") == "false" else 1,
                             float(el.attrib["lat"]) if "lat" in el.attrib else None,
                             float(el.attrib["lon"]) if "lon" in el.attrib else None,
-                            n_refs, json.dumps(tags, ensure_ascii=False))
-            return [got.get((i, v), (otype, i, v, 404, None, None, None, None, None)) for i, v in refs]
+                            n_refs, json.dumps(tags, ensure_ascii=False),
+                            el.attrib.get("timestamp"),
+                            int(el.attrib["uid"]) if el.attrib.get("uid", "").isdigit() else None,
+                            int(el.attrib["changeset"]) if el.attrib.get("changeset", "").isdigit() else None)
+            return [got.get((i, v), (otype, i, v, 404) + (None,) * 8) for i, v in refs]
         if r.status == 414 and len(refs) > 1:
             mid = len(refs) // 2
             return fetch(otype, refs[:mid]) + fetch(otype, refs[mid:])
@@ -671,11 +783,12 @@ def cmd_versions(args) -> int:
                 for i in range(0, len(refs), step):
                     out += fetch(otype, refs[i:i + step])
                 return out
-            return [(otype, i, v, 499, None, None, None, None, None) for i, v in refs]
+            return [(otype, i, v, 499) + (None,) * 8 for i, v in refs]
         return []                             # transient; retried on the next run
 
     run_pool(batches(), lambda b: fetch(*b), lambda rows: conn.executemany(
-        "INSERT OR REPLACE INTO versions VALUES (?,?,?,?,?,?,?,?,?)", rows),
+        "INSERT OR REPLACE INTO versions (otype,oid,version,status,visible,lat,lon,n_refs,tags_json,"
+        "timestamp,uid,changeset) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", rows),
         label="version batches", workers=args.workers, total=calls)
     print(dict(conn.execute("SELECT status, COUNT(*) FROM versions GROUP BY 1")))
     return 0

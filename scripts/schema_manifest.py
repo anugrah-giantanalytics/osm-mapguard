@@ -60,6 +60,12 @@ DESCRIBE = {
     "frac_edits_prev_version": ("ratio", "fraction of edits with a fetched previous version"),
     "user_history_known": ("0/1", "1 if a point-in-time history was available"),
     "has_adiff": ("0/1", "changeset has adiff geometry; marks the B1 evaluation subset; not an input"),
+    "n_prev_authors": ("count", "distinct other authors of the previous versions of touched objects (Ovid)"),
+    "imagery_used": ("0/1", "changeset has an imagery_used tag (Ovid)"),
+    "r_stratum": ("random|vandal_supplement", "corpus R sampling stratum; selects task rows, not an input"),
+    "revert_mentions_vandalism": ("0/1", "corpus R positive whose revert comment mentions vandalism (Ovid's label rule); not an input"),
+    "days_since_prev_version": ("days", "time since the previous version of the object (Ovid)"),
+    "prev_same_author": ("0/1", "previous version made by the same author (Ovid)"),
     "user_seq_len": ("count", "history steps in user_seq"),
     # edits
     "position": ("index", "edit position in commit order"),

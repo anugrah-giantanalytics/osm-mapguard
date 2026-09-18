@@ -76,7 +76,26 @@ def report(y_val, p_val, y_test, p_test, *, n_boot: int = 1000, seed: int = 2026
             "roc_auc": [round(roc_point, 4), round(roc_lo, 4), round(roc_hi, 4)],
         },
         "test_calibration": calibration(y_test, p_test),
+        "ovid_table": ovid_table(y_test, p_test, threshold),
     }
+
+
+def ovid_table(y: np.ndarray, p: np.ndarray, threshold: float) -> dict:
+    """Precision, recall, F1 and accuracy on the test set as it is, at the validation
+    threshold - the four columns of Ovid's Table 1, so the numbers compare directly (Ovid's
+    test set is balanced; check `positive_rate`)."""
+    pred = (p >= threshold).astype(int)
+    tp = int(((pred == 1) & (y == 1)).sum())
+    fp = int(((pred == 1) & (y == 0)).sum())
+    fn = int(((pred == 0) & (y == 1)).sum())
+    prec = tp / max(1, tp + fp)
+    rec = tp / max(1, tp + fn)
+    return {"precision": round(prec, 4), "recall": round(rec, 4),
+            "f1": round(2 * prec * rec / max(1e-12, prec + rec), 4),
+            "accuracy": round(float((pred == y).mean()), 4),
+            "positive_rate": round(float(y.mean()), 4), "threshold": round(float(threshold), 6),
+            "reference_ovid_2021": {"precision": 0.8035, "recall": 0.8302, "f1": 0.8166,
+                                    "accuracy": 0.8137}}
 
 
 def headline(rep: dict) -> dict:
@@ -87,5 +106,6 @@ def headline(rep: dict) -> dict:
         "test_roc_auc": rep["test_intervals_95"]["roc_auc"],
         "test_pr_auc_at_1pct_prevalence": t["by_prevalence"]["0.01"]["pr_auc"],
         "test_f1_at_val_threshold": t["by_prevalence"]["0.5"]["f1"],
+        "test_ovid_table": {k: rep["ovid_table"][k] for k in ("precision", "recall", "f1", "accuracy")},
         "test_ece": rep["test_calibration"]["ece"],
     }

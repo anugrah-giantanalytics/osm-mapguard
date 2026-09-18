@@ -40,7 +40,7 @@ EDIT_FEATURES = (
     "centroid_shift_m", "hausdorff_m", "d_length_m", "d_area_m2",
     "length_ratio", "area_ratio", "d_points", "n_tags", "n_refs",
     "version", "is_new_object", "tags_added", "tags_removed", "tags_changed",
-    "d_refs", "geom_route",
+    "d_refs", "geom_route", "days_since_prev_version", "prev_same_author",
 )
 
 # account_age_days is deliberately NOT a model input. It comes from the account as it is
@@ -61,7 +61,8 @@ TABULAR_FEATURES = (
     "user_n_prior", "user_days_since_prev", "user_days_active_span",
     "user_changesets_per_active_day", "user_mean_prior_changes",
     "user_max_prior_changes", "user_distinct_editors", "user_frac_prior_with_comment",
-    "user_max_bbox_diag_deg", "user_history_truncated",
+    "user_max_bbox_diag_deg", "user_history_truncated", "user_active_weeks",
+    "n_prev_authors", "imagery_used",
 )
 
 
