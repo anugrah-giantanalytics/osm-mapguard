@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Create the training environment on an M4 Mac or a Linux box, then prove it works.
 #
-#   bash train/setup_env.sh            # CPU TensorFlow (safe default on the M4)
-#   bash train/setup_env.sh --metal    # also try Apple's GPU plugin
+#   bash train/setup_env.sh            # TensorFlow + Apple GPU plugin on a Mac
+#   bash train/setup_env.sh --cpu      # skip the Apple GPU plugin
 #
 # Then:
 #   source .venv-train/bin/activate
@@ -13,8 +13,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-METAL=0
-[[ "${1:-}" == "--metal" ]] && METAL=1
+METAL=1
+[[ "${1:-}" == "--cpu" ]] && METAL=0
 
 PY=""
 for cand in python3.12 python3.11 python3.10; do
@@ -36,8 +36,8 @@ python -m pip install -q -r requirements-train.txt
 if [[ "$(uname -s)" == "Darwin" ]]; then
   python -m pip install -q "tensorflow>=2.16,<2.20"
   if [[ $METAL == 1 ]]; then
-    # Optional. If the model misbehaves on Metal, uninstall it: CPU on an M4 is fast
-    # enough for this model, and correctness matters more than minutes.
+    # The wiring check below proves the model on Metal. If it fails, or masked RNNs run
+    # slower than CPU, rerun with --cpu (or pass --device cpu to run_pipeline).
     python -m pip install -q tensorflow-metal || echo "tensorflow-metal unavailable; staying on CPU"
   fi
 else

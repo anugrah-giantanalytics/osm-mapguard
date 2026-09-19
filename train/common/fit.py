@@ -36,6 +36,18 @@ from .run import keras_version
 
 ENCODER_FILE = "edit_encoder.npz"
 
+GPU_BATCH = 256     # fills a GPU step; the train sets are 5k-18k rows, so larger stops helping
+CPU_BATCH = 128
+
+
+def resolve_batch_size(value) -> int:
+    """`auto` (the default) picks GPU_BATCH when a GPU is visible, else CPU_BATCH."""
+    if value not in (None, "auto"):
+        return int(value)
+    import tensorflow as tf
+
+    return GPU_BATCH if tf.config.list_physical_devices("GPU") else CPU_BATCH
+
 
 def model_kwargs(prep, cfg: dict) -> dict:
     m = cfg.get("model", {})
@@ -101,6 +113,11 @@ def check_encoder_split(enc_dir: Path, cfg: dict) -> None:
 def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> dict:
     import tensorflow as tf
     from tensorflow import keras
+
+    from .run import configure_precision
+
+    precision = configure_precision(cfg.get("train", {}).get("mixed_precision"))
+    batch_size = resolve_batch_size(cfg.get("train", {}).get("batch_size"))
 
     from mapguard.models.stage2 import focal_loss, pack, scoring_model, verify_masking
 
@@ -181,7 +198,7 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
         pack(model, a, train_rows), y[train_rows],
         validation_data=(pack(model, a, val_rows), y[val_rows]),
         epochs=int(t_cfg.get("epochs", 40)),
-        batch_size=int(t_cfg.get("batch_size", 64)),
+        batch_size=batch_size,
         class_weight=class_weight,
         callbacks=callbacks,
         verbose=int(t_cfg.get("verbose", 2)),
@@ -199,7 +216,7 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
         raise SystemExit(f"masking check failed after training: {post_check}")
 
     # 6. evaluate -------------------------------------------------------------------
-    bs = int(t_cfg.get("batch_size", 64)) * 4
+    bs = batch_size * 4
     p_val, _ = model.predict(pack(model, a, val_rows), batch_size=bs, verbose=0)
     p_test, w_test = model.predict(pack(model, a, test_rows), batch_size=bs, verbose=0)
     rep = scoring.report(y[val_rows], p_val, y[test_rows], p_test, seed=int(cfg.get("seed", 0)))
@@ -238,7 +255,8 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
             "n_val": int(val_rows.sum()), "n_test": int(test_rows.sum()),
             "class_weight": class_weight, "loss": loss_name,
             "params": int(model.count_params()),
-            "tensorflow": tf.__version__, "keras": keras_version(),
+            "tensorflow": tf.__version__, "keras": keras_version(), "precision": precision,
+            "batch_size": batch_size,
         },
         "branches": kwargs["branches"],
         "pretrained_encoder": encoder_info,

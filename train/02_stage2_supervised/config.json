@@ -10,7 +10,13 @@
     "feature_store": null
   },
   "model": {
-    "branches": ["B1", "B2", "B3", "B4", "B5"],
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
     "max_edits": 256,
     "user_steps": 200,
     "embed": 64,
@@ -20,7 +26,7 @@
   },
   "train": {
     "epochs": 40,
-    "batch_size": 64,
+    "batch_size": "auto",
     "lr": 0.001,
     "clipnorm": 1.0,
     "loss": "focal",
@@ -28,7 +34,8 @@
     "focal_alpha": 0.5,
     "class_weight": null,
     "patience": 5,
-    "verbose": 2
+    "verbose": 2,
+    "mixed_precision": "auto"
   },
   "init": {
     "pretrained_encoder": null,

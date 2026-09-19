@@ -94,19 +94,76 @@ def seed_everything(seed: int, deterministic: bool = False) -> None:
 
 
 def configure_device(device: str) -> list[str]:
-    """`cpu` hides GPUs before TensorFlow touches them; `auto` leaves them alone.
+    """Pick the hardware and set it up to be used fully. Must run before any model is built.
 
-    Must run before any model is built - TensorFlow fixes the device list on first use.
+    auto  - NVIDIA GPU if present (memory growth on, so a shared MIG slice is not grabbed
+            whole and several jobs can share a GPU); Apple GPU if tensorflow-metal is
+            installed; otherwise every CPU core.
+    cpu   - hide GPUs (useful on a Mac: masked LSTM/GRU layers can be slower on Metal).
+
+    The chosen setup is printed and returned, so it lands in every run's provenance.
     """
+    import os
+    import platform
+
     try:
         import tensorflow as tf
     except ImportError:
         return ["cpu (no tensorflow)"]
+    if device not in ("auto", "cpu"):
+        raise SystemExit(f"device must be 'auto' or 'cpu', got {device!r}")
     if device == "cpu":
         tf.config.set_visible_devices([], "GPU")
-    elif device != "auto":
-        raise SystemExit(f"device must be 'auto' or 'cpu', got {device!r}")
-    return [d.name for d in tf.config.get_visible_devices()]
+    gpus = tf.config.list_physical_devices("GPU") if device == "auto" else []
+    for g in gpus:
+        try:
+            tf.config.experimental.set_memory_growth(g, True)
+        except (RuntimeError, ValueError):
+            pass                                  # already initialised: harmless
+    info = [d.name for d in tf.config.get_visible_devices()]
+    if gpus:
+        try:
+            details = tf.config.experimental.get_device_details(gpus[0])
+            info.append(f"gpu={details.get('device_name', 'unknown')} "
+                        f"cc={details.get('compute_capability')}")
+        except Exception:
+            pass
+        if platform.system() == "Darwin":
+            info.append("apple-metal (if masked RNNs are slow, rerun with device=cpu)")
+    else:
+        info.append(f"cpu cores={os.cpu_count()}")
+    print("device:", " | ".join(info), flush=True)
+    return info
+
+
+def configure_precision(mode: str | None) -> str:
+    """Mixed precision: ~1.5-2x faster on tensor-core GPUs (NVIDIA compute capability >= 7).
+
+    off (default) - float32 everywhere; identical numbers on every machine.
+    auto          - mixed_float16 only on a capable NVIDIA GPU, else float32.
+    on            - mixed_float16 regardless.
+
+    Safe to try: the output layer stays float32, and the masking check runs on the real
+    model before training - if reduced precision let padding leak, the run aborts.
+    """
+    mode = (mode or "off").lower()
+    if mode == "off":
+        return "float32"
+    import tensorflow as tf
+    from tensorflow import keras
+
+    use = mode == "on"
+    if mode == "auto":
+        for g in tf.config.list_physical_devices("GPU"):
+            try:
+                cc = tf.config.experimental.get_device_details(g).get("compute_capability")
+                use = use or bool(cc and cc[0] >= 7)
+            except Exception:
+                continue
+    if use:
+        keras.mixed_precision.set_global_policy("mixed_float16")
+        return "mixed_float16"
+    return "float32"
 
 
 def keras_version() -> str:

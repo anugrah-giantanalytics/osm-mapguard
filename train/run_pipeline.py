@@ -95,6 +95,8 @@ class Pipeline:
         s = ["--set", f"task={self.args.task}",
              "--set", f"data.feature_store={json.dumps(str(self.args.feature_store))}",
              "--set", f"device={self.args.device}"]
+        if self.args.float32:
+            s += ["--set", "train.mixed_precision=off"]
         if self.args.task == "ovid_modern":
             # train on A, test on R: R has no adiff geometry, so neither may the model
             s += ["--set", "model.exclude_columns=adiff_only"]
@@ -151,6 +153,8 @@ def main() -> int:
     ap.add_argument("--stages", default=",".join(ORDER),
                     help="comma list from 00,01,02,03,04,05,06 (always run in pipeline order)")
     ap.add_argument("--device", default="auto", choices=("auto", "cpu"))
+    ap.add_argument("--float32", action="store_true",
+                    help="disable mixed precision (on by default on NVIDIA GPUs with tensor cores)")
     ap.add_argument("--quick", action="store_true", help="smoke test: tiny epochs, never report")
     ap.add_argument("--cutoff", default=None, help="override the temporal cutoff")
     ap.add_argument("--keep-going", action="store_true", help="continue after a failed stage")

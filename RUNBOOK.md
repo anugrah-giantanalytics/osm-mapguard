@@ -214,6 +214,10 @@ plus the arguments shown (or the `99_full_pipeline` notebook with `TASK`/`STAGES
 - Cross-label check (label-source drift): after 3 and 4, run
   `train/02_stage2_supervised/stage2_evaluate.py --run <T1 run> --task T2` and the reverse.
 - Never report a directory ending in `_quick`.
+- Hardware is used automatically: NVIDIA GPU → batch 256, mixed precision on tensor-core GPUs,
+  memory growth on (several jobs can share one GPU); Mac → Apple GPU via tensorflow-metal;
+  no GPU → all CPU cores, batch 128. Force full precision with `--float32`, force CPU with
+  `--device cpu`. `00_wiring_check` proves the mixed-precision path on any GPU first.
 
 ## Step 4a — train on the SVKM cluster
 

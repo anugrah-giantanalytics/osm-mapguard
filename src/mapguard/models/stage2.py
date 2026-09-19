@@ -97,7 +97,7 @@ class AttentionReceived(layers.Layer):
         weighted = per_query * m[:, :, None]                # drop padded query rows
         received = tf.reduce_sum(weighted, axis=1)          # (N, K)
         n_real = tf.maximum(tf.reduce_sum(m, axis=1, keepdims=True), 1.0)
-        return (received / n_real) * m
+        return tf.cast((received / n_real) * m, "float32")
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0][0], input_shape[0][-1])
@@ -213,7 +213,8 @@ def build_model(
     h = layers.Dense(64, activation="relu")(fused)
     h = layers.Dropout(dropout)(h)
     h = layers.LayerNormalization()(h)
-    out = layers.Dense(1, activation="sigmoid", name="p_damaging")(h)
+    # float32 even under a mixed-precision policy: the loss and the score need full range
+    out = layers.Dense(1, activation="sigmoid", name="p_damaging", dtype="float32")(h)
 
     return keras.Model(
         inputs=[inputs[k] for k in sorted(inputs)],

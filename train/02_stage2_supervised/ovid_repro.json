@@ -22,7 +22,7 @@
   },
   "train": {
     "epochs": 40,
-    "batch_size": 64,
+    "batch_size": "auto",
     "lr": 0.001,
     "clipnorm": 1.0,
     "loss": "bce",
@@ -30,7 +30,8 @@
     "focal_alpha": 0.5,
     "class_weight": null,
     "patience": 5,
-    "verbose": 2
+    "verbose": 2,
+    "mixed_precision": "auto"
   },
   "init": {
     "pretrained_encoder": null,

@@ -98,6 +98,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--device", default="auto", choices=("auto", "cpu"))
     ap.add_argument("--keep", action="store_true", help="keep the temporary directory")
+    ap.add_argument("--mixed", action="store_true",
+                    help="also train the full model under mixed precision (run_pipeline --fast)")
     args = ap.parse_args()
 
     devices = configure_device(args.device)
@@ -198,6 +200,23 @@ def main() -> int:
         res = train_stage2(cfg, prep, masks, run)
         return {"encoder": res["pretrained_encoder"]}
     check("stage1 encoder -> stage2 edit_encoder transfer", transfer)
+
+    if args.mixed or tf.config.list_physical_devices("GPU"):
+        def mixed():
+            tf.keras.backend.clear_session()
+            cfg = base_cfg(branch_sets[-1])
+            cfg["train"]["mixed_precision"] = "on"
+            run = Run(cfg, tag="mixed", root=tmp)
+            res = train_stage2(cfg, select_branches(raw, branch_sets[-1]), masks, run)
+            tf.keras.mixed_precision.set_global_policy("float32")
+            for when in ("before_training", "after_training"):
+                if not res["masking_checks"][when]["masking_holds"]:
+                    raise AssertionError(f"masking leaks under mixed precision {when}")
+            if not np.isfinite(res["headline"]["test_pr_auc"][0]):
+                raise AssertionError("non-finite PR-AUC under mixed precision")
+            return {"precision": res["training"]["precision"],
+                    "masking_delta_after": res["masking_checks"]["after_training"]["max_delta"]}
+        check("stage2 full model under mixed precision", mixed)
 
     def wrong_split_refused():
         cfg = base_cfg(branch_sets[-1])
