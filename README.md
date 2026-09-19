@@ -30,29 +30,43 @@ claimed that has no artefact.
 | **1d** framework spike | **PASS** — masking delta 0.0 (Keras 3, local) | `gate1d_framework_spike.json` |
 | **1d** re-verify on cluster Keras 2 | not yet run | `cluster/00_env_check` |
 
-### Data collected (2026-09-18)
+### Data (final, 2026-09-19)
 
-Sources and why: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Coverage per label:
+Sources and why: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Coverage by label:
 `results/feature_store_build_report.json`. Every column: `results/feature_schema.json`.
 
-| Corpus | Years | Label | Status |
+**Feature store: 46,578 changesets · 2.05 M sampled edits · 3.15 M point-in-time history
+steps · 100% history coverage.** All raw sources fetched; nothing partial.
+
+| Corpus | Years | Label | Changesets (neg / pos) |
 |---|---|---|---|
-| **A** Ovid benchmark | 2014–2019 | reverted | **feature store built: 18,050 changesets** (226 empty dropped), 100% point-in-time history, 456k previous object versions, adiff on 1,007 |
-| **R** revert-mined | 2021-09 → 2026-06 | reverted by another account ≤ 90 days | 78.4 M changesets scanned from the dump, 113,559 reverts found; **11,444 selected (5,722 / 5,722)**; contents, versions and histories fetching |
-| **M** OSMCha | 2023-01 → 2026-09 | human review | 90,725 labels stored; harvest holes remain (osmcha.org overloaded) |
-| **N** random | 2023 → 2026 | presumed clean | sampler ready, waits on M |
+| **A** Ovid benchmark | 2014–2019 | reverted | 8,906 / 9,131 |
+| **R** revert-mined from the planet changeset dump (78.4 M changesets scanned) | 2021-09 → 2026-06 | reverted by another account ≤ 90 days; Ovid's "mentions vandalism" flag | 8,514 / 8,204 |
+| **M** OSMCha | 2023 → 2026 | human review (harmful vs flagged-and-cleared) | 3,945 / 3,947 |
+| **N** random | 2023 → 2026 | presumed clean | 3,931 / — |
 
-**First results** (Corpus A, user-disjoint split R1b = Ovid's own protocol, test n = 3,611,
-`results/baselines_ovid_R1b.json`):
+Leaks found in the real data and removed before any training: `comments_count`, account age
+(deleted accounts), empty changesets, and edits whose previous version was hidden by
+moderators (R positives 4.0% vs negatives 1.9%).
 
-| Model | PR-AUC | Precision | Recall | F1 | Accuracy |
-|---|---|---|---|---|---|
-| B0 metadata tripwire | ROC-AUC 0.657 | 57.6 | 89.8 | 70.2 | 62.2 |
-| Logistic regression | 0.807 | 71.0 | 83.5 | 76.7 | 74.9 |
-| XGBoost | **0.864** [0.849, 0.878] | 75.4 | 83.5 | **79.2** | 78.3 |
-| *Ovid, published (WWW'22 / SIGSPATIAL'21)* | — | 80.35 | 83.02 | *81.66* | 81.37 |
+### Baselines (user-disjoint R1b = Ovid's protocol; `results/baselines_*.json`)
 
-The neural model has to beat F1 81.66 on this split to claim an improvement.
+| Task | Rows | B0 tripwire ROC-AUC | LogReg PR-AUC | XGBoost PR-AUC |
+|---|---|---|---|---|
+| `ovid` (A) | 18,037 | 0.661 | 0.808 | 0.860 |
+| `revert` (R) | 11,280 | 0.731 | 0.895 | 0.901 |
+| `revert_vandalism` (R, Ovid rule) | 7,080 | 0.839 ⚠ | 0.949 | 0.954 |
+| `ovid_modern` (A + R vandalism) | 25,117 | 0.734 | 0.863 | 0.910 |
+| `T1` triage (M) | 7,892 | 0.693 | 0.771 | 0.802 |
+| `T2` detection (M + N) | 7,878 | 0.667 | 0.860 | 0.877 |
+
+⚠ On `revert_vandalism`, metadata alone (new account, short comment, editor) nearly separates
+the classes. That is a property of Ovid's label, not a pipeline leak - report it beside every
+number on that task. On `ovid`, XGBoost reaches F1 77.7 / accuracy 76.2 against Ovid's published
+81.66 / 81.37 on the same protocol; the neural model has to beat 81.66.
+
+TensorFlow is verified on Keras 3.15 and Keras 2.13 (the cluster's version): wiring check PASS,
+and the full pipeline runs end to end on the real store.
 
 ### Two things the original plan had wrong
 

@@ -96,8 +96,9 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [x] Corpus M selector: 4k harmful + 4k reviewed-clean, water-filled across quarters.
 - [x] Corpus N sampler: random ids inside each quarter's id range, date-matched to M's positives.
   Empty and open changesets are rejected in hash order.
-- [ ] **At home:** finish the OSMCha harvest first. The store has no harmful labels for
-  2023Q4 and no cleared labels for 2025Q4–2026Q1, plus 318 gap windows.
+- [x] OSMCha holes refilled with 1-day windows, targeting the missing class per month (osmcha.org
+  rate-limits and times out on large queries). Totals are now 91,590 cleared and 41,933 harmful.
+  Corpus M has 4,000 per class, balanced over 15 quarters. Corpus N has 4,000.
 - [ ] 2026 cleared labels are scarce. The T1/T2 temporal cutoff is set to 2025-07-01 so the test
   side holds both classes; report prevalence-corrected metrics.
 - [ ] N is "not flagged in our harvest", not "verified clean". Disclose it as presumed-negative.
@@ -119,8 +120,10 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   (67k osm-revert, 24k JOSM reverter, 22k comment, 1k simple_revert).
 - [x] Corpus R selected: 5,722 positives and 5,722 negatives, matched per quarter over 20
   quarters; 610 self-reverts excluded.
-- [~] Corpus R contents, versions, users and histories are fetching (chained). After that,
-  rebuild with `--corpora A,MN` and re-bundle.
+- [x] Corpus R fully fetched: contents, 1.51 M previous versions, accounts and histories.
+  The vandalism supplement adds Ovid's rule, reverts that mention vandalism.
+- [x] Final store built from A, R, M and N: 46,578 changesets with 100% history. Splits are
+  frozen for 6 tasks × (R1b, temporal).
 - [x] Corpus A carries adiff geometry and R does not, so `ovid_modern` drops the adiff-only
   columns automatically (`model.exclude_columns=adiff_only`, tested).
 - [x] Ovid paper read (arXiv 2203.11087). Its split is **user-disjoint**, so R1b is Ovid's
@@ -130,8 +133,9 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   change, distinct previous authors, imagery use and user active weeks. `ovid_repro.json` is the
   Ovid-equivalent model on R1b. `ovid_table` reports P/R/F1/accuracy beside Ovid's 80.35 / 83.02 /
   81.66 / 81.37.
-- [x] Reference numbers: XGBoost on R1b gives F1 79.2 and accuracy 78.3 against Ovid's
-  81.66 / 81.37, so the data reproduces Ovid's range. The neural model has to beat 81.66.
+- [x] Reference numbers on the final store: XGBoost on R1b gives F1 77.7 and accuracy 76.2
+  against Ovid's 81.66 / 81.37, so the data reproduces Ovid's range. The neural model has to
+  beat 81.66.
 
 ### D. Claims that have to match the evidence
 - [ ] "Self-supervised": there is no unlabelled Corpus C. Stage 1 pretrains on training-fold

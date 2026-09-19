@@ -2,7 +2,7 @@
  "store": "C:\\osm-data\\interim",
  "tables": {
   "changesets": {
-   "rows": 18050,
+   "rows": 46578,
    "columns": [
     {
      "name": "cid",
@@ -86,21 +86,21 @@
      "dtype": "double",
      "unit": "degrees",
      "meaning": "changeset bbox height",
-     "null_fraction": 0.0005
+     "null_fraction": 0.0009
     },
     {
      "name": "bbox_lon_span",
      "dtype": "double",
      "unit": "degrees",
      "meaning": "changeset bbox width",
-     "null_fraction": 0.0005
+     "null_fraction": 0.0009
     },
     {
      "name": "account_age_days",
      "dtype": "double",
      "unit": "days",
      "meaning": "edit time minus account creation. NOT a model input: missing when the account was deleted later, which leaks the label",
-     "null_fraction": 0.0332
+     "null_fraction": 0.0379
     },
     {
      "name": "account_age_known",
@@ -499,7 +499,7 @@
      "dtype": "double",
      "unit": "mixed",
      "meaning": "point-in-time user aggregate, from changesets strictly before this one",
-     "null_fraction": 0.0557
+     "null_fraction": 0.0676
     },
     {
      "name": "user_days_active_span",
@@ -583,19 +583,19 @@
      "dtype": "string",
      "unit": "random|vandal_supplement",
      "meaning": "corpus R sampling stratum; selects task rows, not an input",
-     "null_fraction": 1.0
+     "null_fraction": 0.6411
     },
     {
      "name": "revert_mentions_vandalism",
      "dtype": "double",
      "unit": "0/1",
      "meaning": "corpus R positive whose revert comment mentions vandalism (Ovid's label rule); not an input",
-     "null_fraction": 1.0
+     "null_fraction": 0.8239
     }
    ]
   },
   "edits": {
-   "rows": 826275,
+   "rows": 2045397,
    "columns": [
     {
      "name": "cid",
@@ -665,35 +665,35 @@
      "dtype": "double",
      "unit": "count",
      "meaning": "n_refs change against the previous version (modify only)",
-     "null_fraction": 0.7697
+     "null_fraction": 0.7228
     },
     {
      "name": "days_since_prev_version",
      "dtype": "double",
      "unit": "days",
      "meaning": "time since the previous version of the object (Ovid)",
-     "null_fraction": 0.651
+     "null_fraction": 0.5948
     },
     {
      "name": "prev_same_author",
      "dtype": "double",
      "unit": "0/1",
      "meaning": "previous version made by the same author (Ovid)",
-     "null_fraction": 0.6502
+     "null_fraction": 0.5943
     },
     {
      "name": "lat",
      "dtype": "double",
      "unit": "degrees",
      "meaning": "node latitude after the edit",
-     "null_fraction": 0.2678
+     "null_fraction": 0.3096
     },
     {
      "name": "lon",
      "dtype": "double",
      "unit": "degrees",
      "meaning": "node longitude after the edit",
-     "null_fraction": 0.2678
+     "null_fraction": 0.3096
     },
     {
      "name": "text",
@@ -721,75 +721,75 @@
      "dtype": "double",
      "unit": "metres",
      "meaning": "how far the object's centroid moved",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "hausdorff_m",
      "dtype": "double",
      "unit": "metres",
      "meaning": "shape change, symmetric Hausdorff",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "d_length_m",
      "dtype": "double",
      "unit": "metres",
      "meaning": "way length change (adiff only)",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "d_area_m2",
      "dtype": "double",
      "unit": "m^2",
      "meaning": "closed-way area change (adiff only)",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "length_ratio",
      "dtype": "double",
      "unit": "ratio",
      "meaning": "new/old length, capped at 1e6 (adiff only)",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "area_ratio",
      "dtype": "double",
      "unit": "ratio",
      "meaning": "new/old area, capped at 1e6 (adiff only)",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "d_points",
      "dtype": "double",
      "unit": "count",
      "meaning": "vertex count change (adiff only)",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "tags_added",
      "dtype": "double",
      "unit": "count",
      "meaning": "tag keys added against the previous version",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "tags_removed",
      "dtype": "double",
      "unit": "count",
      "meaning": "tag keys removed against the previous version",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     },
     {
      "name": "tags_changed",
      "dtype": "double",
      "unit": "count",
      "meaning": "tag values changed against the previous version",
-     "null_fraction": 0.6187
+     "null_fraction": 0.5816
     }
    ]
   },
   "user_seq": {
-   "rows": 1188118,
+   "rows": 3152736,
    "columns": [
     {
      "name": "cid",
@@ -908,9 +908,9 @@
  "missing_policy": "null -> 0 at assembly; *_known flags and geom_route carry whether a value was measured, so 0 is never ambiguous",
  "build_report": {
   "schema_version": 3,
-  "changesets": 18050,
-  "edits": 826275,
-  "user_seq_steps": 1188118,
+  "changesets": 46578,
+  "edits": 2045397,
+  "user_seq_steps": 3152736,
   "sample_k": 256,
   "sources_present": {
    "users": true,
@@ -921,23 +921,82 @@
   },
   "coverage_by_corpus": {
    "A": {
-    "account_age_known_label_0": 8810,
-    "account_age_known_label_1": 8641,
+    "account_age_known_label_0": 8802,
+    "account_age_known_label_1": 8636,
     "candidates": 18276,
-    "changesets_with_adiff": 1007,
-    "dropped_empty_label_0": 224,
-    "dropped_empty_label_1": 2,
-    "edits": 2065047,
-    "edits_eligible_prev_version": 656864,
+    "changesets_with_adiff": 1006,
+    "dropped_empty_label_0": 232,
+    "dropped_empty_label_1": 7,
+    "edits": 2063289,
+    "edits_dropped_hidden_prev_label_0": 1165,
+    "edits_dropped_hidden_prev_label_1": 593,
+    "edits_eligible_prev_version": 655106,
     "edits_prev_version": 430989,
-    "history_complete_later_window": 3352,
+    "history_complete_later_window": 3350,
     "history_complete_later_window_label_0": 5,
-    "history_complete_later_window_label_1": 3347,
-    "history_exact": 14698,
-    "history_exact_label_0": 8909,
-    "history_exact_label_1": 5789,
-    "label_0": 8914,
-    "label_1": 9136
+    "history_complete_later_window_label_1": 3345,
+    "history_exact": 14687,
+    "history_exact_label_0": 8901,
+    "history_exact_label_1": 5786,
+    "label_0": 8906,
+    "label_1": 9131
+   },
+   "R": {
+    "account_age_known_label_0": 8430,
+    "account_age_known_label_1": 7494,
+    "candidates": 17196,
+    "changesets_with_adiff": 0,
+    "dropped_empty_label_0": 84,
+    "dropped_empty_label_1": 394,
+    "edits": 2448617,
+    "edits_dropped_hidden_prev_label_0": 1980,
+    "edits_dropped_hidden_prev_label_1": 7738,
+    "edits_eligible_prev_version": 1133992,
+    "edits_prev_version": 744394,
+    "history_complete_later_window": 2228,
+    "history_complete_later_window_label_0": 5,
+    "history_complete_later_window_label_1": 2223,
+    "history_exact": 14490,
+    "history_exact_label_0": 8509,
+    "history_exact_label_1": 5981,
+    "label_0": 8514,
+    "label_1": 8204
+   },
+   "M": {
+    "account_age_known_label_0": 3917,
+    "account_age_known_label_1": 3633,
+    "candidates": 8000,
+    "changesets_with_adiff": 0,
+    "dropped_empty_label_0": 55,
+    "dropped_empty_label_1": 53,
+    "edits": 847801,
+    "edits_dropped_hidden_prev_label_0": 3394,
+    "edits_dropped_hidden_prev_label_1": 2482,
+    "edits_eligible_prev_version": 333931,
+    "edits_prev_version": 230969,
+    "history_complete_later_window": 527,
+    "history_complete_later_window_label_0": 150,
+    "history_complete_later_window_label_1": 377,
+    "history_exact": 7365,
+    "history_exact_label_0": 3795,
+    "history_exact_label_1": 3570,
+    "label_0": 3945,
+    "label_1": 3947
+   },
+   "N": {
+    "account_age_known_label_0": 3902,
+    "candidates": 4000,
+    "changesets_with_adiff": 0,
+    "dropped_empty_label_0": 69,
+    "edits": 329008,
+    "edits_dropped_hidden_prev_label_0": 1217,
+    "edits_eligible_prev_version": 111982,
+    "edits_prev_version": 80734,
+    "history_complete_later_window": 5,
+    "history_complete_later_window_label_0": 5,
+    "history_exact": 3926,
+    "history_exact_label_0": 3926,
+    "label_0": 3931
    }
   },
   "out": "C:\\osm-data\\interim",
