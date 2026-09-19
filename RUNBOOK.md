@@ -12,6 +12,24 @@ Every command is resumable: stop with Ctrl+C, run it again, it continues.
 
 ---
 
+## Shortcut — train straight from the release
+
+Every fetch below is already done (2026-09-19). GitHub release **v1.0.0** carries:
+
+- `mapguard_bundle.zip`: code, notebooks, the pseudonymised feature store and frozen splits.
+  Upload it to the cluster, or unzip it on the M4, and go to Step 4.
+- `mapguard-dataset-v1.0.0.zip`: the full dataset (feature store, OSMCha labels, corpus R
+  revert provenance, splits, dataset card).
+
+Pseudonymisation does not change results: baselines on the release bundle match the raw store
+exactly (XGBoost `ovid` PR-AUC 0.8595 on both).
+
+```bash
+gh release download v1.0.0 -p mapguard_bundle.zip
+```
+
+Steps 1–3 are only for rebuilding the data from scratch.
+
 ## Step 1 — fetch (laptop)
 
 Which source gives what, and why Geofabrik/OSMnx/QuickOSM are not used:

@@ -1,6 +1,6 @@
-# MapGuard dataset — v1.0.0-test
+# MapGuard dataset — v1.0.0
 
-Generated 2026-09-18T16:55:06+00:00 from commit `fc8cd958590f`.
+Generated 2026-09-19T05:11:27+00:00 from commit `447a6d08f8af`.
 
 Training-ready: `feature_store/` is the exact input of `train/` (pseudonymised), with the
 frozen splits in `splits/`. Build provenance and per-label coverage are in
@@ -23,12 +23,12 @@ vandalism-detection models. Two label sources with **different meanings** — se
 
 | File | Rows | Description |
 |---|---|---|
-| `feature_store/*.parquet` | 18,050 changesets | training input for `train/` - changesets, sampled edits, point-in-time user history |
+| `feature_store/*.parquet` | 46,578 changesets | training input for `train/` - changesets, sampled edits, point-in-time user history |
 | `corpus_r_reverts.parquet` | 16,562 | which revert labelled each corpus R positive |
 | `splits/` | — | frozen train/val/test id lists |
 | `corpus_a_changesets.parquet` | 18,276 | Ovid-benchmark changesets, 2014–2019, with parsed edit counts |
-| `osmcha_labels.parquet` | 125,143 | OSMCha human review decisions, 2023 onward |
-| `fetch_coverage.json` | 1451 | windows the harvest failed to retrieve |
+| `osmcha_labels.parquet` | 133,523 | OSMCha human review decisions, 2023 onward |
+| `fetch_coverage.json` | 1687 | windows the harvest failed to retrieve |
 | `results/` | — | gate artefacts: every measurement behind the design decisions |
 | `fixtures/` | — | real changesets selected as awkward cases |
 | `MANIFEST.json` | — | provenance, counts, git SHA |
@@ -66,7 +66,7 @@ sampling choice. Models evaluated on it are best evidenced on European edits.
 ## Coverage and gaps
 
 `fetch_coverage.json` lists every date window the harvest failed to retrieve, with
-status and retry count. Unresolved gaps at packaging time: **349**.
+status and retry count. Unresolved gaps at packaging time: **353**.
 A dataset that cannot say what it failed to collect cannot support a coverage claim, so
 the gaps ship with the data rather than being quietly dropped.
 
