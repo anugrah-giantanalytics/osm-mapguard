@@ -136,8 +136,8 @@ def export_feature_store(out_dir: Path, s: str) -> dict:
     """The training feature store exactly as built, with identities removed.
 
     uid and user_uid become salted integer pseudonyms (grouping preserved, so R1b splits
-    still hold); the free-text changeset comment is dropped. Everything else is map data
-    or derived counts.
+    still hold). The changeset comment stays - it is public metadata and a model input.
+    Everything else is map data or derived counts.
     """
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -156,8 +156,8 @@ def export_feature_store(out_dir: Path, s: str) -> dict:
                     vals = [pseudo_int(u, s) for u in table.column(col).to_pylist()]
                     idx = table.column_names.index(col)
                     table = table.set_column(idx, col, pa.array(vals, type=pa.int64()))
-            if "comment" in table.column_names:
-                table = table.drop(["comment"])
+            # the changeset comment is kept: it is public changeset metadata and an input of
+            # the B2 text branch; dropping it would change what the released store trains
         pq.write_table(table, dst / f"{name}.parquet", compression="zstd")
         stats[name] = table.num_rows
     for extra in ("build_report.json",):

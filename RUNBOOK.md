@@ -194,6 +194,27 @@ splits and a manifest. The same zip goes to the cluster and to the M4.
 
 ---
 
+## Training plan — which runs the paper needs
+
+Run these, in this order. Every command is `train/run_pipeline.py --feature-store data/interim`
+plus the arguments shown (or the `99_full_pipeline` notebook with `TASK`/`STAGES` set).
+
+| # | Task | Stages | Answers | Priority |
+|---|---|---|---|---|
+| 0 | any | `00` | the image works (wiring check) | first, always |
+| 1 | `ovid` | `00,01,02,04,03,05,06` (all) | headline R1 vs Ovid's 81.66; ablations; self-supervision (R4); 2019 temporal | **must** |
+| 2 | `ovid_modern` | `01,02,06` | does a model trained on 2014–19 still work on 2021–26 under the *same* label rule (R3: drift) | **must** |
+| 3 | `T1` | `01,02,06` | triage of human-flagged changesets (OSMCha), 2023–26 | should |
+| 4 | `T2` | `01,02,06` | detection vs random traffic, 2023–26 | should |
+| 5 | `revert_vandalism` | `01,02` | Ovid's rule on modern data; report B0 = 0.839 beside it | could |
+| 6 | `revert` | `01,02` | any-revert labels, 2021–26 | could |
+
+- Stage 03 and 05 are the expensive ones (7×2 and 4×2×2 trainings); run them for `ovid`
+  only unless time is left.
+- Cross-label check (label-source drift): after 3 and 4, run
+  `train/02_stage2_supervised/stage2_evaluate.py --run <T1 run> --task T2` and the reverse.
+- Never report a directory ending in `_quick`.
+
 ## Step 4a — train on the SVKM cluster
 
 See RUN_ALTAIR.md for the portal. For every job: image `tensorflow_pbs:23.07-tf2-py3`,

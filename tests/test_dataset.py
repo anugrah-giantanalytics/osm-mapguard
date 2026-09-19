@@ -156,3 +156,13 @@ def test_standardise_survives_a_constant_column():
     train = np.array([[5.0, 1.0], [5.0, 3.0]])
     tr, = standardise(train)
     assert np.isfinite(tr).all()
+
+
+def test_text_input_puts_the_comment_first_and_caps_it():
+    from mapguard.training.dataset import COMMENT_CHARS, text_input
+
+    assert text_input("fix road", "Main Street") == "fix road | Main Street"
+    assert text_input(None, "Main Street") == "Main Street"
+    assert text_input(float("nan"), None) == ""
+    long = text_input("x" * 500, "Main Street")
+    assert long.startswith("x" * COMMENT_CHARS + " | ") and long.endswith("Main Street")

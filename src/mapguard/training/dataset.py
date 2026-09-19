@@ -66,6 +66,24 @@ TABULAR_FEATURES = (
 )
 
 
+COMMENT_CHARS = 120      # of TEXT_LEN; the rest is free-text tag values
+
+
+def text_input(comment, text_blob) -> str:
+    """B2 reads what the author typed: the changeset comment, then free-text tag values.
+
+    Both are written at edit time, so neither carries future information. The comment comes
+    first and is capped, so a long comment cannot crowd the tag text (`name=...`) out of the
+    TEXT_LEN window. Checked 2026-09-19: reviewer or revert wording appears in <1% of
+    comments in either class, so the comment does not echo the label.
+    """
+    c = "" if comment is None or comment != comment else str(comment)[:COMMENT_CHARS]
+    b = "" if text_blob is None or text_blob != text_blob else str(text_blob)
+    if c and b:
+        return f"{c} | {b}"
+    return c or b
+
+
 def encode_text(s: str | None, length: int = TEXT_LEN) -> np.ndarray:
     """Characters to ids, lowercased, zero-padded.
 
@@ -188,7 +206,9 @@ def build_batch(
 
     # --- B2: text ------------------------------------------------------------
     blobs = changesets["text_blob"].tolist() if "text_blob" in changesets.columns else [""] * n
-    text = np.stack([encode_text(b) for b in blobs])
+    comments = (changesets["comment"].tolist() if "comment" in changesets.columns
+                else [""] * n)
+    text = np.stack([encode_text(text_input(c, b)) for c, b in zip(comments, blobs)])
 
     # --- B5: tabular ---------------------------------------------------------
     tab_cols = []

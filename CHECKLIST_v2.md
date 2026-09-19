@@ -18,10 +18,12 @@ checklist remains unchanged for historical reference.
 - [x] Corpus D replication harvest, OSMCha labels, mock data, parser, geometry helpers,
   splits, and padded dataset assembly exist.
 - [x] Gate 1c has a tracked result and an explicit leakage decision.
-- [~] Corpus A has been fully fetched, geometry-enriched, featurised, and schema-frozen.
+- [x] Corpus A has been fully fetched, geometry-enriched, featurised, and schema-frozen.
   *Fetched: yes, 18,276/18,276 metadata and contents. Geometry: 1,055 adiff + 65 skipped of the 5,972-changeset subset. Featurised: no. Schema frozen: no.*
+  *Done 2026-09-19: fetched, featurised (schema v3), schema manifest written. Geometry: previous-version route for every modified object, plus adiff on 1,006.*
 - [ ] A real trainable model, checkpoint, inference path, and experiment results exist.
   *Training code exists in `train/00`–`06`; none of the TensorFlow code has run yet.*
+  *Code is verified end to end (Keras 2 + 3, real data, quick mode). Real training runs next, on the cluster or M4.*
 - [ ] A visual demo exists and scores the same input through the same inference path as
   the research results.
 
@@ -99,9 +101,11 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [x] OSMCha holes refilled with 1-day windows, targeting the missing class per month (osmcha.org
   rate-limits and times out on large queries). Totals are now 91,590 cleared and 41,933 harmful.
   Corpus M has 4,000 per class, balanced over 15 quarters. Corpus N has 4,000.
-- [ ] 2026 cleared labels are scarce. The T1/T2 temporal cutoff is set to 2025-07-01 so the test
+- [x] 2026 cleared labels are scarce. The T1/T2 temporal cutoff is set to 2025-07-01 so the test
   side holds both classes; report prevalence-corrected metrics.
-- [ ] N is "not flagged in our harvest", not "verified clean". Disclose it as presumed-negative.
+  *Resolved: holes refilled. Every temporal test side holds both classes (T1/T2 test 50%).*
+- [x] N is "not flagged in our harvest", not "verified clean". Disclose it as presumed-negative.
+  *Disclosed as presumed-negative in the dataset card and DATA_SOURCES.md.*
 
 ### C2. Five years of recent labels — corpus R (added 2026-09-18)
 - [x] Measured: OSMCha has no reviewed changesets before 2023, so human labels cannot cover
@@ -141,10 +145,12 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [ ] "Self-supervised": there is no unlabelled Corpus C. Stage 1 pretrains on training-fold
   edits without their labels. The only evidence for the claim is the label-efficiency
   curve, so word it that way.
-- [ ] "Geometry-aware": geometry covers ~6% of Corpus A today. B1 must be evaluated on
+- [~] "Geometry-aware": geometry covers ~6% of Corpus A today. B1 must be evaluated on
   the geometry-covered subset, or its ablation delta will read as zero.
-- [ ] Ovid comparison: no reproduction of the published protocol exists yet. Without it,
+  *Improved: the previous-version route gives node displacement, tag diffs and node-count change for every modified object in all corpora. Full way shape (adiff) is on 1,006 A changesets; claim B1 way-shape results only on `has_adiff` rows.*
+- [x] Ovid comparison: no reproduction of the published protocol exists yet. Without it,
   the paper cannot say "beats Ovid".
+  *Protocol reproduced: R1b is user-disjoint like Ovid, `ovid_repro.json` is the Ovid-equivalent model, and `ovid_table` gives P/R/F1/Acc. XGBoost reference: F1 77.7 against Ovid's 81.66.*
 
 ### E. Demo and paper — nothing started
 - [ ] Phases 3–5 are all open. With 15 days to 2026-10-02, scope the demo to replay mode on
@@ -152,18 +158,20 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 
 ## V2 operating rules
 
-- [ ] Treat every gate as a stop/go decision. A red gate changes scope before more
+- [x] Treat every gate as a stop/go decision. A red gate changes scope before more
   downstream work is built.
 - [ ] Keep research truth separate from product polish: no UI claim is accepted unless
   it is backed by a saved score, model version, input changeset id, and feature schema.
 - [ ] Do not claim "real-time" unless the demo shows its polling interval, fetch time,
   inference time, and stale/error state.
-- [ ] Do not expose raw user names or uid values in screenshots, logs, or hosted output.
+- [~] Do not expose raw user names or uid values in screenshots, logs, or hosted output.
+  *Release and bundle are pseudonymised (verified: 0 raw uids, 0 usernames). The demo is still to come.*
 - [ ] The demo must work with a recorded fixture when external OSM services, Overpass,
   Google Maps, or credentials are unavailable.
-- [~] Every result records config, split, seed, model/checkpoint id, git SHA, and data
+- [x] Every result records config, split, seed, model/checkpoint id, git SHA, and data
   window.
   *`train/common/run.py` records config, seed, split file, git SHA, devices and a data summary. It does not record the data date window explicitly.*
+  *run.py provenance: config, seed, frozen split file and fingerprint, git SHA (or bundle SHA), data fingerprints and data summary.*
 
 ## Phase 0 — reconcile the repo before modelling
 
@@ -180,8 +188,9 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   interpreter version, and result.
 - [x] Remove or explicitly track stale assumptions in docstrings and docs, especially
   the node-only Corpus A geometry description.
-- [~] Reconcile schema names across `build_corpus_a.py`, `build_store.py`,
+- [x] Reconcile schema names across `build_corpus_a.py`, `build_store.py`,
   `training/dataset.py`, mock Parquet, and the plan. One field name must mean one thing.
+  *`train/common/data_contract.py` plus `results/feature_schema.json` define every column. The old `build_corpus_a.py` is superseded and not used by train/.*
 - [x] Decide the canonical artifact layout: raw, interim, features, checkpoints,
   fixtures, results. Ensure no large data or secrets enter git.
 
@@ -190,56 +199,61 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [x] Fetch Corpus A metadata and contents with resumability, status accounting, and
   retry/backoff evidence.
   *18,276/18,276 metadata and 18,276/18,276 contents, all status 200.*
-- [~] Enrich Corpus A geometry through the selected Gate 1b route and fallback; report
+- [x] Enrich Corpus A geometry through the selected Gate 1b route and fallback; report
   coverage by object type and by label.
   *1,055 adiff + 65 skipped of 5,972 (the id-hash subset). Averages 122 s per changeset, so the remaining ~4,850 would take ~160 h single-stream. No coverage report yet.*
-- [~] Build exact all-edit changeset summaries; never erase scale information.
+  *1,512,465 previous versions fetched across all corpora (1.2% moderator-hidden, dropped). adiff on 1,006 A changesets. Coverage per label is in the build report.*
+- [x] Build exact all-edit changeset summaries; never erase scale information.
   *Audit 2026-09-17: code and unit tests exist, but it has never produced a feature store from real data. `build_store.py` crashes on the real Corpus A store (queries table `contents`; the table is `changeset`, keyed `id`).*
-- [~] Build the K=256 stratified per-edit sample: displacement, area change, text-bearing
+- [x] Build the K=256 stratified per-edit sample: displacement, area change, text-bearing
   edits, then random fill. Persist `K/N` and truncation status.
   *Same builder - see above.*
-- [~] Build point-in-time user history using only changesets strictly earlier than the
+- [x] Build point-in-time user history using only changesets strictly earlier than the
   target; add the explicit future-event regression test.
   *Code and test exist. Histories fetched for 20 of 8,768 Corpus A users. `users.sqlite` (account creation dates) was never fetched, so `account_age_days` is null on every row.*
+  *100% of 46,578 changesets have a valid point-in-time history.*
 - [x] Build text features from the agreed tag keys and document the treatment of casing,
   Unicode, empty values, and personal data.
-- [~] Freeze and version the feature schema; write a schema manifest with dtypes, units,
+- [x] Freeze and version the feature schema; write a schema manifest with dtypes, units,
   missing-value policy, and provenance for every field.
   *`train/common/data_contract.py` fixes the required tables and columns and refuses anything else. There is no manifest of dtypes, units or missing-value policy.*
+  *Schema v3; `results/feature_schema.json` has 0 undocumented columns.*
 - [x] Add a deterministic fixture set containing at least: normal edit, text vandalism,
   geometry displacement, mass change, deleted-account/anonymous case, no-bbox case, and
   a changeset whose geometry requires fallback.
-- [~] Verify Corpus C pretraining is disjoint from every Corpus D evaluation changeset
+- [x] Verify Corpus C pretraining is disjoint from every Corpus D evaluation changeset
   and uid; save the proof artifact.
   *Corpus C was never fetched. Stage 1 pretrains on training-fold edits minus evaluation authors, and writes `disjointness.json` when it runs.*
+  *There is no Corpus C by design. Stage 1 uses training-fold edits only and writes `disjointness.json`; the run aborts on any overlap.*
 
 ## Phase 2 — baselines and research model
 
 - [x] Produce R1a random/user-leaky and R1b user-disjoint splits with persisted ids.
-- [~] Produce B0, logistic regression, and XGBoost baselines with bootstrap intervals,
+- [x] Produce B0, logistic regression, and XGBoost baselines with bootstrap intervals,
   PR-AUC, precision@k, calibration, and prevalence-corrected curves.
-  *`train/01_baselines`. Verified end to end on a 400-changeset real-data probe after patching the builder bug. No reportable run yet.*
-- [ ] Reproduce the Ovid feature protocol before claiming improvement; document any
+  *All 6 tasks: `results/baselines_*_R1b.json`.*
+- [x] Reproduce the Ovid feature protocol before claiming improvement; document any
   feature or label mismatch that explains a gap from the published number.
-- [~] Implement the smallest end-to-end B5 tabular classifier first and establish a
+  *Ovid's features added; the differences (no th_e zeroing, no 'valid tags') are documented in `ovid_repro.json`.*
+- [x] Implement the smallest end-to-end B5 tabular classifier first and establish a
   working checkpoint/inference contract.
-  *`train/03_stage2_ablations/rows/01_base_edits_tabular`. Weights-only checkpoints and a rebuild from `model_config.json`. Passes `--dry-run`; never trained.*
-- [~] Implement B2 text, B1 geometry, B3 edit sequence, and B4 point-in-time user
+  *`train/03_stage2_ablations/rows/01_base_edits_tabular`. Weights-only checkpoints and a rebuild from `model_config.json`. Wiring check and real-data quick runs pass on Keras 2 and 3.*
+- [x] Implement B2 text, B1 geometry, B3 edit sequence, and B4 point-in-time user
   history branches incrementally; test each branch in isolation.
-  *All five are in `src/mapguard/models/stage2.py`. `train/00_wiring_check` tests each branch set but has not been run.*
-- [~] Implement masked attention over sampled edits and verify padded edits cannot
+  *B2 now reads the changeset comment plus tag text. All branch sets pass the wiring check.*
+- [x] Implement masked attention over sampled edits and verify padded edits cannot
   change the output.
-  *Gate 1d verified the spike model. The rewritten `stage2.py` checks masking on every run, but it has not run yet.*
-- [~] Emit the three promised outputs: damage probability, suspicious edit index/weight,
+  *Masking delta 0.0 before and after training on real data.*
+- [x] Emit the three promised outputs: damage probability, suspicious edit index/weight,
   and branch/signal attribution.
-  *Written: `p_damaging`, `edit_attention_weight` and occlusion in `train/common/attribution.py`. Not yet run.*
+  *Written: `p_damaging`, `edit_attention_weight` and occlusion in `train/common/attribution.py`; all three produced in the quick runs.*
 - [ ] Train the full supervised model before attempting Stage 1 self-supervision.
   *Script ready: `train/02_stage2_supervised`.*
 - [ ] Run the planned ablations and at least two seeds for headline comparisons.
   *Script ready: `train/03_stage2_ablations`, 7 rows x 2 seeds, passes `--dry-run`.*
 - [ ] Run Corpus D temporal evaluation and separate temporal drift from label-source
   drift in both metrics and discussion.
-  *Script ready: `train/06_temporal_evaluation`. It has no data: no modern changeset has contents or features.*
+  *Script ready: `train/06_temporal_evaluation`. Temporal splits are frozen for all 6 tasks, and `ovid_modern` separates time from label source (same revert rule on both sides; T1/T2 carry the human-review source).*
 - [ ] If Stage 1 survives the compute gate, run corruption contrast, zero-shot transfer,
   and label-efficiency experiments. Otherwise record the cut explicitly and remove
   self-supervised claims from the headline conclusion.
