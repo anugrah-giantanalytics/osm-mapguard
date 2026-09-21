@@ -1,5 +1,1 @@
-{
-  "name": "plus_text",
-  "purpose": "adds B2 - the char-CNN over tag text (gap G2)",
-  "overrides": {"model": {"branches": ["B2", "B5"]}}
-}
+{"name": "plus_text", "purpose": "comment + tag text - the strongest branch in round 1", "overrides": {"model": {"branches": ["B2", "B5"]}}}

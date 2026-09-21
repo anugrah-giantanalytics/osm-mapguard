@@ -1,6 +1,0 @@
-{
-  "name": "full_pretrained",
-  "purpose": "all five branches, edit encoder initialised from Stage 1 - skipped unless a pretrained encoder is given",
-  "requires_pretrained_encoder": true,
-  "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5"]}}
-}

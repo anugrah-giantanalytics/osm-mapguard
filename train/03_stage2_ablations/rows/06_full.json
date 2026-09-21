@@ -1,0 +1,1 @@
+{"name": "full", "purpose": "all six branches, MIL pooling, author-balanced - the v2 headline", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"]}}}

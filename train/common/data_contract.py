@@ -55,8 +55,9 @@ TABLES = {
 }
 
 REQUIRED = {
-    "changesets": ("cid", "label", "uid", "created_at", "text_blob"),
-    "edits": ("cid",) + tuple(EDIT_FEATURES),
+    "changesets": ("cid", "label", "uid", "created_at", "text_blob", "diff_tokens"),
+    # diff_tokens/text/old_text feed branch B6 (schema v4); without them B6 would train on zeros
+    "edits": ("cid", "diff_tokens", "text", "old_text") + tuple(EDIT_FEATURES),
     "user_seq": ("cid", "step", "num_changes", "gap_days", "comment_length", "bbox_diag_deg"),
 }
 

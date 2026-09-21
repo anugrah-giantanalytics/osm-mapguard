@@ -18,7 +18,8 @@
     "embed": 64,
     "heads": 4,
     "dropout": 0.2,
-    "raster": null
+    "raster": null,
+    "pooling": "mean"
   },
   "train": {
     "epochs": 40,
@@ -31,7 +32,9 @@
     "class_weight": null,
     "patience": 5,
     "verbose": 2,
-    "mixed_precision": "auto"
+    "mixed_precision": "auto",
+    "author_weighting": null,
+    "weight_decay": 0.0
   },
   "init": {
     "pretrained_encoder": null,
@@ -42,5 +45,5 @@
     "top_k": 0
   },
   "tag": "ovid_repro",
-  "_comment": "Ovid-equivalent model for the reproduction row (Tempelmeier & Demidova 2021): changeset + user features through dense layers, multi-head attention over per-edit features, no geometry (B1), no text (B2), no user sequence (B4) or edit order (B3). Same R1b split as Ovid's user-disjoint protocol. Differences, disclosed: Ovid zeroes edits above th_e,max, this keeps them (MapGuard rule 1); 'valid tags' is not reproduced."
+  "_comment": "Ovid-equivalent model for the reproduction row (Tempelmeier & Demidova 2021): changeset + user features through dense layers, multi-head attention over per-edit features, no geometry (B1), no text (B2), no user sequence (B4) or edit order (B3). Same R1b split as Ovid's user-disjoint protocol. Differences, disclosed: Ovid zeroes edits above th_e,max, this keeps them (MapGuard rule 1); 'valid tags' is not reproduced. Kept at round-1 settings (mean pooling, no author weighting, no weight decay) so it stays a fixed reference."
 }

@@ -54,8 +54,35 @@ def calibration(y: np.ndarray, p: np.ndarray, bins: int = 10) -> dict:
     }
 
 
-def report(y_val, p_val, y_test, p_test, *, n_boot: int = 1000, seed: int = 20260904) -> dict:
-    """The full evaluation block written into results.json for any scored model."""
+def author_robust(y: np.ndarray, p: np.ndarray, groups) -> dict:
+    """Scores that one prolific author cannot move.
+
+    In Corpus A, 56 authors supply 37% of the positives (bulk-reverted accounts). Each of
+    their changesets counts separately in an ordinary metric, so a model that recognises one
+    such account's style gets hundreds of easy points. Measured 2026-09-22: tabular XGBoost
+    scores 0.858 PR-AUC on ovid but 0.764 counted one changeset per author.
+
+    one_per_author   the first changeset of each (author, class) - deterministic
+    author_weighted  every changeset weighted 1 / (changesets by its author)
+    """
+    import pandas as pd
+
+    g = pd.Series(list(groups)).map(lambda u: -1 if u is None else u).to_numpy()
+    df = pd.DataFrame({"y": y.astype(int), "p": p, "g": g})
+    one = df.groupby(["g", "y"], sort=False).head(1)
+    w = 1.0 / df.groupby("g")["g"].transform("count").to_numpy()
+    out = {"authors": int(df["g"].nunique()), "one_per_author_n": int(len(one))}
+    if one["y"].nunique() == 2:
+        out["one_per_author_pr_auc"] = round(float(average_precision(one["y"].to_numpy(), one["p"].to_numpy())), 4)
+    out["author_weighted_pr_auc"] = round(float(average_precision(df["y"].to_numpy(), df["p"].to_numpy(), w)), 4)
+    return out
+
+
+def report(y_val, p_val, y_test, p_test, *, n_boot: int = 1000, seed: int = 20260904,
+           test_groups=None) -> dict:
+    """The full evaluation block written into results.json for any scored model.
+
+    `test_groups` (author ids of the test rows) adds the author-robust block."""
     y_val, p_val = np.asarray(y_val).astype(int), np.asarray(p_val, float).ravel()
     y_test, p_test = np.asarray(y_test).astype(int), np.asarray(p_test, float).ravel()
 
@@ -77,6 +104,8 @@ def report(y_val, p_val, y_test, p_test, *, n_boot: int = 1000, seed: int = 2026
         },
         "test_calibration": calibration(y_test, p_test),
         "ovid_table": ovid_table(y_test, p_test, threshold),
+        **({"author_robust": author_robust(y_test, p_test, test_groups)}
+           if test_groups is not None else {}),
     }
 
 
@@ -107,5 +136,6 @@ def headline(rep: dict) -> dict:
         "test_pr_auc_at_1pct_prevalence": t["by_prevalence"]["0.01"]["pr_auc"],
         "test_f1_at_val_threshold": t["by_prevalence"]["0.5"]["f1"],
         "test_ovid_table": {k: rep["ovid_table"][k] for k in ("precision", "recall", "f1", "accuracy")},
+        "test_author_robust": rep.get("author_robust"),
         "test_ece": rep["test_calibration"]["ece"],
     }

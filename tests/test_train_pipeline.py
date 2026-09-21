@@ -370,3 +370,25 @@ def test_every_stage_config_is_valid_json_with_a_stage():
     for row in sorted((TRAIN / "03_stage2_ablations" / "rows").glob("*.json")):
         r = json.loads(row.read_text(encoding="utf-8"))
         assert r["name"] and "overrides" in r
+
+
+# ---------------------------------------------------------------- v2: author robustness
+
+
+def test_author_robust_metrics_count_each_author_once():
+    y = np.array([1, 1, 1, 1, 0, 0])
+    p = np.array([0.9, 0.9, 0.9, 0.2, 0.1, 0.8])
+    g = [7, 7, 7, 8, 9, 10]
+    r = scoring.author_robust(y, p, g)
+    assert r["authors"] == 4 and r["one_per_author_n"] == 4
+    assert 0 < r["one_per_author_pr_auc"] <= 1 and 0 < r["author_weighted_pr_auc"] <= 1
+
+
+def test_author_sample_weights_shrink_prolific_authors():
+    from common.fit import author_sample_weights
+
+    uids = np.array([1, 1, 1, 1, 2, None], dtype=object)
+    rows = np.array([True, True, True, True, True, True])
+    w = author_sample_weights(uids, rows, "sqrt")
+    assert w[0] < w[4] and abs(w.mean() - 1) < 1e-6
+    assert author_sample_weights(uids, rows, None) is None

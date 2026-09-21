@@ -410,3 +410,25 @@ Deadline 2026-10-02. Ordered by what the results say matters. Details in
   the text-dominance ablation, time drift, and the negative self-supervision result.
 - [ ] Limitations: CPU-only training, label noise from mass reverts, B0 0.839 on revert_vandalism,
   presumed-negative N.
+
+## Round 2 — model v2 (2026-09-22, deadline end of October)
+
+Evidence and reasoning: `docs/MODEL_V2.md`. Round 1 results: `experiments/rounds/r1_2026-09-21_m4/`.
+
+- [x] Diagnosed round 1. Signal families are complementary (WHO / WHAT / TEXT). Round 1 lacked
+  WHAT: it saw counts, not which tag changed.
+- [x] Found the benchmark inflation: XGBoost gets 0.858 normally but 0.764 counting one changeset
+  per author. Author-robust metrics are now in every report.
+- [x] Probe: edit tokens + text + author weighting lift the tree model to 0.898 / 0.836 one-per-author,
+  F1 81.1 / Acc 81.3, level with Ovid's 81.66 / 81.37.
+- [x] Builder v4: per-edit `diff_tokens` + `old_text`, and a changeset token bag (rebuild running).
+- [x] Model v2: B6 edit-meaning branch, gated-attention MIL + max pooling, AdamW, dropout 0.3,
+  author-balanced weights.
+- [x] Hybrid baseline (trees + out-of-fold token/text models) and stage 07 ensemble.
+- [x] Ablation rows redesigned to test each v2 claim (edit meaning, MIL vs mean, weighting).
+- [ ] Rebuild store v4, rerun baselines + hybrid on all tasks (CPU), re-freeze splits if ids change.
+- [ ] Bundle v1.1.0, run round 2 on the M4 (RUNBOOK training plan), analyse into
+  `experiments/rounds/r2_*`.
+- [ ] If Stage 1 is retried: pretrain on edit tokens (masked-token), not on edit numbers.
+- [ ] WHERE signal (author's usual area vs this edit) needs history locations, which means a refetch.
+  Decide after round 2.

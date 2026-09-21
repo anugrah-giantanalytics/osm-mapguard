@@ -10,6 +10,8 @@ Deep Learning (702AI0C008) mini project · team of 4 · four-week build to 2026-
 | What the plan got wrong | [docs/PLAN_REVIEW.md](docs/PLAN_REVIEW.md) |
 | Build checklist | [CHECKLIST_v2.md](CHECKLIST_v2.md) |
 | Fetch -> build -> bundle -> train | [RUNBOOK.md](RUNBOOK.md) |
+| Model v2: why round 1 plateaued | [docs/MODEL_V2.md](docs/MODEL_V2.md) |
+| Training rounds | `experiments/rounds/` |
 | GPU cluster | [RUN_ALTAIR.md](RUN_ALTAIR.md) |
 
 ---

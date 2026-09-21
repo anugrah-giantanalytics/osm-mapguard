@@ -11,6 +11,8 @@ Outputs, keyed to the branches in PROJECT_PLAN section 5.3:
 
     edit_features  (N, K, F)   B1/B3  per-edit numeric, zero-padded
     edit_mask      (N, K)      -      1 = real edit, 0 = padding
+    edit_tokens    (N, K, T)   B6     hashed edit tokens (what the edit did), 0 = padding
+    edit_text      (N, K, L)   B6     characters of "old text>new text" per edit
     text           (N, C)      B2     character codes, zero-padded
     user_sequence  (N, S, 4)   B4     point-in-time history, zero-padded
     user_mask      (N, S)      -
@@ -29,6 +31,8 @@ import numpy as np
 MAX_EDITS = 256          # K, matches SAMPLE_K in features.build_store
 MAX_USER_STEPS = 200     # S, matches SEQUENCE_LENGTH in features.user_history
 TEXT_LEN = 256           # C, character sequence for the B2 char-CNN
+EDIT_TEXT_LEN = 24       # L, per-edit "old>new" free text for B6
+from mapguard.features.edit_tokens import TOKEN_BUCKETS, TOKENS_PER_EDIT, encode_tokens  # noqa: E402
 
 # Printable ASCII plus a catch-all. Deliberately small: the B2 branch is meant to read
 # shapes of text - repetition, case, gibberish, symbol runs - not to model language.
@@ -109,6 +113,8 @@ class Batch:
     uids: np.ndarray
     edit_features: np.ndarray
     edit_mask: np.ndarray
+    edit_tokens: np.ndarray
+    edit_text: np.ndarray
     text: np.ndarray
     user_sequence: np.ndarray
     user_mask: np.ndarray
@@ -118,6 +124,8 @@ class Batch:
         return {
             "edit_features": self.edit_features,
             "edit_mask": self.edit_mask,
+            "edit_tokens": self.edit_tokens,
+            "edit_text": self.edit_text,
             "text": self.text,
             "user_sequence": self.user_sequence,
             "user_mask": self.user_mask,
@@ -132,6 +140,7 @@ class Batch:
         return Batch(
             cids=self.cids[mask], y=self.y[mask], uids=self.uids[mask],
             edit_features=self.edit_features[mask], edit_mask=self.edit_mask[mask],
+            edit_tokens=self.edit_tokens[mask], edit_text=self.edit_text[mask],
             text=self.text[mask], user_sequence=self.user_sequence[mask],
             user_mask=self.user_mask[mask], tabular=self.tabular[mask],
         )
@@ -163,12 +172,17 @@ def build_batch(
     # --- B1/B3: per-edit -----------------------------------------------------
     ef = np.zeros((n, max_edits, len(EDIT_FEATURES)), dtype="float32")
     em = np.zeros((n, max_edits), dtype="float32")
+    et = np.zeros((n, max_edits, TOKENS_PER_EDIT), dtype="int32")
+    ex = np.zeros((n, max_edits, EDIT_TEXT_LEN), dtype="int32")
 
     if edits is not None and len(edits):
         cols = [edits[c].to_numpy() if c in edits.columns else np.zeros(len(edits))
                 for c in EDIT_FEATURES]
         block = _clean(np.column_stack(cols))
         edit_cids = edits["cid"].to_numpy()
+        toks = edits["diff_tokens"].tolist() if "diff_tokens" in edits.columns else None
+        new_t = edits["text"].tolist() if "text" in edits.columns else None
+        old_t = edits["old_text"].tolist() if "old_text" in edits.columns else None
         # Position within the changeset, not the row number in the table.
         slot: dict[int, int] = {}
         for r in range(len(edits)):
@@ -181,6 +195,13 @@ def build_batch(
                 continue
             ef[i, k] = block[r]
             em[i, k] = 1.0
+            if toks is not None:
+                et[i, k] = encode_tokens(toks[r])
+            if new_t is not None or old_t is not None:
+                o = (old_t[r] if old_t is not None else "") or ""
+                w = (new_t[r] if new_t is not None else "") or ""
+                if o or w:
+                    ex[i, k] = encode_text(f"{o}>{w}", EDIT_TEXT_LEN)
             slot[cid] = k + 1
 
     # --- B4: user history ----------------------------------------------------
@@ -226,7 +247,7 @@ def build_batch(
 
     return Batch(
         cids=cids, y=y, uids=uids,
-        edit_features=ef, edit_mask=em, text=text,
+        edit_features=ef, edit_mask=em, edit_tokens=et, edit_text=ex, text=text,
         user_sequence=us, user_mask=um, tabular=tabular,
     )
 

@@ -9,6 +9,7 @@ watching the score move:
     B3  real edits shuffled within each changeset - removes order, keeps content
     B4  user history emptied
     B5  tabular features set to the mean
+    B6  edit tokens and per-edit old>new text replaced with padding
 
 Occlusion rather than gradients because it answers the reviewer's question directly -
 "how much would this score change without that evidence?" - and because it behaves the same
@@ -49,6 +50,11 @@ def _occlude(arrays: dict, branch: str, edit_columns, tabular_columns, rng) -> d
         a["user_mask"][:] = 0.0
     elif branch == "B5":
         a["tabular"][:] = 0.0
+    elif branch == "B6":
+        if "edit_tokens" not in a:
+            return None
+        a["edit_tokens"][:] = 0
+        a["edit_text"][:] = 0
     else:
         return None
     return a

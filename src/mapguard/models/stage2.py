@@ -18,6 +18,15 @@ The branches, and the gap each closes (PROJECT_PLAN section 5.3):
     B3  edit seq     BiLSTM over sampled edits in commit order      -> G4
     B4  user history GRU over point-in-time prior changesets        -> G3
     B5  tabular      MLP over changeset-level features              -> parity
+    B6  edit meaning tokens of what each edit did (+leisure=park, -highway,
+                     ~name) and its old->new text, per edit            -> v2 (2026-09-22)
+
+Pooling over edits (v2): a changeset is a *bag* of edits and one bad edit makes it bad -
+multiple-instance learning. Round 1 averaged the edits, which dilutes one bad edit among
+200 good ones, and its attention came out near-uniform (~1/n). v2 pools with gated attention
+(Ilse, Tomczak & Welling 2018) *and* a masked max, so a single strong edit survives, and the
+attention weights become the "which edit" explanation. `pooling="mean"` keeps the round-1
+behaviour for the ablation that proves the difference.
 
 Outputs:
     p_damaging              (N, 1)  the score
@@ -33,7 +42,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-ALL_BRANCHES = ("B1", "B2", "B3", "B4", "B5")
+ALL_BRANCHES = ("B1", "B2", "B3", "B4", "B5", "B6")
 
 
 # ------------------------------------------------------------------- mask layers
@@ -103,6 +112,64 @@ class AttentionReceived(layers.Layer):
         return (input_shape[0][0], input_shape[0][-1])
 
 
+class MaskedTokenMean(layers.Layer):
+    """[(N, K, T, D) embeddings, (N, K, T) ids] -> (N, K, D): mean over real tokens (id > 0)."""
+
+    def call(self, inputs):
+        emb, ids = inputs
+        m = tf.cast(tf.greater(ids, 0), emb.dtype)[..., None]
+        return tf.reduce_sum(emb * m, axis=2) / tf.maximum(tf.reduce_sum(m, axis=2), 1.0)
+
+    def compute_output_shape(self, input_shape):
+        s = input_shape[0]
+        return (s[0], s[1], s[3])
+
+
+class MaskedMax(layers.Layer):
+    """[(N, K, D), (N, K) mask] -> (N, D): strongest real edit per feature. Padding can never
+    win: it is replaced by a large negative before the max."""
+
+    def call(self, inputs):
+        x, mask = inputs
+        m = tf.cast(mask, tf.bool)[:, :, None]
+        return tf.reduce_max(tf.where(m, x, tf.cast(-1e4, x.dtype) * tf.ones_like(x)), axis=1)
+
+    def compute_output_shape(self, input_shape):
+        return (input_shape[0][0], input_shape[0][-1])
+
+
+class GatedAttentionPool(layers.Layer):
+    """Gated attention MIL pooling (Ilse et al. 2018) over real edits.
+
+    a_k = softmax_k( w^T (tanh(V h_k) * sigmoid(U h_k)) ),  z = sum_k a_k h_k
+    Returns [z (N, D), a (N, K) float32]; padded edits get exactly zero weight.
+    """
+
+    def __init__(self, units: int = 32, **kwargs):
+        super().__init__(**kwargs)
+        self.units = units
+        self.v = layers.Dense(units, activation="tanh", name="mil_v")
+        self.u = layers.Dense(units, activation="sigmoid", name="mil_u")
+        self.w = layers.Dense(1, name="mil_w")
+
+    def call(self, inputs):
+        h, mask = inputs
+        m = tf.cast(mask, tf.bool)
+        logits = tf.squeeze(self.w(self.v(h) * self.u(h)), axis=-1)
+        logits = tf.where(m, logits, tf.cast(-1e4, logits.dtype) * tf.ones_like(logits))
+        a = tf.nn.softmax(logits, axis=1) * tf.cast(m, logits.dtype)
+        a = a / tf.maximum(tf.reduce_sum(a, axis=1, keepdims=True), tf.cast(1e-6, a.dtype))
+        z = tf.reduce_sum(h * a[:, :, None], axis=1)
+        return [z, tf.cast(a, "float32")]
+
+    def compute_output_shape(self, input_shape):
+        s = input_shape[0]
+        return [(s[0], s[2]), (s[0], s[1])]
+
+    def get_config(self):
+        return {**super().get_config(), "units": self.units}
+
+
 # ------------------------------------------------------------------------ model
 
 
@@ -120,6 +187,10 @@ def build_model(
     heads: int = 4,
     dropout: float = 0.2,
     branches: tuple[str, ...] = ALL_BRANCHES,
+    edit_tokens_len: int = 12,
+    edit_text_len: int = 24,
+    token_buckets: int = 1 << 14,
+    pooling: str = "mil",
 ) -> keras.Model:
     """The full model, or any subset of branches for the ablation grid.
 
@@ -164,6 +235,23 @@ def build_model(
     x = layers.Concatenate(axis=-1)(per_edit) if len(per_edit) > 1 else per_edit[0]
     x = layers.TimeDistributed(layers.Dense(embed, activation="relu"), name="edit_encoder")(x)
 
+    # --- B6 edit meaning: what each edit did (tokens) and the text it changed (old>new).
+    # Joined *after* edit_encoder, so Stage 1 encoder weights still transfer unchanged.
+    if "B6" in branches:
+        tok_in = keras.Input(shape=(max_edits, edit_tokens_len), name="edit_tokens", dtype="int32")
+        etx_in = keras.Input(shape=(max_edits, edit_text_len), name="edit_text", dtype="int32")
+        inputs["edit_tokens"] = tok_in
+        inputs["edit_text"] = etx_in
+        tok = layers.Embedding(token_buckets, 32, name="edit_token_embed")(tok_in)
+        tok = MaskedTokenMean(name="edit_token_mean")([tok, tok_in])
+        ch = layers.Embedding(vocab_size, 16, name="edit_char_embed")(etx_in)
+        ch = layers.TimeDistributed(layers.Conv1D(32, 3, activation="relu", padding="same"),
+                                    name="edit_char_conv")(ch)
+        ch = layers.TimeDistributed(layers.GlobalMaxPooling1D(), name="edit_char_pool")(ch)
+        x = layers.Concatenate(axis=-1, name="edit_meaning")([x, tok, ch])
+        x = layers.TimeDistributed(layers.Dense(embed, activation="relu"), name="edit_fuse")(x)
+        x = layers.Dropout(dropout, name="edit_fuse_dropout")(x)
+
     # --- B3 edit sequence
     if "B3" in branches:
         x = layers.Bidirectional(
@@ -175,8 +263,16 @@ def build_model(
         num_heads=heads, key_dim=max(8, embed // heads), name="edit_attention"
     )(x, x, attention_mask=PairwiseMask(name="edit_pair_mask")(mask_in),
       return_attention_scores=True)
-    fusion.append(MaskedMeanPool(name="edit_pool")([attended, mask_in]))
-    edit_weight = AttentionReceived(name="edit_attention_weight")([scores, mask_in])
+    if pooling == "mil":
+        z_att, a = GatedAttentionPool(32, name="edit_mil_attention")([attended, mask_in])
+        z_max = MaskedMax(name="edit_max")([attended, mask_in])
+        fusion.append(layers.Concatenate(name="edit_pool")([z_att, z_max]))
+        edit_weight = layers.Activation("linear", dtype="float32", name="edit_attention_weight")(a)
+    elif pooling == "mean":
+        fusion.append(MaskedMeanPool(name="edit_pool")([attended, mask_in]))
+        edit_weight = AttentionReceived(name="edit_attention_weight")([scores, mask_in])
+    else:
+        raise ValueError(f"pooling must be 'mil' or 'mean', got {pooling!r}")
 
     # --- B2 text
     if "B2" in branches:
@@ -285,6 +381,11 @@ def verify_masking(model: keras.Model, arrays: dict, n: int = 64) -> dict:
             arr = base[key]
             shape = pad.shape + (1,) * (arr.ndim - pad.ndim)
             perturbed[key] = (arr + pad.reshape(shape) * rng.normal(size=arr.shape) * 50.0).astype(arr.dtype)
+    for key, high in (("edit_tokens", 1 << 14), ("edit_text", 50)):
+        if key in base:
+            arr = base[key]
+            noise = rng.integers(1, high, size=arr.shape).astype(arr.dtype)
+            perturbed[key] = np.where(pad[..., None] > 0, noise, arr)
 
     after = model.predict(pack(model, perturbed), verbose=0)[0]
     delta = float(np.max(np.abs(before - after)))

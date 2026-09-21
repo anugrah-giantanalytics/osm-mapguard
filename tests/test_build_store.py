@@ -178,6 +178,17 @@ def test_edits_with_a_hidden_previous_version_are_dropped(stores, tmp_path):
     assert report["coverage_by_corpus"]["A"]["edits_dropped_hidden_prev_label_1"] == 1
 
 
+def test_edit_tokens_are_written_per_edit_and_per_changeset(stores, tmp_path):
+    out = tmp_path / "fs"
+    build_store.main(["--corpora", "A", "--out", str(out)])
+    e = pd.read_parquet(out / "edits.parquet")
+    e = e[e.cid == 1001].set_index("oid")
+    assert e.loc[20, "diff_tokens"].split()[:2] == ["modify_way", "+name"]
+    assert e.loc[30, "diff_tokens"] == "create_node"
+    cs = pd.read_parquet(out / "changesets.parquet").set_index("cid")
+    assert "+name" in cs.loc[1001, "diff_tokens"].split()
+
+
 def test_point_in_time_history_uses_a_complete_later_window_but_only_the_past(stores, tmp_path):
     out = tmp_path / "fs"
     build_store.main(["--corpora", "A", "--out", str(out)])

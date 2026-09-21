@@ -75,6 +75,7 @@ from mapguard.data.corpora import (
 from mapguard.data.osmchange import Edit, parse_safe
 from mapguard.data.overpass import GeometryAction, GeometryState
 from mapguard.data.users import account_age_days
+from mapguard.features.edit_tokens import edit_tokens
 from mapguard.features.geometry import features_for, summarise
 from mapguard.features.user_history import PriorChangeset, build as build_user
 
@@ -91,7 +92,7 @@ TEXT_KEYS = ("name", "description", "note", "comment", "operator", "brand", "ins
 
 SAMPLE_K = 256
 BATCH_ROWS = 2000
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4          # 4: per-edit diff_tokens/old_text, changeset diff_tokens
 
 ROUTE_NONE, ROUTE_VERSION, ROUTE_ADIFF = 0, 1, 2
 
@@ -293,6 +294,22 @@ def stratified_sample(edits: list[Edit], geom_by_key: dict, k: int = SAMPLE_K) -
 # ------------------------------------------------------------------------ features
 
 
+def prev_tags(e: Edit, old_tags: dict) -> dict | None:
+    """Tags before the edit: {} for a creation, None when unknown (beyond the fetch cap)."""
+    if e.action == "create":
+        return {}
+    return old_tags.get((e.otype, e.oid))
+
+
+def diff_bag(edits: list[Edit], old_tags: dict, cap_per_token: int = 20) -> str:
+    """Changeset-level bag of edit tokens over *every* edit (Rule 1: no truncation), each
+    token repeated at most `cap_per_token` times so one mass edit cannot drown the rest."""
+    counts: Counter[str] = Counter()
+    for e in edits:
+        counts.update(edit_tokens(e.action, e.otype, prev_tags(e, old_tags), e.tags))
+    return " ".join(" ".join([t] * min(n, cap_per_token)) for t, n in sorted(counts.items()))
+
+
 def changeset_row(
     cid: int,
     label: int,
@@ -412,8 +429,10 @@ def _days_between(a: str | None, b: str | None) -> float | None:
 
 
 def edit_rows(cid: int, edits: list[Edit], geom_by_key: dict, routes: dict,
-              prev_refs: dict, prev_meta: dict | None = None) -> list[dict]:
+              prev_refs: dict, prev_meta: dict | None = None,
+              old_tags: dict | None = None) -> list[dict]:
     prev_meta = prev_meta or {}
+    old_tags = old_tags or {}
     keep = stratified_sample(edits, geom_by_key)
     rows = []
     for pos in keep:
@@ -439,6 +458,11 @@ def edit_rows(cid: int, edits: list[Edit], geom_by_key: dict, routes: dict,
             "lat": e.lat,
             "lon": e.lon,
             "text": text[:200],
+            # what the edit did, as tokens (see features/edit_tokens.py), and the free text it
+            # replaced - "old_text -> text" is how a renamed street reads
+            "diff_tokens": " ".join(edit_tokens(e.action, e.otype, prev_tags(e, old_tags), e.tags)),
+            "old_text": " ".join(v for k, v in (old_tags.get(key) or {}).items()
+                                 if is_text_key(k) and v)[:200],
             "has_geometry": 1 if g else 0,
             "geom_route": routes.get(key, ROUTE_NONE),
             "centroid_shift_m": g.centroid_shift_m if g else None,
@@ -528,7 +552,7 @@ FLOAT_EDIT = {c: pa.float64() for c in (
     "lat", "lon", "days_since_prev_version", "prev_same_author")}
 FLOAT_CS = {c: pa.float64() for c in (
     "account_age_days", "bbox_lat_span", "bbox_lon_span", "num_changes_meta", "uid")}
-FLOAT_CS.update({"quarter": pa.string(), "created_at": pa.string(), "comment": pa.string(),
+FLOAT_CS.update({"diff_tokens": pa.string(), "quarter": pa.string(), "created_at": pa.string(), "comment": pa.string(),
                  "editor": pa.string(), "text_blob": pa.string(), "r_stratum": pa.string(),
                  "revert_mentions_vandalism": pa.float64()})
 
@@ -653,6 +677,7 @@ def main(argv: list[str] | None = None) -> int:
         for a in vacts:
             routes[(a.otype, a.oid)] = ROUTE_VERSION
             geom_by_key[(a.otype, a.oid)] = features_for(a)
+        old_tags = {(a.otype, a.oid): (a.old.tags if a.old else {}) for a in adiff + vacts}
         c["edits"] += len(edits)
         c["edits_eligible_prev_version"] += eligible
         c["edits_prev_version"] += len(vacts)
@@ -672,9 +697,10 @@ def main(argv: list[str] | None = None) -> int:
         cw.add(changeset_row(cid, label, corpus, meta, edits, adiff + vacts, routes,
                              created, history, rule != "missing", uf, prev_meta,
                              {"r_stratum": extra.get("r_stratum"),
-                              "revert_mentions_vandalism": extra.get("revert_mentions_vandalism")}))
+                              "revert_mentions_vandalism": extra.get("revert_mentions_vandalism"),
+                              "diff_tokens": diff_bag(edits, old_tags)}))
         if edits:
-            ew.add(edit_rows(cid, edits, geom_by_key, routes, prev_refs, prev_meta))
+            ew.add(edit_rows(cid, edits, geom_by_key, routes, prev_refs, prev_meta, old_tags))
         if uf.sequence:
             sw.add(user_seq_rows(cid, uf))
 

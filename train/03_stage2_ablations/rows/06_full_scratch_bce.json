@@ -1,5 +1,0 @@
-{
-  "name": "full_scratch_bce",
-  "purpose": "same as full_scratch with plain BCE - is focal loss actually helping?",
-  "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5"]}, "train": {"loss": "bce"}}
-}

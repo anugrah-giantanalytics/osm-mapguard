@@ -9,7 +9,13 @@
     "feature_store": null
   },
   "model": {
-    "branches": ["B1", "B2", "B3", "B4", "B5"],
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
     "max_edits": 256,
     "user_steps": 200
   },
@@ -24,6 +30,8 @@
       "subsample": 0.8,
       "colsample_bytree": 0.8
     },
-    "b0_leak_auc": 0.85
+    "b0_leak_auc": 0.85,
+    "hybrid": true,
+    "author_weighting": "sqrt"
   }
 }

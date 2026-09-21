@@ -59,6 +59,8 @@ DESCRIBE = {
     "geom_frac_adiff": ("ratio", "fraction of edits with full adiff geometry"),
     "frac_edits_prev_version": ("ratio", "fraction of edits with a fetched previous version"),
     "user_history_known": ("0/1", "1 if a point-in-time history was available"),
+    "diff_tokens": ("tokens", "what the edit(s) did: create_node, +name, -highway=residential, ~highway:track>motorway (features/edit_tokens.py); changeset rows hold the bag over every edit"),
+    "old_text": ("text", "free-text tag values before the edit; B6 reads old_text>text per edit"),
     "has_adiff": ("0/1", "changeset has adiff geometry; marks the B1 evaluation subset; not an input"),
     "n_prev_authors": ("count", "distinct other authors of the previous versions of touched objects (Ovid)"),
     "imagery_used": ("0/1", "changeset has an imagery_used tag (Ovid)"),

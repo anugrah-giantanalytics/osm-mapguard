@@ -4,7 +4,7 @@ Run order 3 of 6. Plan stage: Stage 2 ablations (PROJECT_PLAN §11, cut to 7 row
 by §13). Heavy - intended for the cluster.
 
     python train/03_stage2_ablations/run_ablations.py
-    python train/03_stage2_ablations/run_ablations.py --set rows='["full_scratch","plus_geometry"]'
+    python train/03_stage2_ablations/run_ablations.py --set rows='["full","plus_edit_meaning"]'
     python train/03_stage2_ablations/run_ablations.py --set pretrained_encoder=experiments/runs/stage1_pretrain/<dir>
 
 **Seeds vary the initialisation, never the split.** Every row and every seed trains on the
@@ -105,7 +105,7 @@ def main() -> int:
     out = Run(summary_cfg, tag="grid")
     out.provenance(devices=devices, data_files=store.files,
                    extra={"rows": [r["name"] for r in rows], "seeds": seeds, "split_seed": split_seed})
-    out.finish({"headline": table.get("full_scratch"), "table": table, "runs": grid,
+    out.finish({"headline": table.get("full"), "table": table, "runs": grid,
                 "skipped": skipped})
     print("\n" + json.dumps(table, indent=2))
     return 0

@@ -38,7 +38,10 @@ from mapguard.training.dataset import (
     MAX_EDITS,
     MAX_USER_STEPS,
     TABULAR_FEATURES,
+    EDIT_TEXT_LEN,
     TEXT_LEN,
+    TOKEN_BUCKETS,
+    TOKENS_PER_EDIT,
     VOCAB_SIZE,
     build_batch,
 )
@@ -80,6 +83,9 @@ class Prepared:
             "user_steps": int(a["user_sequence"].shape[1]),
             "user_features": int(a["user_sequence"].shape[2]),
             "tabular_features": int(a["tabular"].shape[1]),
+            "edit_tokens_len": int(a["edit_tokens"].shape[2]) if "edit_tokens" in a else TOKENS_PER_EDIT,
+            "edit_text_len": int(a["edit_text"].shape[2]) if "edit_text" in a else EDIT_TEXT_LEN,
+            "token_buckets": int(TOKEN_BUCKETS),
         }
 
     def subset(self, rows: np.ndarray) -> "Prepared":
@@ -118,6 +124,8 @@ def assemble(store, *, max_edits: int = MAX_EDITS, user_steps: int = MAX_USER_ST
         arrays={
             "edit_features": b.edit_features,
             "edit_mask": b.edit_mask,
+            "edit_tokens": b.edit_tokens,
+            "edit_text": b.edit_text,
             "text": b.text,
             "user_sequence": b.user_sequence,
             "user_mask": b.user_mask,

@@ -166,3 +166,16 @@ def test_text_input_puts_the_comment_first_and_caps_it():
     assert text_input(float("nan"), None) == ""
     long = text_input("x" * 500, "Main Street")
     assert long.startswith("x" * COMMENT_CHARS + " | ") and long.endswith("Main Street")
+
+
+def test_b6_arrays_follow_the_edit_slots_and_stay_zero_on_padding():
+    from mapguard.features.edit_tokens import token_id
+    changesets, edits, user_seq = make_frames(edit_counts=(2, 0, 1), seq_counts=(0, 0, 0))
+    edits["diff_tokens"] = ["modify_way +name", "create_node", "delete_node -shop"]
+    edits["text"] = ["Main St", "", ""]
+    edits["old_text"] = ["Old St", "", "Bakery"]
+    b = build_batch(changesets, edits, user_seq, max_edits=4)
+    assert b.edit_tokens[0, 0, 0] == token_id("modify_way") and b.edit_tokens[0, 0, 2] == 0
+    assert b.edit_text[0, 0].sum() > 0 and b.edit_text[0, 1].sum() == 0
+    assert (b.edit_tokens[:, :, :][b.edit_mask == 0] == 0).all()
+    assert (b.edit_text[b.edit_mask == 0] == 0).all()

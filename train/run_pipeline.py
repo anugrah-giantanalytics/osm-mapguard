@@ -11,6 +11,7 @@ training logic of its own - and wires one stage's output into the next:
     00 wiring_check            proves TensorFlow and the model work here; stops if it fails
     01 baselines               also freezes the split every later stage reuses
     02 stage2_supervised       R1b full model, plus the Ovid-equivalent reproduction (ovid task)
+    07 ensemble                deep model + hybrid trees, blend weight chosen on validation
     04 stage1_pretrain         runs before 03 so the ablation grid can include row 07
        stage1_zero_shot        on the encoder 04 just wrote
     03 stage2_ablations        7 rows x 2 seeds, row 07 uses the stage 04 encoder
@@ -40,7 +41,7 @@ from pathlib import Path
 TRAIN = Path(__file__).resolve().parent
 REPO = TRAIN.parent
 RUNS = REPO / "experiments" / "runs"
-ORDER = ["00", "01", "02", "04", "03", "05", "06"]
+ORDER = ["00", "01", "02", "07", "04", "03", "05", "06"]
 
 # Temporal cutoffs chosen so both sides hold both classes (see RUNBOOK.md):
 #   ovid: train 2014-2018, test 2019 (3,360 changesets, 41% damaging)
@@ -151,7 +152,7 @@ def main() -> int:
     ap.add_argument("--task", default="ovid",
                     choices=("ovid", "revert", "revert_vandalism", "ovid_modern", "T1", "T2"))
     ap.add_argument("--stages", default=",".join(ORDER),
-                    help="comma list from 00,01,02,03,04,05,06 (always run in pipeline order)")
+                    help="comma list from 00,01,02,03,04,05,06,07 (always run in pipeline order)")
     ap.add_argument("--device", default="auto", choices=("auto", "cpu"))
     ap.add_argument("--float32", action="store_true",
                     help="disable mixed precision (on by default on NVIDIA GPUs with tensor cores)")
@@ -218,6 +219,12 @@ def main() -> int:
             q = p.quick("train.epochs=1", "seeds=[20260904]", "fractions=[0.25,1.0]")
             if stop(p.run("05 label efficiency", "05_stage1_label_efficiency/label_efficiency.py",
                           *p.common(), "--set", f"pretrained_encoder={json.dumps(str(encoder))}", *q)):
+                break
+        elif s == "07":
+            if stop(p.run("07 ensemble (deep + hybrid, weight chosen on validation)",
+                          "07_ensemble/ensemble.py", "--task", t,
+                          "--feature-store", str(args.feature_store),
+                          *(["--quick"] if args.quick else []))):
                 break
         elif s == "06":
             cutoff = args.cutoff or CUTOFFS[t]

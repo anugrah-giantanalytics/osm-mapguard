@@ -194,30 +194,26 @@ splits and a manifest. The same zip goes to the cluster and to the M4.
 
 ---
 
-## Training plan — which runs the paper needs
+## Training plan — round 2 (model v2, see docs/MODEL_V2.md)
 
-Run these, in this order. Every command is `train/run_pipeline.py --feature-store data/interim`
-plus the arguments shown (or the `99_full_pipeline` notebook with `TASK`/`STAGES` set).
+Every command is `python train/run_pipeline.py --feature-store data/interim` plus:
 
-| # | Task | Stages | Answers | Priority |
-|---|---|---|---|---|
-| 0 | any | `00` | the image works (wiring check) | first, always |
-| 1 | `ovid` | `00,01,02,04,03,05,06` (all) | headline R1 vs Ovid's 81.66; ablations; self-supervision (R4); 2019 temporal | **must** |
-| 2 | `ovid_modern` | `01,02,06` | does a model trained on 2014–19 still work on 2021–26 under the *same* label rule (R3: drift) | **must** |
-| 3 | `T1` | `01,02,06` | triage of human-flagged changesets (OSMCha), 2023–26 | should |
-| 4 | `T2` | `01,02,06` | detection vs random traffic, 2023–26 | should |
-| 5 | `revert_vandalism` | `01,02` | Ovid's rule on modern data; report B0 = 0.839 beside it | could |
-| 6 | `revert` | `01,02` | any-revert labels, 2021–26 | could |
+| # | Arguments | Answers | Priority |
+|---|---|---|---|
+| 0 | `--task ovid --quick` | everything runs (smoke test, ~20 min) | first |
+| 1 | `--task ovid --stages 00,01,02,07` | v2 headline vs XGBoost, hybrid, ensemble, Ovid's 81.66 | **must** |
+| 2 | `--task ovid --stages 03` | 9 ablation rows × 2 seeds: which branch, MIL vs mean, author weighting | **must** |
+| 3 | `--task ovid_modern --stages 01,02,07,06` | 2014–19 → 2021–26 under the same rule | **must** |
+| 4 | `--task T1 --stages 01,02,07,06` | human-reviewed triage | should |
+| 5 | `--task T2 --stages 01,02,07,06` | detection vs random traffic | should |
+| 6 | `--task ovid --stages 04,05` | Stage 1 again (round 1: no gain) | only if time |
 
-- Stage 03 and 05 are the expensive ones (7×2 and 4×2×2 trainings); run them for `ovid`
-  only unless time is left.
-- Cross-label check (label-source drift): after 3 and 4, run
-  `train/02_stage2_supervised/stage2_evaluate.py --run <T1 run> --task T2` and the reverse.
+- Lead with `test_author_robust.one_per_author_pr_auc`, not only PR-AUC: Ovid's labels are
+  concentrated in a few bulk-reverted accounts (docs/MODEL_V2.md §3).
+- Stage 07 needs the same task's 01 and 02 runs; the pipeline orders it after them.
 - Never report a directory ending in `_quick`.
-- Hardware is used automatically: NVIDIA GPU → batch 256, mixed precision on tensor-core GPUs,
-  memory growth on (several jobs can share one GPU); Mac → Apple GPU via tensorflow-metal;
-  no GPU → all CPU cores, batch 128. Force full precision with `--float32`, force CPU with
-  `--device cpu`. `00_wiring_check` proves the mixed-precision path on any GPU first.
+- Hardware is used automatically (see train/setup_env.sh). If the Apple GPU does not attach,
+  CPU training takes ~5–8 min per model.
 
 ## Step 4a — train on the SVKM cluster
 

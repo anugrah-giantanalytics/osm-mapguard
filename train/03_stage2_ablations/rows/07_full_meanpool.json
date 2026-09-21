@@ -1,0 +1,1 @@
+{"name": "full_meanpool", "purpose": "v2 with round-1 mean pooling - does multiple-instance pooling help?", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "pooling": "mean"}}}

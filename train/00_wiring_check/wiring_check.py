@@ -42,7 +42,14 @@ from common.preprocess import (  # noqa: E402
     signed_log1p,
 )
 from common.run import Run, configure_device, keras_version, seed_everything  # noqa: E402
-from mapguard.training.dataset import EDIT_FEATURES, TABULAR_FEATURES, VOCAB_SIZE  # noqa: E402
+from mapguard.training.dataset import (  # noqa: E402
+    EDIT_FEATURES,
+    EDIT_TEXT_LEN,
+    TABULAR_FEATURES,
+    TOKEN_BUCKETS,
+    TOKENS_PER_EDIT,
+    VOCAB_SIZE,
+)
 
 N, K, S, T = 240, 16, 12, 256
 
@@ -65,6 +72,10 @@ def random_prepared(seed: int = 7) -> Prepared:
     return Prepared(
         arrays={
             "edit_features": edit, "edit_mask": edit_mask,
+            "edit_tokens": (rng.integers(1, TOKEN_BUCKETS, size=(N, K, TOKENS_PER_EDIT))
+                            * edit_mask[:, :, None]).astype("int32"),
+            "edit_text": (rng.integers(0, VOCAB_SIZE, size=(N, K, EDIT_TEXT_LEN))
+                          * edit_mask[:, :, None]).astype("int32"),
             "text": rng.integers(0, VOCAB_SIZE, size=(N, T)).astype("int32"),
             "user_sequence": user, "user_mask": user_mask,
             "tabular": rng.lognormal(0.0, 2.0, size=(N, len(TABULAR_FEATURES))).astype("float32"),
@@ -89,7 +100,8 @@ def base_cfg(branches) -> dict:
         "model": {"branches": list(branches), "max_edits": K, "user_steps": S,
                   "embed": 32, "heads": 2, "dropout": 0.1, "raster": None},
         "train": {"epochs": 1, "batch_size": 32, "lr": 1e-3, "loss": "focal",
-                  "patience": 1, "verbose": 0},
+                  "patience": 1, "verbose": 0, "author_weighting": "sqrt",
+                  "weight_decay": 1e-4},
         "evaluate": {"attribution": True, "top_k": 3},
     }
 
@@ -130,7 +142,8 @@ def main() -> int:
     seed_everything(1)
 
     # 1. every ablation branch set builds, trains, masks, attributes -------------------
-    branch_sets = [["B5"], ["B1", "B5"], ["B2", "B5"], ["B3", "B4", "B5"], ["B1", "B2", "B3", "B4", "B5"]]
+    branch_sets = [["B5"], ["B1", "B5"], ["B2", "B5"], ["B3", "B4", "B5"], ["B5", "B6"],
+                   ["B1", "B2", "B3", "B4", "B5", "B6"]]
     full_run_dir = {}
     for bs in branch_sets:
         def one(bs=bs):
@@ -149,6 +162,17 @@ def main() -> int:
                     "masking_delta_after": res["masking_checks"]["after_training"]["max_delta"],
                     "null_edits_inserted": res["notes"]}
         check(f"stage2 train {'+'.join(bs)}", one)
+
+    def meanpool():
+        tf.keras.backend.clear_session()
+        cfg = base_cfg(branch_sets[-1])
+        cfg["model"]["pooling"] = "mean"
+        run = Run(cfg, tag="meanpool", root=tmp)
+        res = train_stage2(cfg, select_branches(raw, branch_sets[-1]), masks, run)
+        if not res["masking_checks"]["after_training"]["masking_holds"]:
+            raise AssertionError("masking leaks with mean pooling")
+        return {"pooling": res["training"]["pooling"]}
+    check("stage2 full model with round-1 mean pooling", meanpool)
 
     # 2. weights round-trip through model_config + rebuild -----------------------------
     def roundtrip():

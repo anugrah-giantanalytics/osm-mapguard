@@ -19,8 +19,9 @@
     "user_steps": 200,
     "embed": 64,
     "heads": 4,
-    "dropout": 0.2,
-    "raster": null
+    "dropout": 0.3,
+    "raster": null,
+    "pooling": "mil"
   },
   "train": {
     "epochs": 40,
@@ -33,7 +34,9 @@
     "class_weight": null,
     "patience": 5,
     "verbose": 2,
-    "mixed_precision": "auto"
+    "mixed_precision": "auto",
+    "author_weighting": "sqrt",
+    "weight_decay": 0.0001
   },
   "evaluate": {
     "attribution": false,

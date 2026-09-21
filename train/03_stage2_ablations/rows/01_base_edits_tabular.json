@@ -1,5 +1,1 @@
-{
-  "name": "base_edits_tabular",
-  "purpose": "common base: edit trunk without geometry columns, tabular without geometry or text counts",
-  "overrides": {"model": {"branches": ["B5"]}}
-}
+{"name": "base_edits_tabular", "purpose": "edit numbers + changeset table only - the floor every branch is measured against", "overrides": {"model": {"branches": ["B5"]}}}
