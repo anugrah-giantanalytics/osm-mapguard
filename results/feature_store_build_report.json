@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "changesets": 46578,
   "edits": 2045397,
   "user_seq_steps": 3152736,
@@ -91,6 +91,6 @@
       "label_0": 3931
     }
   },
-  "out": "C:\\osm-data\\interim",
+  "out": "C:\\osm-data\\interim_v4",
   "note": "coverage split by label on purpose: if history or account-age coverage differs between classes, the corresponding features measure the fetch and must not be reported as a signal"
 }

@@ -64,7 +64,7 @@
      "name": "comment",
      "dtype": "string",
      "unit": "text",
-     "meaning": "changeset comment, truncated to 500 chars; not a model input",
+     "meaning": "changeset comment (500 chars); first 120 chars feed the B2 text branch",
      "null_fraction": 0.0
     },
     {
@@ -232,7 +232,7 @@
      "name": "text_blob",
      "dtype": "string",
      "unit": "text",
-     "meaning": "free-text tag values, B2 char-CNN input",
+     "meaning": "free-text tag values, B2 char-CNN input after the comment",
      "null_fraction": 0.0
     },
     {
@@ -591,6 +591,13 @@
      "unit": "0/1",
      "meaning": "corpus R positive whose revert comment mentions vandalism (Ovid's label rule); not an input",
      "null_fraction": 0.8239
+    },
+    {
+     "name": "diff_tokens",
+     "dtype": "string",
+     "unit": "tokens",
+     "meaning": "what the edit(s) did: create_node, +name, -highway=residential, ~highway:track>motorway (features/edit_tokens.py); changeset rows hold the bag over every edit",
+     "null_fraction": 0.0
     }
    ]
   },
@@ -700,6 +707,20 @@
      "dtype": "string",
      "unit": "text",
      "meaning": "free-text tag values of this object",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "diff_tokens",
+     "dtype": "string",
+     "unit": "tokens",
+     "meaning": "what the edit(s) did: create_node, +name, -highway=residential, ~highway:track>motorway (features/edit_tokens.py); changeset rows hold the bag over every edit",
+     "null_fraction": 0.0
+    },
+    {
+     "name": "old_text",
+     "dtype": "string",
+     "unit": "text",
+     "meaning": "free-text tag values before the edit; B6 reads old_text>text per edit",
      "null_fraction": 0.0
     },
     {
@@ -907,7 +928,7 @@
  },
  "missing_policy": "null -> 0 at assembly; *_known flags and geom_route carry whether a value was measured, so 0 is never ambiguous",
  "build_report": {
-  "schema_version": 3,
+  "schema_version": 4,
   "changesets": 46578,
   "edits": 2045397,
   "user_seq_steps": 3152736,
@@ -999,7 +1020,7 @@
     "label_0": 3931
    }
   },
-  "out": "C:\\osm-data\\interim",
+  "out": "C:\\osm-data\\interim_v4",
   "note": "coverage split by label on purpose: if history or account-age coverage differs between classes, the corresponding features measure the fetch and must not be reported as a signal"
  },
  "model_inputs_missing_from_store": [],
