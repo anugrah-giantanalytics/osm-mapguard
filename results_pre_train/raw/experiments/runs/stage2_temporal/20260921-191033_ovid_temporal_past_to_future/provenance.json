@@ -1,0 +1,70 @@
+{
+  "started_utc": "2026-09-21T13:40:33+00:00",
+  "git_sha": "3c97b88d63998cc7562564175dad35b4f0399d98 (bundle)",
+  "git_dirty_src_or_train": null,
+  "command": "/Users/parth/Desktop/DL/mapguard/train/06_temporal_evaluation/temporal_train_eval.py --set task=ovid --set data.feature_store=\"/Users/parth/Desktop/DL/mapguard/data/interim\" --set device=cpu --set temporal.cutoff=2019-01-01T00:00:00Z --set reference_run=\"/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_supervised/20260921-164213_ovid_R1b\"",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "devices": [
+    "/physical_device:CPU:0",
+    "cpu cores=10"
+  ],
+  "libraries": {
+    "python": "3.12.14",
+    "numpy": "2.1.3",
+    "tensorflow": "2.19.1",
+    "keras": "3.15.1",
+    "sklearn": "1.9.1",
+    "xgboost": "3.4.1",
+    "pandas": "3.0.6",
+    "pyarrow": "25.0.1"
+  },
+  "data": {
+    "changesets": {
+      "bytes": 8301841,
+      "mtime": 1789797242,
+      "sha256_16mb": "711f7008d1540416"
+    },
+    "edits": {
+      "bytes": 39304303,
+      "mtime": 1789797248,
+      "sha256_16mb": "019afb27fc4bae6a"
+    },
+    "user_seq": {
+      "bytes": 22251369,
+      "mtime": 1789797250,
+      "sha256_16mb": "b49fe6a34fc00fcd"
+    }
+  },
+  "split_file": "/Users/parth/Desktop/DL/mapguard/experiments/splits/ovid_temporal_seed20260904_2019-01-01.json",
+  "split_fingerprint": {
+    "bytes": 166604,
+    "mtime": 1789792650,
+    "sha256_16mb": "ae1529cfbd50e22d"
+  },
+  "data_summary": {
+    "root": "/Users/parth/Desktop/DL/mapguard/data/interim",
+    "task": "ovid",
+    "n_changesets": 18037,
+    "n_positive": 9131,
+    "n_negative": 8906,
+    "n_edit_rows": 825311,
+    "n_user_seq_rows": 1187051,
+    "missing_optional_columns": [],
+    "by_corpus": {
+      "A": 18037
+    }
+  },
+  "split_summary": {
+    "kind": "temporal",
+    "leaky": false,
+    "seed": 20260904,
+    "cutoff": "2019-01-01T00:00:00Z",
+    "n_train": 11940,
+    "n_val": 1334,
+    "n_test": 3342,
+    "pos_rate_train": 0.5331,
+    "pos_rate_val": 0.5412,
+    "pos_rate_test": 0.4135
+  }
+}

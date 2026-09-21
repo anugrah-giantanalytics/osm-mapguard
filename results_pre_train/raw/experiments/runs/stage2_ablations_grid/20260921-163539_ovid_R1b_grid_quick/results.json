@@ -1,0 +1,332 @@
+{
+  "stage": "stage2_ablations_grid",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-09-21T11:05:39+00:00",
+  "headline": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7751,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.7992,
+    "test_pr_auc_at_1pct_mean": 0.0418,
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
+    "pr_auc_change_vs_base": 0.0001
+  },
+  "table": {
+    "base_edits_tabular": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.775,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.799,
+      "test_pr_auc_at_1pct_mean": 0.0405,
+      "branches": [
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0
+    },
+    "plus_geometry": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.771,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7936,
+      "test_pr_auc_at_1pct_mean": 0.0459,
+      "branches": [
+        "B1",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": -0.004
+    },
+    "plus_text": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7806,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.8088,
+      "test_pr_auc_at_1pct_mean": 0.0407,
+      "branches": [
+        "B2",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0056
+    },
+    "plus_sequences": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7865,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7987,
+      "test_pr_auc_at_1pct_mean": 0.0481,
+      "branches": [
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0115
+    },
+    "full_scratch": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7751,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7992,
+      "test_pr_auc_at_1pct_mean": 0.0418,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0001
+    },
+    "full_scratch_bce": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.8066,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.8199,
+      "test_pr_auc_at_1pct_mean": 0.0561,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0316
+    },
+    "full_pretrained": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.776,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7992,
+      "test_pr_auc_at_1pct_mean": 0.0428,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.001
+    }
+  },
+  "runs": [
+    {
+      "row": "base_edits_tabular",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163448_ovid_R1b_base_edits_tabular_s20260904_quick",
+      "branches": [
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.775,
+        0.7535,
+        0.7969
+      ],
+      "test_roc_auc": [
+        0.799,
+        0.784,
+        0.8138
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0405,
+      "test_f1_at_val_threshold": 0.7476,
+      "test_ovid_table": {
+        "precision": 0.6871,
+        "recall": 0.8166,
+        "f1": 0.7463,
+        "accuracy": 0.7239
+      },
+      "test_ece": 0.11842
+    },
+    {
+      "row": "plus_geometry",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163454_ovid_R1b_plus_geometry_s20260904_quick",
+      "branches": [
+        "B1",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.771,
+        0.7507,
+        0.794
+      ],
+      "test_roc_auc": [
+        0.7936,
+        0.7791,
+        0.8098
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0459,
+      "test_f1_at_val_threshold": 0.7414,
+      "test_ovid_table": {
+        "precision": 0.6709,
+        "recall": 0.825,
+        "f1": 0.74,
+        "accuracy": 0.7117
+      },
+      "test_ece": 0.12797
+    },
+    {
+      "row": "plus_text",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163459_ovid_R1b_plus_text_s20260904_quick",
+      "branches": [
+        "B2",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7806,
+        0.7597,
+        0.8027
+      ],
+      "test_roc_auc": [
+        0.8088,
+        0.7944,
+        0.8232
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0407,
+      "test_f1_at_val_threshold": 0.7544,
+      "test_ovid_table": {
+        "precision": 0.6912,
+        "recall": 0.8272,
+        "f1": 0.7531,
+        "accuracy": 0.7302
+      },
+      "test_ece": 0.12035
+    },
+    {
+      "row": "plus_sequences",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163505_ovid_R1b_plus_sequences_s20260904_quick",
+      "branches": [
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7865,
+        0.7658,
+        0.8065
+      ],
+      "test_roc_auc": [
+        0.7987,
+        0.7851,
+        0.8126
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0481,
+      "test_f1_at_val_threshold": 0.737,
+      "test_ovid_table": {
+        "precision": 0.7165,
+        "recall": 0.7564,
+        "f1": 0.7359,
+        "accuracy": 0.73
+      },
+      "test_ece": 0.10798
+    },
+    {
+      "row": "full_scratch",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163512_ovid_R1b_full_scratch_s20260904_quick",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7751,
+        0.7545,
+        0.7974
+      ],
+      "test_roc_auc": [
+        0.7992,
+        0.7855,
+        0.8131
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0418,
+      "test_f1_at_val_threshold": 0.7314,
+      "test_ovid_table": {
+        "precision": 0.6895,
+        "recall": 0.7759,
+        "f1": 0.7301,
+        "accuracy": 0.7147
+      },
+      "test_ece": 0.11121
+    },
+    {
+      "row": "full_scratch_bce",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163521_ovid_R1b_full_scratch_bce_s20260904_quick",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "loss": "bce",
+      "test_pr_auc": [
+        0.8066,
+        0.7886,
+        0.826
+      ],
+      "test_roc_auc": [
+        0.8199,
+        0.8069,
+        0.8336
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0561,
+      "test_f1_at_val_threshold": 0.7541,
+      "test_ovid_table": {
+        "precision": 0.6814,
+        "recall": 0.8406,
+        "f1": 0.7527,
+        "accuracy": 0.7253
+      },
+      "test_ece": 0.11358
+    },
+    {
+      "row": "full_pretrained",
+      "seed": 20260904,
+      "run_dir": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_ablations/20260921-163531_ovid_R1b_full_pretrained_s20260904_quick",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.776,
+        0.756,
+        0.7983
+      ],
+      "test_roc_auc": [
+        0.7992,
+        0.7853,
+        0.8134
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0428,
+      "test_f1_at_val_threshold": 0.7257,
+      "test_ovid_table": {
+        "precision": 0.7269,
+        "recall": 0.7224,
+        "f1": 0.7246,
+        "accuracy": 0.7269
+      },
+      "test_ece": 0.1054
+    }
+  ],
+  "skipped": []
+}

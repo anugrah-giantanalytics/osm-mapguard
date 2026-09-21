@@ -1,0 +1,32 @@
+{
+  "started": "20260921-201018",
+  "task": "T1",
+  "quick": false,
+  "feature_store": "/Users/parth/Desktop/DL/mapguard/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 4.3
+    },
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 3.1
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20260921-201021_T1_R1b",
+    "experiments/runs/stage2_supervised/20260921-201026_T1_R1b",
+    "experiments/runs/stage2_temporal/20260921-201448_T1_temporal_past_to_future"
+  ],
+  "all_ok": true
+}

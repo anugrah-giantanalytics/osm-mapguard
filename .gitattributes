@@ -1,0 +1,3 @@
+
+# training results are archived byte-for-byte; never convert line endings
+results_pre_train/raw/** -text

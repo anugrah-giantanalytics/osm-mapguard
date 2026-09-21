@@ -1,0 +1,53 @@
+{
+  "stage": "stage2_temporal",
+  "task": "ovid",
+  "split": "temporal",
+  "seed": 20260904,
+  "device": "cpu",
+  "resplit": false,
+  "reference_run": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_supervised/20260921-164213_ovid_R1b",
+  "temporal": {
+    "cutoff": "2019-01-01T00:00:00Z",
+    "exclude_test_users_from_train": true
+  },
+  "data": {
+    "feature_store": "/Users/parth/Desktop/DL/mapguard/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
+    "max_edits": 256,
+    "user_steps": 200,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.2,
+    "raster": null
+  },
+  "train": {
+    "epochs": 40,
+    "batch_size": "auto",
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2,
+    "mixed_precision": "auto"
+  },
+  "init": {
+    "pretrained_encoder": null,
+    "freeze_encoder": false
+  },
+  "evaluate": {
+    "attribution": true,
+    "top_k": 20
+  },
+  "_config_path": "/Users/parth/Desktop/DL/mapguard/train/06_temporal_evaluation/config.json"
+}

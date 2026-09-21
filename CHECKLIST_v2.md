@@ -21,9 +21,10 @@ checklist remains unchanged for historical reference.
 - [x] Corpus A has been fully fetched, geometry-enriched, featurised, and schema-frozen.
   *Fetched: yes, 18,276/18,276 metadata and contents. Geometry: 1,055 adiff + 65 skipped of the 5,972-changeset subset. Featurised: no. Schema frozen: no.*
   *Done 2026-09-19: fetched, featurised (schema v3), schema manifest written. Geometry: previous-version route for every modified object, plus adiff on 1,006.*
-- [ ] A real trainable model, checkpoint, inference path, and experiment results exist.
+- [~] A real trainable model, checkpoint, inference path, and experiment results exist.
   *Training code exists in `train/00`–`06`; none of the TensorFlow code has run yet.*
   *Code is verified end to end (Keras 2 + 3, real data, quick mode). Real training runs next, on the cluster or M4.*
+  *Trained 2026-09-21 (results_pre_train/). Checkpoints and results exist; a single-changeset inference path for the demo is still to build.*
 - [ ] A visual demo exists and scores the same input through the same inference path as
   the research results.
 
@@ -92,7 +93,8 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [x] The full `--quick` pipeline (00→01→02→Ovid-repro→04→zero-shot→03→05→06) completes on
   the real Corpus A store under both Keras versions. Masking delta was 0.0 before and after
   training, and there were no NaNs.
-- [ ] Real (non-quick) runs on the cluster or M4, in RUNBOOK order.
+- [x] Real (non-quick) runs on the cluster or M4, in RUNBOOK order.
+  *Done on an M4, CPU only (Metal did not attach). ovid all stages; ovid_modern/T1/T2 stages 01,02,06.*
 
 ### C. Modern tasks T1/T2 — code done, data at home
 - [x] Corpus M selector: 4k harmful + 4k reviewed-clean, water-filled across quarters.
@@ -247,17 +249,21 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 - [x] Emit the three promised outputs: damage probability, suspicious edit index/weight,
   and branch/signal attribution.
   *Written: `p_damaging`, `edit_attention_weight` and occlusion in `train/common/attribution.py`; all three produced in the quick runs.*
-- [ ] Train the full supervised model before attempting Stage 1 self-supervision.
+- [x] Train the full supervised model before attempting Stage 1 self-supervision.
   *Script ready: `train/02_stage2_supervised`.*
-- [ ] Run the planned ablations and at least two seeds for headline comparisons.
+  *ovid R1b: PR-AUC 0.844, F1 78.1, which ties XGBoost (0.857 / 78.1) and is below Ovid's 81.66.*
+- [x] Run the planned ablations and at least two seeds for headline comparisons.
   *Script ready: `train/03_stage2_ablations`, 7 rows x 2 seeds, passes `--dry-run`.*
-- [ ] Run Corpus D temporal evaluation and separate temporal drift from label-source
+  *7 rows × 2 seeds. Text is the whole gain (+0.035). Geometry +0.014 and history/sequence +0.016 add nothing on top of text.*
+- [x] Run Corpus D temporal evaluation and separate temporal drift from label-source
   drift in both metrics and discussion.
   *Script ready: `train/06_temporal_evaluation`. Temporal splits are frozen for all 6 tasks, and `ovid_modern` separates time from label source (same revert rule on both sides; T1/T2 carry the human-review source).*
-- [ ] If Stage 1 survives the compute gate, run corruption contrast, zero-shot transfer,
+  *ovid −0.076, ovid_modern −0.018 (test set is easy, B0 0.839), T1 +0.007, T2 −0.042. Temporal baselines still missing.*
+- [x] If Stage 1 survives the compute gate, run corruption contrast, zero-shot transfer,
   and label-efficiency experiments. Otherwise record the cut explicitly and remove
   self-supervised claims from the headline conclusion.
   *Scripts ready: `train/04_stage1_pretrain` (corruptions, pretrain, zero-shot) and `train/05_stage1_label_efficiency`.*
+  *Run. Negative result: pretrained minus scratch is within ±0.003 at 10/25/50/100% labels. Zero-shot 0.611. Remove the self-supervised claim from the headline.*
 
 ## Phase 3 — visual demo definition
 
@@ -368,3 +374,39 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
   flag.
 - [ ] Offline replay works without secrets; live mode degrades gracefully.
 - [ ] Paper, README, results, demo screenshots/recording, and repository status agree.
+
+## Round 2 — proposed after the first training round (2026-09-21, not started)
+
+Deadline 2026-10-02. Ordered by what the results say matters. Details in
+`results_pre_train/README.md`.
+
+### R2-A. Make the claims defensible — cheap, do first (~1 day)
+- [ ] Temporal baselines: XGBoost and B0 on every temporal split. Without them, "the deep model
+  holds up over time" has no reference, and ovid_modern's 0.891 may just be an easy test set.
+- [ ] Author-robust evaluation on Corpus A: metrics with each author weighted equally, and with
+  the 56 mass-revert authors (>20 positives) held out. This measures how much Ovid's label noise
+  drives every score, ours and theirs.
+- [ ] Error analysis: 30 highest-confidence false positives and false negatives on ovid,
+  read by hand (mapathons, imports, bots).
+
+### R2-B. Try once, properly, to beat XGBoost (~1–2 days, M4)
+- [ ] Regularisation sweep chosen on validation only: dropout 0.3/0.5, AdamW weight decay,
+  lr 3e-4, embed 32/64 (about 12 runs × 5 min). Best epoch 5 of 10 says the model overfits.
+- [ ] Stronger text branch, since text is the only branch that pays: encode the comment and the
+  tag text separately.
+- [ ] Hybrid: XGBoost on tabular features plus the deep model's text/edit embeddings. If
+  nothing beats XGBoost, report the tie honestly - the ablation insight (text matters, geometry
+  does not) is still a result.
+- [ ] Optional: get Metal working (pin tensorflow 2.18 + tensorflow-metal) - speed only.
+
+### R2-C. Demo (~3 days)
+- [ ] `score_changeset(cid)`: fetch → build rows with the same builder → saved normaliser →
+  model. Replay mode on committed fixtures first, live mode second.
+- [ ] Streamlit page: score, before/after map, text diff, branch attribution. Edit attention is
+  near-uniform today, so show branch attribution, not "suspicious edit", unless R2-B fixes it.
+
+### R2-D. Paper and presentation (~3 days)
+- [ ] Headline framing: a faithful Ovid-protocol comparison, a 5-year modern corpus, leak audit,
+  the text-dominance ablation, time drift, and the negative self-supervision result.
+- [ ] Limitations: CPU-only training, label noise from mass reverts, B0 0.839 on revert_vandalism,
+  presumed-negative N.

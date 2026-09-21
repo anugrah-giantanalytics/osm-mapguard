@@ -1,0 +1,32 @@
+{
+  "edit_columns": [
+    "centroid_shift_m",
+    "hausdorff_m",
+    "d_length_m",
+    "d_area_m2",
+    "length_ratio",
+    "area_ratio",
+    "d_points",
+    "n_tags",
+    "n_refs",
+    "version",
+    "is_new_object",
+    "tags_added",
+    "tags_removed",
+    "tags_changed",
+    "d_refs",
+    "geom_route",
+    "days_since_prev_version",
+    "prev_same_author"
+  ],
+  "embed": 64,
+  "dropout": 0.1,
+  "corruptions": [
+    "displace",
+    "area_blowup",
+    "length_stretch",
+    "tag_wipe",
+    "tag_spam",
+    "mass_points"
+  ]
+}

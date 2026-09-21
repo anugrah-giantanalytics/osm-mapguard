@@ -1,0 +1,205 @@
+
+================================================================================
+[20:10:18] 01 baselines
+$ /Users/parth/Desktop/DL/mapguard/.venv-train/bin/python3 -u /Users/parth/Desktop/DL/mapguard/train/01_baselines/baselines_train.py --set task=T1 --set data.feature_store="/Users/parth/Desktop/DL/mapguard/data/interim" --set device=cpu
+================================================================================
+device: /physical_device:CPU:0 | cpu cores=10
+data: {'root': '/Users/parth/Desktop/DL/mapguard/data/interim', 'task': 'T1', 'n_changesets': 7892, 'n_positive': 3947, 'n_negative': 3945, 'n_edit_rows': 332813, 'n_user_seq_rows': 539191, 'missing_optional_columns': [], 'by_corpus': {'M': 7892}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 5524, 'n_val': 789, 'n_test': 1579, 'pos_rate_train': 0.4993, 'pos_rate_val': 0.4981, 'pos_rate_test': 0.5041}
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:219: RuntimeWarning: divide by zero encountered in matmul
+  raw_prediction = X @ weights_xp + intercept_xp
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:219: RuntimeWarning: overflow encountered in matmul
+  raw_prediction = X @ weights_xp + intercept_xp
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:219: RuntimeWarning: invalid value encountered in matmul
+  raw_prediction = X @ weights_xp + intercept_xp
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:356: RuntimeWarning: divide by zero encountered in matmul
+  X_grad = X.T @ grad_pointwise
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:356: RuntimeWarning: overflow encountered in matmul
+  X_grad = X.T @ grad_pointwise
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:356: RuntimeWarning: invalid value encountered in matmul
+  X_grad = X.T @ grad_pointwise
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: divide by zero encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: overflow encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: invalid value encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: divide by zero encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: overflow encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: invalid value encountered in matmul
+  ret = a @ b
+B0 tripwire  ROC-AUC 0.6931  -> PASS - weak prior, not leakage
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:219: RuntimeWarning: divide by zero encountered in matmul
+  raw_prediction = X @ weights_xp + intercept_xp
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:219: RuntimeWarning: overflow encountered in matmul
+  raw_prediction = X @ weights_xp + intercept_xp
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:219: RuntimeWarning: invalid value encountered in matmul
+  raw_prediction = X @ weights_xp + intercept_xp
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:356: RuntimeWarning: divide by zero encountered in matmul
+  X_grad = X.T @ grad_pointwise
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:356: RuntimeWarning: overflow encountered in matmul
+  X_grad = X.T @ grad_pointwise
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/linear_model/_linear_loss.py:356: RuntimeWarning: invalid value encountered in matmul
+  X_grad = X.T @ grad_pointwise
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: divide by zero encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: overflow encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: invalid value encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: divide by zero encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: overflow encountered in matmul
+  ret = a @ b
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/sklearn/utils/extmath.py:229: RuntimeWarning: invalid value encountered in matmul
+  ret = a @ b
+LogReg       PR-AUC [0.7712, 0.7367, 0.8005]
+XGBoost      PR-AUC [0.8092, 0.7794, 0.835]
+
+run directory: /Users/parth/Desktop/DL/mapguard/experiments/runs/baselines/20260921-201021_T1_R1b
+
+================================================================================
+[20:10:23] 02 stage2 R1b
+$ /Users/parth/Desktop/DL/mapguard/.venv-train/bin/python3 -u /Users/parth/Desktop/DL/mapguard/train/02_stage2_supervised/stage2_train.py --set task=T1 --set data.feature_store="/Users/parth/Desktop/DL/mapguard/data/interim" --set device=cpu
+================================================================================
+device: /physical_device:CPU:0 | cpu cores=10
+data: {'root': '/Users/parth/Desktop/DL/mapguard/data/interim', 'task': 'T1', 'n_changesets': 7892, 'n_positive': 3947, 'n_negative': 3945, 'n_edit_rows': 332813, 'n_user_seq_rows': 539191, 'missing_optional_columns': [], 'by_corpus': {'M': 7892}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 5524, 'n_val': 789, 'n_test': 1579, 'pos_rate_train': 0.4993, 'pos_rate_val': 0.4981, 'pos_rate_test': 0.5041}
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/keras/src/layers/layer.py:1039: UserWarning: Layer 'edit_pool' (of type MaskedMeanPool) was passed an input with a mask attached to it. However, this layer does not support masking and will therefore destroy the mask information. Downstream layers will not see the mask.
+  warnings.warn(
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/keras/src/layers/layer.py:1039: UserWarning: Layer 'edit_attention_weight' (of type AttentionReceived) was passed an input with a mask attached to it. However, this layer does not support masking and will therefore destroy the mask information. Downstream layers will not see the mask.
+  warnings.warn(
+Epoch 1/40
+22/22 - 13s - 586ms/step - loss: 0.1016 - pr_auc: 0.6423 - roc_auc: 0.6644 - val_loss: 0.0773 - val_pr_auc: 0.7228 - val_roc_auc: 0.7444
+Epoch 2/40
+22/22 - 9s - 387ms/step - loss: 0.0728 - pr_auc: 0.7575 - roc_auc: 0.7765 - val_loss: 0.0785 - val_pr_auc: 0.7235 - val_roc_auc: 0.7572
+Epoch 3/40
+22/22 - 9s - 397ms/step - loss: 0.0683 - pr_auc: 0.7961 - roc_auc: 0.8063 - val_loss: 0.0778 - val_pr_auc: 0.7461 - val_roc_auc: 0.7658
+Epoch 4/40
+22/22 - 9s - 400ms/step - loss: 0.0648 - pr_auc: 0.8245 - roc_auc: 0.8314 - val_loss: 0.0771 - val_pr_auc: 0.7620 - val_roc_auc: 0.7720
+Epoch 5/40
+22/22 - 9s - 405ms/step - loss: 0.0626 - pr_auc: 0.8379 - roc_auc: 0.8432 - val_loss: 0.0783 - val_pr_auc: 0.7595 - val_roc_auc: 0.7723
+Epoch 6/40
+22/22 - 9s - 416ms/step - loss: 0.0607 - pr_auc: 0.8509 - roc_auc: 0.8532 - val_loss: 0.0769 - val_pr_auc: 0.7635 - val_roc_auc: 0.7744
+Epoch 7/40
+22/22 - 9s - 403ms/step - loss: 0.0591 - pr_auc: 0.8602 - roc_auc: 0.8643 - val_loss: 0.0770 - val_pr_auc: 0.7673 - val_roc_auc: 0.7770
+Epoch 8/40
+22/22 - 9s - 412ms/step - loss: 0.0577 - pr_auc: 0.8677 - roc_auc: 0.8724 - val_loss: 0.0790 - val_pr_auc: 0.7621 - val_roc_auc: 0.7754
+Epoch 9/40
+22/22 - 9s - 424ms/step - loss: 0.0553 - pr_auc: 0.8805 - roc_auc: 0.8842 - val_loss: 0.0791 - val_pr_auc: 0.7704 - val_roc_auc: 0.7826
+Epoch 10/40
+22/22 - 10s - 464ms/step - loss: 0.0537 - pr_auc: 0.8861 - roc_auc: 0.8925 - val_loss: 0.0776 - val_pr_auc: 0.7729 - val_roc_auc: 0.7900
+Epoch 11/40
+22/22 - 9s - 416ms/step - loss: 0.0513 - pr_auc: 0.8988 - roc_auc: 0.9021 - val_loss: 0.0794 - val_pr_auc: 0.7731 - val_roc_auc: 0.7927
+Epoch 12/40
+22/22 - 9s - 429ms/step - loss: 0.0490 - pr_auc: 0.9091 - roc_auc: 0.9128 - val_loss: 0.0826 - val_pr_auc: 0.7708 - val_roc_auc: 0.7927
+Epoch 13/40
+22/22 - 10s - 446ms/step - loss: 0.0470 - pr_auc: 0.9155 - roc_auc: 0.9195 - val_loss: 0.0798 - val_pr_auc: 0.7767 - val_roc_auc: 0.7948
+Epoch 14/40
+22/22 - 10s - 458ms/step - loss: 0.0452 - pr_auc: 0.9216 - roc_auc: 0.9261 - val_loss: 0.0853 - val_pr_auc: 0.7773 - val_roc_auc: 0.7923
+Epoch 15/40
+22/22 - 11s - 484ms/step - loss: 0.0421 - pr_auc: 0.9322 - roc_auc: 0.9362 - val_loss: 0.0941 - val_pr_auc: 0.7728 - val_roc_auc: 0.7907
+Epoch 16/40
+22/22 - 11s - 503ms/step - loss: 0.0418 - pr_auc: 0.9333 - roc_auc: 0.9371 - val_loss: 0.0989 - val_pr_auc: 0.7830 - val_roc_auc: 0.7971
+Epoch 17/40
+22/22 - 11s - 521ms/step - loss: 0.0393 - pr_auc: 0.9414 - roc_auc: 0.9449 - val_loss: 0.0972 - val_pr_auc: 0.7742 - val_roc_auc: 0.7887
+Epoch 18/40
+22/22 - 12s - 540ms/step - loss: 0.0376 - pr_auc: 0.9453 - roc_auc: 0.9492 - val_loss: 0.1009 - val_pr_auc: 0.7835 - val_roc_auc: 0.7946
+Epoch 19/40
+22/22 - 12s - 551ms/step - loss: 0.0348 - pr_auc: 0.9548 - roc_auc: 0.9566 - val_loss: 0.1041 - val_pr_auc: 0.7747 - val_roc_auc: 0.7875
+Epoch 20/40
+22/22 - 12s - 568ms/step - loss: 0.0322 - pr_auc: 0.9610 - roc_auc: 0.9631 - val_loss: 0.1292 - val_pr_auc: 0.7706 - val_roc_auc: 0.7798
+Epoch 21/40
+22/22 - 12s - 566ms/step - loss: 0.0319 - pr_auc: 0.9605 - roc_auc: 0.9636 - val_loss: 0.1175 - val_pr_auc: 0.7801 - val_roc_auc: 0.7896
+Epoch 22/40
+22/22 - 12s - 564ms/step - loss: 0.0314 - pr_auc: 0.9640 - roc_auc: 0.9655 - val_loss: 0.1129 - val_pr_auc: 0.7824 - val_roc_auc: 0.7919
+Epoch 23/40
+22/22 - 13s - 571ms/step - loss: 0.0290 - pr_auc: 0.9704 - roc_auc: 0.9707 - val_loss: 0.1229 - val_pr_auc: 0.7763 - val_roc_auc: 0.7889
+
+run directory: /Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_supervised/20260921-201026_T1_R1b
+
+T1 / R1b
+  test PR-AUC  0.7863  95% CI [0.7523, 0.8172]
+  test ROC-AUC 0.8069
+  PR-AUC at 1% prevalence 0.0488
+  ECE 0.03563
+
+================================================================================
+[20:14:44] 06 temporal
+$ /Users/parth/Desktop/DL/mapguard/.venv-train/bin/python3 -u /Users/parth/Desktop/DL/mapguard/train/06_temporal_evaluation/temporal_train_eval.py --set task=T1 --set data.feature_store="/Users/parth/Desktop/DL/mapguard/data/interim" --set device=cpu --set temporal.cutoff=2025-07-01T00:00:00Z --set reference_run="/Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_supervised/20260921-201026_T1_R1b"
+================================================================================
+device: /physical_device:CPU:0 | cpu cores=10
+data: {'root': '/Users/parth/Desktop/DL/mapguard/data/interim', 'task': 'T1', 'n_changesets': 7892, 'n_positive': 3947, 'n_negative': 3945, 'n_edit_rows': 332813, 'n_user_seq_rows': 539191, 'missing_optional_columns': [], 'by_corpus': {'M': 7892}}
+split: {'kind': 'temporal', 'leaky': False, 'seed': 20260904, 'cutoff': '2025-07-01T00:00:00Z', 'n_train': 4037, 'n_val': 441, 'n_test': 2634, 'pos_rate_train': 0.5521, 'pos_rate_val': 0.5442, 'pos_rate_test': 0.5015}
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/keras/src/layers/layer.py:1039: UserWarning: Layer 'edit_pool' (of type MaskedMeanPool) was passed an input with a mask attached to it. However, this layer does not support masking and will therefore destroy the mask information. Downstream layers will not see the mask.
+  warnings.warn(
+/Users/parth/Desktop/DL/mapguard/.venv-train/lib/python3.12/site-packages/keras/src/layers/layer.py:1039: UserWarning: Layer 'edit_attention_weight' (of type AttentionReceived) was passed an input with a mask attached to it. However, this layer does not support masking and will therefore destroy the mask information. Downstream layers will not see the mask.
+  warnings.warn(
+Epoch 1/40
+16/16 - 13s - 826ms/step - loss: 0.1124 - pr_auc: 0.6465 - roc_auc: 0.6292 - val_loss: 0.0764 - val_pr_auc: 0.7566 - val_roc_auc: 0.7389
+Epoch 2/40
+16/16 - 9s - 579ms/step - loss: 0.0776 - pr_auc: 0.7586 - roc_auc: 0.7279 - val_loss: 0.0733 - val_pr_auc: 0.7717 - val_roc_auc: 0.7569
+Epoch 3/40
+16/16 - 9s - 579ms/step - loss: 0.0731 - pr_auc: 0.7874 - roc_auc: 0.7629 - val_loss: 0.0717 - val_pr_auc: 0.7908 - val_roc_auc: 0.7767
+Epoch 4/40
+16/16 - 9s - 582ms/step - loss: 0.0705 - pr_auc: 0.8079 - roc_auc: 0.7817 - val_loss: 0.0704 - val_pr_auc: 0.8012 - val_roc_auc: 0.7872
+Epoch 5/40
+16/16 - 9s - 591ms/step - loss: 0.0696 - pr_auc: 0.8129 - roc_auc: 0.7901 - val_loss: 0.0696 - val_pr_auc: 0.8105 - val_roc_auc: 0.7961
+Epoch 6/40
+16/16 - 9s - 587ms/step - loss: 0.0666 - pr_auc: 0.8337 - roc_auc: 0.8135 - val_loss: 0.0682 - val_pr_auc: 0.8180 - val_roc_auc: 0.8107
+Epoch 7/40
+16/16 - 9s - 586ms/step - loss: 0.0645 - pr_auc: 0.8477 - roc_auc: 0.8263 - val_loss: 0.0673 - val_pr_auc: 0.8267 - val_roc_auc: 0.8195
+Epoch 8/40
+16/16 - 9s - 586ms/step - loss: 0.0635 - pr_auc: 0.8535 - roc_auc: 0.8331 - val_loss: 0.0666 - val_pr_auc: 0.8359 - val_roc_auc: 0.8265
+Epoch 9/40
+16/16 - 10s - 598ms/step - loss: 0.0617 - pr_auc: 0.8665 - roc_auc: 0.8456 - val_loss: 0.0657 - val_pr_auc: 0.8417 - val_roc_auc: 0.8315
+Epoch 10/40
+16/16 - 9s - 588ms/step - loss: 0.0595 - pr_auc: 0.8788 - roc_auc: 0.8595 - val_loss: 0.0661 - val_pr_auc: 0.8428 - val_roc_auc: 0.8333
+Epoch 11/40
+16/16 - 9s - 584ms/step - loss: 0.0585 - pr_auc: 0.8811 - roc_auc: 0.8654 - val_loss: 0.0653 - val_pr_auc: 0.8501 - val_roc_auc: 0.8416
+Epoch 12/40
+16/16 - 9s - 582ms/step - loss: 0.0560 - pr_auc: 0.8945 - roc_auc: 0.8767 - val_loss: 0.0665 - val_pr_auc: 0.8460 - val_roc_auc: 0.8409
+Epoch 13/40
+16/16 - 9s - 576ms/step - loss: 0.0545 - pr_auc: 0.8994 - roc_auc: 0.8848 - val_loss: 0.0675 - val_pr_auc: 0.8437 - val_roc_auc: 0.8363
+Epoch 14/40
+16/16 - 9s - 567ms/step - loss: 0.0521 - pr_auc: 0.9118 - roc_auc: 0.8976 - val_loss: 0.0703 - val_pr_auc: 0.8443 - val_roc_auc: 0.8368
+Epoch 15/40
+16/16 - 9s - 590ms/step - loss: 0.0509 - pr_auc: 0.9152 - roc_auc: 0.9007 - val_loss: 0.0687 - val_pr_auc: 0.8456 - val_roc_auc: 0.8374
+Epoch 16/40
+16/16 - 10s - 598ms/step - loss: 0.0472 - pr_auc: 0.9291 - roc_auc: 0.9162 - val_loss: 0.0752 - val_pr_auc: 0.8457 - val_roc_auc: 0.8357
+
+run directory: /Users/parth/Desktop/DL/mapguard/experiments/runs/stage2_temporal/20260921-201448_T1_temporal_past_to_future
+{
+  "cutoff": "2025-07-01T00:00:00Z",
+  "train_window": [
+    "2023-01-01T12:19:08Z",
+    "2025-06-30T13:44:22Z"
+  ],
+  "test_window": [
+    "2025-07-01T09:40:35Z",
+    "2026-09-16T18:25:50Z"
+  ],
+  "headline": {
+    "test_pr_auc": [
+      0.793,
+      0.7698,
+      0.8162
+    ],
+    "test_roc_auc": [
+      0.8098,
+      0.794,
+      0.8252
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0522,
+    "test_f1_at_val_threshold": 0.7477,
+    "test_ovid_table": {
+      "precision": 0.7018,
+      "recall": 0.8017,
+      "f1": 0.7484,
+      "accuracy": 0.7297
+    },
+    "test_ece": 0.08486
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "started_utc": "2026-09-21T12:31:24+00:00",
+  "git_sha": "3c97b88d63998cc7562564175dad35b4f0399d98 (bundle)",
+  "git_dirty_src_or_train": null,
+  "command": "/Users/parth/Desktop/DL/mapguard/train/03_stage2_ablations/run_ablations.py --set task=ovid --set data.feature_store=\"/Users/parth/Desktop/DL/mapguard/data/interim\" --set device=cpu --set pretrained_encoder=\"/Users/parth/Desktop/DL/mapguard/experiments/runs/stage1_pretrain/20260921-164918_ovid_R1b\"",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "devices": [
+    "/physical_device:CPU:0",
+    "cpu cores=10"
+  ],
+  "libraries": {
+    "python": "3.12.14",
+    "numpy": "2.1.3",
+    "tensorflow": "2.19.1",
+    "keras": "3.15.1",
+    "sklearn": "1.9.1",
+    "xgboost": "3.4.1",
+    "pandas": "3.0.6",
+    "pyarrow": "25.0.1"
+  },
+  "data": {
+    "changesets": {
+      "bytes": 8301841,
+      "mtime": 1789797242,
+      "sha256_16mb": "711f7008d1540416"
+    },
+    "edits": {
+      "bytes": 39304303,
+      "mtime": 1789797248,
+      "sha256_16mb": "019afb27fc4bae6a"
+    },
+    "user_seq": {
+      "bytes": 22251369,
+      "mtime": 1789797250,
+      "sha256_16mb": "b49fe6a34fc00fcd"
+    }
+  },
+  "split_file": null,
+  "split_fingerprint": null,
+  "rows": [
+    "base_edits_tabular",
+    "plus_geometry",
+    "plus_text",
+    "plus_sequences",
+    "full_scratch",
+    "full_scratch_bce",
+    "full_pretrained"
+  ],
+  "seeds": [
+    20260904,
+    20260905
+  ],
+  "split_seed": 20260904
+}

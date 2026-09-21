@@ -1,0 +1,89 @@
+{
+  "stage": "stage1_pretrain",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-09-21T11:19:38+00:00",
+  "headline": {
+    "pretext_val_auc": 0.9965,
+    "weakest_corruption": "tag_wipe"
+  },
+  "pretext": {
+    "val_auc": 0.9965,
+    "per_corruption": {
+      "displace": {
+        "n": 5124,
+        "detected_at_0.5": 0.9807
+      },
+      "area_blowup": {
+        "n": 442,
+        "detected_at_0.5": 1.0
+      },
+      "length_stretch": {
+        "n": 401,
+        "detected_at_0.5": 0.9975
+      },
+      "tag_wipe": {
+        "n": 3010,
+        "detected_at_0.5": 0.8037
+      },
+      "tag_spam": {
+        "n": 31082,
+        "detected_at_0.5": 0.9997
+      },
+      "mass_points": {
+        "n": 5086,
+        "detected_at_0.5": 0.9992
+      },
+      "real_edits_false_alarm_at_0.5": 0.0063
+    },
+    "epochs_run": 16,
+    "n_train": 709710,
+    "n_val": 90290,
+    "corruptions": [
+      "displace",
+      "area_blowup",
+      "length_stretch",
+      "tag_wipe",
+      "tag_spam",
+      "mass_points"
+    ]
+  },
+  "disjointness": {
+    "pretraining_changesets": 12626,
+    "excluded_train_changesets_sharing_an_author_with_eval": 0,
+    "overlap_changeset_ids": 0,
+    "overlap_user_ids": 0
+  },
+  "known_gaps": [
+    "no text corruption - tag text is changeset-level in this feature store",
+    "no mass-deletion corruption - deletion volume is changeset-level"
+  ],
+  "encoder": {
+    "file": "edit_encoder.npz",
+    "embed": 64,
+    "edit_columns": [
+      "centroid_shift_m",
+      "hausdorff_m",
+      "d_length_m",
+      "d_area_m2",
+      "length_ratio",
+      "area_ratio",
+      "d_points",
+      "n_tags",
+      "n_refs",
+      "version",
+      "is_new_object",
+      "tags_added",
+      "tags_removed",
+      "tags_changed",
+      "d_refs",
+      "geom_route",
+      "days_since_prev_version",
+      "prev_same_author"
+    ]
+  },
+  "tensorflow": "2.19.1",
+  "keras": "3.15.1",
+  "next": "run stage1_zero_shot.py on this directory before using it to fine-tune"
+}

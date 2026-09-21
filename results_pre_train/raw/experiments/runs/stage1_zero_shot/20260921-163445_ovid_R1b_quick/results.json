@@ -1,0 +1,39 @@
+{
+  "stage": "stage1_zero_shot",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-09-21T11:04:45+00:00",
+  "source_run": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage1_pretrain/20260921-163440_ovid_R1b_quick",
+  "n_test_changesets": 3607,
+  "n_scored_with_edits": 3607,
+  "aggregate_max_edit_score": {
+    "roc_auc_ci95": [
+      0.547,
+      0.5282,
+      0.5657
+    ],
+    "pr_auc_ci95": [
+      0.5177,
+      0.4974,
+      0.541
+    ]
+  },
+  "aggregate_mean_edit_score": {
+    "roc_auc_ci95": [
+      0.5013,
+      0.4824,
+      0.5206
+    ],
+    "pr_auc_ci95": [
+      0.4864,
+      0.4672,
+      0.5102
+    ]
+  },
+  "verdict": "near chance - the corruptions do not resemble real damage; redesign them before fine-tuning",
+  "headline": {
+    "zero_shot_roc_auc": 0.547,
+    "verdict": "near chance - the corruptions do not resemble real damage; redesign them before fine-tuning"
+  }
+}

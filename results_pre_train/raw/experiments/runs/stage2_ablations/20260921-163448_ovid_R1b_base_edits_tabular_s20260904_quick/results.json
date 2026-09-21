@@ -1,0 +1,191 @@
+{
+  "stage": "stage2_ablations",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-09-21T11:04:53+00:00",
+  "headline": {
+    "test_pr_auc": [
+      0.775,
+      0.7535,
+      0.7969
+    ],
+    "test_roc_auc": [
+      0.799,
+      0.784,
+      0.8138
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0405,
+    "test_f1_at_val_threshold": 0.7476,
+    "test_ovid_table": {
+      "precision": 0.6871,
+      "recall": 0.8166,
+      "f1": 0.7463,
+      "accuracy": 0.7239
+    },
+    "test_ece": 0.11842
+  },
+  "evaluation": {
+    "threshold": {
+      "value": 0.512434,
+      "chosen_on": "validation",
+      "validation_f1": 0.7621
+    },
+    "validation": {
+      "pr_auc": 0.8198,
+      "roc_auc": 0.8222,
+      "n": 1804
+    },
+    "test": {
+      "n": 3607,
+      "n_pos": 1794,
+      "observed_prevalence": 0.497366,
+      "threshold": 0.5124335169792176,
+      "roc_auc": 0.7989650800209807,
+      "precision_at_k": {
+        "10": 0.8,
+        "50": 0.88,
+        "100": 0.86
+      },
+      "by_prevalence": {
+        "0.5": {
+          "precision": 0.6894,
+          "recall": 0.8166,
+          "f1": 0.7476,
+          "pr_auc": 0.7767
+        },
+        "0.01": {
+          "precision": 0.0219,
+          "recall": 0.8166,
+          "f1": 0.0427,
+          "pr_auc": 0.0405
+        },
+        "0.001": {
+          "precision": 0.0022,
+          "recall": 0.8166,
+          "f1": 0.0044,
+          "pr_auc": 0.0047
+        }
+      }
+    },
+    "test_intervals_95": {
+      "pr_auc": [
+        0.775,
+        0.7535,
+        0.7969
+      ],
+      "roc_auc": [
+        0.799,
+        0.784,
+        0.8138
+      ]
+    },
+    "test_calibration": {
+      "brier": 0.19963,
+      "ece": 0.11842,
+      "reliability": [
+        {
+          "bin": 1,
+          "n": 9,
+          "mean_score": 0.1856,
+          "observed_rate": 0.1111
+        },
+        {
+          "bin": 2,
+          "n": 138,
+          "mean_score": 0.2658,
+          "observed_rate": 0.0725
+        },
+        {
+          "bin": 3,
+          "n": 448,
+          "mean_score": 0.3598,
+          "observed_rate": 0.1496
+        },
+        {
+          "bin": 4,
+          "n": 770,
+          "mean_score": 0.4521,
+          "observed_rate": 0.2857
+        },
+        {
+          "bin": 5,
+          "n": 711,
+          "mean_score": 0.5479,
+          "observed_rate": 0.4473
+        },
+        {
+          "bin": 6,
+          "n": 848,
+          "mean_score": 0.6525,
+          "observed_rate": 0.7099
+        },
+        {
+          "bin": 7,
+          "n": 520,
+          "mean_score": 0.7373,
+          "observed_rate": 0.8365
+        },
+        {
+          "bin": 8,
+          "n": 163,
+          "mean_score": 0.83,
+          "observed_rate": 0.865
+        }
+      ]
+    },
+    "ovid_table": {
+      "precision": 0.6871,
+      "recall": 0.8166,
+      "f1": 0.7463,
+      "accuracy": 0.7239,
+      "positive_rate": 0.4974,
+      "threshold": 0.512434,
+      "reference_ovid_2021": {
+        "precision": 0.8035,
+        "recall": 0.8302,
+        "f1": 0.8166,
+        "accuracy": 0.8137
+      }
+    }
+  },
+  "attribution": null,
+  "top_test_examples": null,
+  "masking_checks": {
+    "before_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "note": "padded edits perturbed with 50x noise; a correct model does not move"
+    },
+    "after_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "note": "padded edits perturbed with 50x noise; a correct model does not move"
+    }
+  },
+  "training": {
+    "epochs_run": 1,
+    "best_epoch": 1,
+    "best_val_pr_auc": 0.8195,
+    "n_train": 12626,
+    "n_val": 1804,
+    "n_test": 3607,
+    "class_weight": null,
+    "loss": "focal",
+    "params": 27809,
+    "tensorflow": "2.19.1",
+    "keras": "3.15.1",
+    "precision": "float32",
+    "batch_size": 256
+  },
+  "branches": [
+    "B5"
+  ],
+  "pretrained_encoder": null,
+  "notes": [
+    "1006 changesets had no user history; a null history step was inserted"
+  ],
+  "ablation_row": "base_edits_tabular"
+}

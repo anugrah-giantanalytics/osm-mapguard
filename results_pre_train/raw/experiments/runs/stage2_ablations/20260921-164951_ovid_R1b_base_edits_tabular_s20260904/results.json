@@ -1,0 +1,203 @@
+{
+  "stage": "stage2_ablations",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-09-21T11:25:21+00:00",
+  "headline": {
+    "test_pr_auc": [
+      0.8169,
+      0.7971,
+      0.8363
+    ],
+    "test_roc_auc": [
+      0.8319,
+      0.8187,
+      0.8454
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0589,
+    "test_f1_at_val_threshold": 0.7615,
+    "test_ovid_table": {
+      "precision": 0.6782,
+      "recall": 0.8645,
+      "f1": 0.7601,
+      "accuracy": 0.7286
+    },
+    "test_ece": 0.09903
+  },
+  "evaluation": {
+    "threshold": {
+      "value": 0.466164,
+      "chosen_on": "validation",
+      "validation_f1": 0.7714
+    },
+    "validation": {
+      "pr_auc": 0.8301,
+      "roc_auc": 0.8419,
+      "n": 1804
+    },
+    "test": {
+      "n": 3607,
+      "n_pos": 1794,
+      "observed_prevalence": 0.497366,
+      "threshold": 0.46616430759429933,
+      "roc_auc": 0.8319144343989064,
+      "precision_at_k": {
+        "10": 0.9,
+        "50": 0.88,
+        "100": 0.91
+      },
+      "by_prevalence": {
+        "0.5": {
+          "precision": 0.6805,
+          "recall": 0.8645,
+          "f1": 0.7615,
+          "pr_auc": 0.8183
+        },
+        "0.01": {
+          "precision": 0.0211,
+          "recall": 0.8645,
+          "f1": 0.0411,
+          "pr_auc": 0.0589
+        },
+        "0.001": {
+          "precision": 0.0021,
+          "recall": 0.8645,
+          "f1": 0.0042,
+          "pr_auc": 0.0087
+        }
+      }
+    },
+    "test_intervals_95": {
+      "pr_auc": [
+        0.8169,
+        0.7971,
+        0.8363
+      ],
+      "roc_auc": [
+        0.8319,
+        0.8187,
+        0.8454
+      ]
+    },
+    "test_calibration": {
+      "brier": 0.17677,
+      "ece": 0.09903,
+      "reliability": [
+        {
+          "bin": 0,
+          "n": 64,
+          "mean_score": 0.0808,
+          "observed_rate": 0.0469
+        },
+        {
+          "bin": 1,
+          "n": 252,
+          "mean_score": 0.1558,
+          "observed_rate": 0.0516
+        },
+        {
+          "bin": 2,
+          "n": 353,
+          "mean_score": 0.2521,
+          "observed_rate": 0.1671
+        },
+        {
+          "bin": 3,
+          "n": 402,
+          "mean_score": 0.3494,
+          "observed_rate": 0.2363
+        },
+        {
+          "bin": 4,
+          "n": 392,
+          "mean_score": 0.4515,
+          "observed_rate": 0.3291
+        },
+        {
+          "bin": 5,
+          "n": 418,
+          "mean_score": 0.551,
+          "observed_rate": 0.4091
+        },
+        {
+          "bin": 6,
+          "n": 501,
+          "mean_score": 0.6566,
+          "observed_rate": 0.5788
+        },
+        {
+          "bin": 7,
+          "n": 1092,
+          "mean_score": 0.7486,
+          "observed_rate": 0.8379
+        },
+        {
+          "bin": 8,
+          "n": 129,
+          "mean_score": 0.8209,
+          "observed_rate": 0.8915
+        },
+        {
+          "bin": 9,
+          "n": 4,
+          "mean_score": 0.902,
+          "observed_rate": 1.0
+        }
+      ]
+    },
+    "ovid_table": {
+      "precision": 0.6782,
+      "recall": 0.8645,
+      "f1": 0.7601,
+      "accuracy": 0.7286,
+      "positive_rate": 0.4974,
+      "threshold": 0.466164,
+      "reference_ovid_2021": {
+        "precision": 0.8035,
+        "recall": 0.8302,
+        "f1": 0.8166,
+        "accuracy": 0.8137
+      }
+    }
+  },
+  "attribution": null,
+  "top_test_examples": null,
+  "masking_checks": {
+    "before_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "note": "padded edits perturbed with 50x noise; a correct model does not move"
+    },
+    "after_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "note": "padded edits perturbed with 50x noise; a correct model does not move"
+    }
+  },
+  "training": {
+    "epochs_run": 15,
+    "best_epoch": 10,
+    "best_val_pr_auc": 0.8298,
+    "n_train": 12626,
+    "n_val": 1804,
+    "n_test": 3607,
+    "class_weight": null,
+    "loss": "focal",
+    "params": 27809,
+    "tensorflow": "2.19.1",
+    "keras": "3.15.1",
+    "precision": "float32",
+    "batch_size": 256
+  },
+  "branches": [
+    "B5"
+  ],
+  "pretrained_encoder": null,
+  "notes": [
+    "1006 changesets had no user history; a null history step was inserted"
+  ],
+  "ablation_row": "base_edits_tabular"
+}

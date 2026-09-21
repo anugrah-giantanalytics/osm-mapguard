@@ -1,0 +1,53 @@
+{
+  "stage": "stage1_label_efficiency_curve",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "seeds": [
+    20260904
+  ],
+  "fractions": [
+    0.25,
+    1.0
+  ],
+  "device": "cpu",
+  "resplit": false,
+  "pretrained_encoder": "/Users/parth/Desktop/DL/mapguard/experiments/runs/stage1_pretrain/20260921-163440_ovid_R1b_quick",
+  "data": {
+    "feature_store": "/Users/parth/Desktop/DL/mapguard/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
+    "max_edits": 64,
+    "user_steps": 50,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.2,
+    "raster": null
+  },
+  "train": {
+    "epochs": 1,
+    "batch_size": "auto",
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2,
+    "mixed_precision": "auto"
+  },
+  "evaluate": {
+    "attribution": false,
+    "top_k": 0
+  },
+  "tag": "quick",
+  "_config_path": "/Users/parth/Desktop/DL/mapguard/train/05_stage1_label_efficiency/config.json"
+}

@@ -1,0 +1,84 @@
+{
+  "started": "20260921-163311",
+  "task": "ovid",
+  "quick": true,
+  "feature_store": "/Users/parth/Desktop/DL/mapguard/data/interim",
+  "stages": [
+    {
+      "stage": "00 wiring_check",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.4
+    },
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.5
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.3
+    },
+    {
+      "stage": "02 Ovid reproduction (R1b, Ovid's features and architecture)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.2
+    },
+    {
+      "stage": "04 stage1 pretrain",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "04 stage1 zero-shot",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "03 stage2 ablations",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.9
+    },
+    {
+      "stage": "05 label efficiency",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.6
+    },
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.3
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20260921-163351_ovid_R1b_quick",
+    "experiments/runs/stage2_supervised/20260921-163411_ovid_R1b_quick",
+    "experiments/runs/stage2_supervised/20260921-163430_ovid_R1b_ovid_repro_quick",
+    "experiments/runs/stage1_pretrain/20260921-163440_ovid_R1b_quick",
+    "experiments/runs/stage1_zero_shot/20260921-163445_ovid_R1b_quick",
+    "experiments/runs/stage2_ablations/20260921-163448_ovid_R1b_base_edits_tabular_s20260904_quick",
+    "experiments/runs/stage2_ablations/20260921-163454_ovid_R1b_plus_geometry_s20260904_quick",
+    "experiments/runs/stage2_ablations/20260921-163459_ovid_R1b_plus_text_s20260904_quick",
+    "experiments/runs/stage2_ablations/20260921-163505_ovid_R1b_plus_sequences_s20260904_quick",
+    "experiments/runs/stage2_ablations/20260921-163512_ovid_R1b_full_scratch_s20260904_quick",
+    "experiments/runs/stage2_ablations/20260921-163521_ovid_R1b_full_scratch_bce_s20260904_quick",
+    "experiments/runs/stage2_ablations/20260921-163531_ovid_R1b_full_pretrained_s20260904_quick",
+    "experiments/runs/stage2_ablations_grid/20260921-163539_ovid_R1b_grid_quick",
+    "experiments/runs/stage1_label_efficiency/20260921-163543_ovid_R1b_scratch_f25_s20260904_quick",
+    "experiments/runs/stage1_label_efficiency/20260921-163550_ovid_R1b_pretrained_f25_s20260904_quick",
+    "experiments/runs/stage1_label_efficiency/20260921-163556_ovid_R1b_scratch_f100_s20260904_quick",
+    "experiments/runs/stage1_label_efficiency/20260921-163605_ovid_R1b_pretrained_f100_s20260904_quick",
+    "experiments/runs/stage1_label_efficiency_curve/20260921-163613_ovid_R1b_curve_quick",
+    "experiments/runs/stage2_temporal/20260921-163618_ovid_temporal_past_to_future_quick"
+  ],
+  "all_ok": true
+}
