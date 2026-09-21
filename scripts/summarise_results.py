@@ -1,6 +1,6 @@
 """Summarise a folder of training runs into one table set - reading, never editing.
 
-    python scripts/summarise_results.py results_pre_train
+    python scripts/summarise_results.py experiments/rounds/<round>
 
 Expects `<root>/raw/experiments/{runs,pipeline,splits}` exactly as `train/run_pipeline.py`
 wrote them, and writes `<root>/analysis/summary.md` and `summary.json`. Runs whose directory

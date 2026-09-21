@@ -1,4 +1,4 @@
-# results_pre_train — first full training round (2026-09-21)
+# experiments/rounds/r1_2026-09-21_m4 — first full training round (2026-09-21)
 
 Run on a MacBook M4 (16 GB), bundle release v1.0.1, code `3c97b88`. **CPU only**: the
 Apple GPU was not used (TensorFlow 2.19.1 was installed and `tensorflow-metal` did not attach).
@@ -7,7 +7,7 @@ Each full training took ~3–8 min on 10 cores.
 ## Layout
 
 ```
-results_pre_train/
+experiments/rounds/r1_2026-09-21_m4/
   raw/experiments/        the folder as it came back - untouched, nothing edited or removed
     pipeline/             one log + summary per run_pipeline invocation
     runs/<stage>/<run>/   results.json, provenance.json, training_log.csv, weights, predictions
@@ -18,7 +18,7 @@ results_pre_train/
     summary.json          the same numbers, machine-readable
 ```
 
-Regenerate the analysis with `python scripts/summarise_results.py results_pre_train`.
+Regenerate the analysis with `python scripts/summarise_results.py experiments/rounds/r1_2026-09-21_m4`.
 Directories ending in `_quick` (19) are the smoke test and are excluded from every table.
 Weights (`*.h5`, 64 MB) are git-ignored and stay local.
 

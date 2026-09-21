@@ -24,7 +24,7 @@ checklist remains unchanged for historical reference.
 - [~] A real trainable model, checkpoint, inference path, and experiment results exist.
   *Training code exists in `train/00`–`06`; none of the TensorFlow code has run yet.*
   *Code is verified end to end (Keras 2 + 3, real data, quick mode). Real training runs next, on the cluster or M4.*
-  *Trained 2026-09-21 (results_pre_train/). Checkpoints and results exist; a single-changeset inference path for the demo is still to build.*
+  *Trained 2026-09-21 (experiments/rounds/r1_2026-09-21_m4/). Checkpoints and results exist; a single-changeset inference path for the demo is still to build.*
 - [ ] A visual demo exists and scores the same input through the same inference path as
   the research results.
 
@@ -378,7 +378,7 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 ## Round 2 — proposed after the first training round (2026-09-21, not started)
 
 Deadline 2026-10-02. Ordered by what the results say matters. Details in
-`results_pre_train/README.md`.
+`experiments/rounds/r1_2026-09-21_m4/README.md`.
 
 ### R2-A. Make the claims defensible — cheap, do first (~1 day)
 - [ ] Temporal baselines: XGBoost and B0 on every temporal split. Without them, "the deep model
