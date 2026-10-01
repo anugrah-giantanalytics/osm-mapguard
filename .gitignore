@@ -55,3 +55,4 @@ experiments/runs/
 experiments/pipeline/
 # frozen split files are deliberately TRACKED: they are the reproducibility contract
 !experiments/splits/
+altair/_dist/

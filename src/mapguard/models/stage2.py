@@ -85,8 +85,12 @@ class MaskedMeanPool(layers.Layer):
 
     def call(self, inputs):
         x, mask = inputs
-        m = tf.cast(mask, x.dtype)[:, :, None]
-        return tf.reduce_sum(x * m, axis=1) / tf.maximum(tf.reduce_sum(m, axis=1), 1.0)
+        keep = tf.cast(mask, tf.bool)[:, :, None]
+        # where, not multiply: a padded row that overflowed in float16 is inf/NaN, and
+        # NaN * 0 is NaN - it would leak through a multiplicative mask.
+        x = tf.where(keep, x, tf.zeros_like(x))
+        m = tf.cast(keep, x.dtype)
+        return tf.reduce_sum(x, axis=1) / tf.maximum(tf.reduce_sum(m, axis=1), 1.0)
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0][0], input_shape[0][-1])
@@ -103,7 +107,8 @@ class AttentionReceived(layers.Layer):
         scores, mask = inputs
         m = tf.cast(mask, scores.dtype)                     # (N, K)
         per_query = tf.reduce_mean(scores, axis=1)          # (N, K, K) mean over heads
-        weighted = per_query * m[:, :, None]                # drop padded query rows
+        real_q = tf.cast(mask, tf.bool)[:, :, None]
+        weighted = tf.where(real_q, per_query, tf.zeros_like(per_query))  # drop padded queries
         received = tf.reduce_sum(weighted, axis=1)          # (N, K)
         n_real = tf.maximum(tf.reduce_sum(m, axis=1, keepdims=True), 1.0)
         return tf.cast((received / n_real) * m, "float32")
@@ -155,6 +160,7 @@ class GatedAttentionPool(layers.Layer):
     def call(self, inputs):
         h, mask = inputs
         m = tf.cast(mask, tf.bool)
+        h = tf.where(m[:, :, None], h, tf.zeros_like(h))   # padded rows may be inf/NaN in fp16
         logits = tf.squeeze(self.w(self.v(h) * self.u(h)), axis=-1)
         logits = tf.where(m, logits, tf.cast(-1e4, logits.dtype) * tf.ones_like(logits))
         a = tf.nn.softmax(logits, axis=1) * tf.cast(m, logits.dtype)
@@ -376,11 +382,15 @@ def verify_masking(model: keras.Model, arrays: dict, n: int = 64) -> dict:
 
     pad = 1.0 - base["edit_mask"]
     perturbed = dict(base)
+    # 50x noise in float32. Under mixed_float16 the same noise overflows padded rows to inf
+    # (float16 max is 65504) inside layers that never see padding in real data, so use a
+    # scale that is still far outside the data (features are standardised) but finite.
+    scale = 3.0 if str(getattr(model, "compute_dtype", "float32")) == "float16" else 50.0
     for key in ("edit_features", "geometry"):
         if key in base:
             arr = base[key]
             shape = pad.shape + (1,) * (arr.ndim - pad.ndim)
-            perturbed[key] = (arr + pad.reshape(shape) * rng.normal(size=arr.shape) * 50.0).astype(arr.dtype)
+            perturbed[key] = (arr + pad.reshape(shape) * rng.normal(size=arr.shape) * scale).astype(arr.dtype)
     for key, high in (("edit_tokens", 1 << 14), ("edit_text", 50)):
         if key in base:
             arr = base[key]
@@ -393,5 +403,6 @@ def verify_masking(model: keras.Model, arrays: dict, n: int = 64) -> dict:
         "max_delta": delta,
         "masking_holds": bool(delta < 1e-4),
         "rows_checked": int(len(before)),
-        "note": "padded edits perturbed with 50x noise; a correct model does not move",
+        "noise_scale": scale,
+        "note": "padded edits perturbed with noise; a correct model does not move",
     }

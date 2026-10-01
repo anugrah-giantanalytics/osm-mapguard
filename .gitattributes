@@ -1,3 +1,4 @@
 
 # training results are archived byte-for-byte; never convert line endings
 experiments/rounds/*/raw/** -text
+altair/*.sh text eol=lf
