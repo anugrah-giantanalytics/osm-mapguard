@@ -1,0 +1,50 @@
+{
+  "stage": "stage2_supervised",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "device": "auto",
+  "deterministic": false,
+  "resplit": false,
+  "data": {
+    "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B5"
+    ],
+    "max_edits": 64,
+    "user_steps": 50,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.2,
+    "raster": null,
+    "pooling": "mean"
+  },
+  "train": {
+    "epochs": 2,
+    "batch_size": "auto",
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "bce",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2,
+    "mixed_precision": "auto",
+    "author_weighting": null,
+    "weight_decay": 0.0
+  },
+  "init": {
+    "pretrained_encoder": null,
+    "freeze_encoder": false
+  },
+  "evaluate": {
+    "attribution": false,
+    "top_k": 0
+  },
+  "tag": "ovid_repro_quick",
+  "_comment": "Ovid-equivalent model for the reproduction row (Tempelmeier & Demidova 2021): changeset + user features through dense layers, multi-head attention over per-edit features, no geometry (B1), no text (B2), no user sequence (B4) or edit order (B3). Same R1b split as Ovid's user-disjoint protocol. Differences, disclosed: Ovid zeroes edits above th_e,max, this keeps them (MapGuard rule 1); 'valid tags' is not reproduced. Kept at round-1 settings (mean pooling, no author weighting, no weight decay) so it stays a fixed reference.",
+  "_config_path": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/ovid_repro.json"
+}

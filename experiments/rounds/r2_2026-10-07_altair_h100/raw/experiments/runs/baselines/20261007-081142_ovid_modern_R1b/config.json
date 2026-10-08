@@ -1,0 +1,39 @@
+{
+  "stage": "baselines",
+  "task": "ovid_modern",
+  "split": "R1b",
+  "seed": 20260904,
+  "device": "auto",
+  "resplit": false,
+  "data": {
+    "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
+    "max_edits": 256,
+    "user_steps": 200,
+    "exclude_columns": "adiff_only"
+  },
+  "baselines": {
+    "b0_tripwire": true,
+    "logistic_regression": true,
+    "xgboost": true,
+    "xgboost_params": {
+      "n_estimators": 400,
+      "max_depth": 6,
+      "learning_rate": 0.08,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8
+    },
+    "b0_leak_auc": 0.85,
+    "hybrid": true,
+    "author_weighting": "sqrt"
+  },
+  "_config_path": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/01_baselines/config.json"
+}

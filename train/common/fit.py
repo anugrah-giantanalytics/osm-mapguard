@@ -256,6 +256,10 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
         run.path("predictions.npz"),
         val_cids=prep.cids[val_rows], val_y=y[val_rows], val_p=p_val.ravel(),
         test_cids=prep.cids[test_rows], test_y=y[test_rows], test_p=p_test.ravel(),
+        # per-edit attention (MIL weights, or attention received under mean pooling) and the
+        # number of real edits, so attention concentration can be analysed after the run
+        test_attention=np.asarray(w_test, dtype="float16"),
+        test_n_edits=a["edit_mask"][test_rows].sum(axis=1).astype("int16"),
     )
 
     # 7. attribution ----------------------------------------------------------------

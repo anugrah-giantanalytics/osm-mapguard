@@ -1,0 +1,8 @@
+{
+  "stage": "ensemble",
+  "task": "T2",
+  "split": "R1b",
+  "seed": 0,
+  "deep_run": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-081957_T2_R1b",
+  "hybrid_run": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/baselines/20261007-081940_T2_R1b"
+}

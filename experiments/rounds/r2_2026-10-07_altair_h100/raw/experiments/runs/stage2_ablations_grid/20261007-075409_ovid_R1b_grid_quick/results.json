@@ -1,0 +1,433 @@
+{
+  "stage": "stage2_ablations_grid",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-10-07T07:54:09+00:00",
+  "headline": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7751,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.8014,
+    "test_pr_auc_at_1pct_mean": 0.0405,
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ],
+    "pr_auc_change_vs_base": 0.0052
+  },
+  "table": {
+    "base_edits_tabular": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7699,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7835,
+      "test_pr_auc_at_1pct_mean": 0.0443,
+      "branches": [
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0
+    },
+    "plus_geometry": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7728,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7933,
+      "test_pr_auc_at_1pct_mean": 0.0492,
+      "branches": [
+        "B1",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0029
+    },
+    "plus_text": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7951,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.819,
+      "test_pr_auc_at_1pct_mean": 0.0523,
+      "branches": [
+        "B2",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": 0.0252
+    },
+    "plus_sequences": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7455,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7773,
+      "test_pr_auc_at_1pct_mean": 0.0405,
+      "branches": [
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "pr_auc_change_vs_base": -0.0244
+    },
+    "plus_edit_meaning": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7549,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.7692,
+      "test_pr_auc_at_1pct_mean": 0.0505,
+      "branches": [
+        "B5",
+        "B6"
+      ],
+      "pr_auc_change_vs_base": -0.015
+    },
+    "full": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7751,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.8014,
+      "test_pr_auc_at_1pct_mean": 0.0405,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "pr_auc_change_vs_base": 0.0052
+    },
+    "full_meanpool": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7894,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.8066,
+      "test_pr_auc_at_1pct_mean": 0.056,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "pr_auc_change_vs_base": 0.0195
+    },
+    "full_unweighted": {
+      "n_seeds": 1,
+      "test_pr_auc_mean": 0.7732,
+      "test_pr_auc_std": null,
+      "test_roc_auc_mean": 0.8003,
+      "test_pr_auc_at_1pct_mean": 0.0398,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "pr_auc_change_vs_base": 0.0033
+    }
+  },
+  "runs": [
+    {
+      "row": "base_edits_tabular",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075141_ovid_R1b_base_edits_tabular_s20260904_quick",
+      "branches": [
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7699,
+        0.7485,
+        0.7909
+      ],
+      "test_roc_auc": [
+        0.7835,
+        0.7689,
+        0.7982
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0443,
+      "test_f1_at_val_threshold": 0.7332,
+      "test_ovid_table": {
+        "precision": 0.6936,
+        "recall": 0.7748,
+        "f1": 0.732,
+        "accuracy": 0.7178
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.6549,
+        "author_weighted_pr_auc": 0.6308
+      },
+      "test_ece": 0.10582
+    },
+    {
+      "row": "plus_geometry",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075153_ovid_R1b_plus_geometry_s20260904_quick",
+      "branches": [
+        "B1",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7728,
+        0.7502,
+        0.7941
+      ],
+      "test_roc_auc": [
+        0.7933,
+        0.7788,
+        0.808
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0492,
+      "test_f1_at_val_threshold": 0.745,
+      "test_ovid_table": {
+        "precision": 0.6642,
+        "recall": 0.8445,
+        "f1": 0.7436,
+        "accuracy": 0.7103
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.635,
+        "author_weighted_pr_auc": 0.6173
+      },
+      "test_ece": 0.10147
+    },
+    {
+      "row": "plus_text",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075202_ovid_R1b_plus_text_s20260904_quick",
+      "branches": [
+        "B2",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7951,
+        0.774,
+        0.8158
+      ],
+      "test_roc_auc": [
+        0.819,
+        0.8055,
+        0.8323
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0523,
+      "test_f1_at_val_threshold": 0.7567,
+      "test_ovid_table": {
+        "precision": 0.6904,
+        "recall": 0.8339,
+        "f1": 0.7554,
+        "accuracy": 0.7314
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.6752,
+        "author_weighted_pr_auc": 0.6565
+      },
+      "test_ece": 0.13087
+    },
+    {
+      "row": "plus_sequences",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075214_ovid_R1b_plus_sequences_s20260904_quick",
+      "branches": [
+        "B3",
+        "B4",
+        "B5"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7455,
+        0.7234,
+        0.768
+      ],
+      "test_roc_auc": [
+        0.7773,
+        0.7624,
+        0.7925
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0405,
+      "test_f1_at_val_threshold": 0.7332,
+      "test_ovid_table": {
+        "precision": 0.6973,
+        "recall": 0.7703,
+        "f1": 0.732,
+        "accuracy": 0.7194
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.5961,
+        "author_weighted_pr_auc": 0.5791
+      },
+      "test_ece": 0.11921
+    },
+    {
+      "row": "plus_edit_meaning",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075235_ovid_R1b_plus_edit_meaning_s20260904_quick",
+      "branches": [
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7549,
+        0.7333,
+        0.7778
+      ],
+      "test_roc_auc": [
+        0.7692,
+        0.7537,
+        0.7846
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0505,
+      "test_f1_at_val_threshold": 0.7235,
+      "test_ovid_table": {
+        "precision": 0.6234,
+        "recall": 0.8573,
+        "f1": 0.7219,
+        "accuracy": 0.6715
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.6453,
+        "author_weighted_pr_auc": 0.6091
+      },
+      "test_ece": 0.08689
+    },
+    {
+      "row": "full",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075251_ovid_R1b_full_s20260904_quick",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7751,
+        0.7536,
+        0.7982
+      ],
+      "test_roc_auc": [
+        0.8014,
+        0.7875,
+        0.816
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0405,
+      "test_f1_at_val_threshold": 0.7389,
+      "test_ovid_table": {
+        "precision": 0.7135,
+        "recall": 0.7637,
+        "f1": 0.7377,
+        "accuracy": 0.73
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.6139,
+        "author_weighted_pr_auc": 0.6059
+      },
+      "test_ece": 0.1315
+    },
+    {
+      "row": "full_meanpool",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075318_ovid_R1b_full_meanpool_s20260904_quick",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7894,
+        0.7708,
+        0.8097
+      ],
+      "test_roc_auc": [
+        0.8066,
+        0.7934,
+        0.821
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.056,
+      "test_f1_at_val_threshold": 0.7422,
+      "test_ovid_table": {
+        "precision": 0.7091,
+        "recall": 0.7759,
+        "f1": 0.741,
+        "accuracy": 0.7302
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.6953,
+        "author_weighted_pr_auc": 0.6602
+      },
+      "test_ece": 0.11124
+    },
+    {
+      "row": "full_unweighted",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075345_ovid_R1b_full_unweighted_s20260904_quick",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.7732,
+        0.7517,
+        0.7962
+      ],
+      "test_roc_auc": [
+        0.8003,
+        0.7863,
+        0.8147
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0398,
+      "test_f1_at_val_threshold": 0.7412,
+      "test_ovid_table": {
+        "precision": 0.6978,
+        "recall": 0.7876,
+        "f1": 0.74,
+        "accuracy": 0.7247
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.608,
+        "author_weighted_pr_auc": 0.6021
+      },
+      "test_ece": 0.13597
+    }
+  ],
+  "skipped": [
+    {
+      "row": "full_pretrained",
+      "reason": "no pretrained_encoder given"
+    }
+  ]
+}

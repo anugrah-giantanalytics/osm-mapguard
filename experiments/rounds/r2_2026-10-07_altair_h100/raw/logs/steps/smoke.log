@@ -1,0 +1,519 @@
+
+================================================================================
+[07:48:14] 00 wiring_check
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/00_wiring_check/wiring_check.py --device auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+PASS  stage2 train B5  (5.9s)
+PASS  stage2 train B1+B5  (4.3s)
+PASS  stage2 train B2+B5  (6.0s)
+2026-10-07 07:48:41.204702: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+PASS  stage2 train B3+B4+B5  (13.9s)
+WARNING:tensorflow:5 out of the last 9 calls to <function Model.make_test_function.<locals>.test_function at 0x7fe9ce9dd750> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B5+B6  (6.1s)
+WARNING:tensorflow:6 out of the last 11 calls to <function Model.make_test_function.<locals>.test_function at 0x7fe98d3449d0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B1+B2+B3+B4+B5+B6  (16.2s)
+PASS  stage2 full model with round-1 mean pooling  (15.6s)
+PASS  weights save -> rebuild -> load  (6.6s)
+PASS  stage1 corruptions + encoder pretrain  (0.6s)
+PASS  stage1 encoder -> stage2 edit_encoder transfer  (16.1s)
+PASS  stage2 full model under mixed precision  (18.7s)
+PASS  encoder from a different split is refused  (0.0s)
+
+{
+  "verdict": "PASS",
+  "tensorflow": "2.12.0",
+  "keras": "2.12.0",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ]
+}
+[OK] 00 wiring_check in 1.9 min
+
+================================================================================
+[07:50:07] 01 baselines
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/01_baselines/baselines_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+B0 tripwire  ROC-AUC 0.6617  -> PASS - weak prior, not leakage
+LogReg       PR-AUC [0.8081, 0.788, 0.8282]
+XGBoost      PR-AUC [0.8602, 0.846, 0.8743]
+Hybrid       PR-AUC [0.8986, 0.8867, 0.9101]  one-per-author 0.8324
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/baselines/20261007-075012_ovid_R1b_quick
+[OK] 01 baselines in 0.5 min
+
+================================================================================
+[07:50:38] 02 stage2 R1b
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/stage2_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set train.epochs=2
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/2
+2026-10-07 07:50:56.443551: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+50/50 - 21s - loss: 0.1080 - pr_auc: 0.6594 - roc_auc: 0.6863 - val_loss: 0.0723 - val_pr_auc: 0.7874 - val_roc_auc: 0.8210 - 21s/epoch - 422ms/step
+Epoch 2/2
+50/50 - 5s - loss: 0.0669 - pr_auc: 0.8095 - roc_auc: 0.8231 - val_loss: 0.0720 - val_pr_auc: 0.8078 - val_roc_auc: 0.8306 - 5s/epoch - 95ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-075043_ovid_R1b_quick
+
+ovid / R1b
+  test PR-AUC  0.8  95% CI [0.7798, 0.8206]
+  test ROC-AUC 0.8166
+  PR-AUC at 1% prevalence 0.0516
+  ECE 0.11425
+[OK] 02 stage2 R1b in 0.7 min
+
+================================================================================
+[07:51:20] 02 Ovid reproduction (R1b, Ovid's features and architecture)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/stage2_train.py --config /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/ovid_repro.json --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set train.epochs=2 --set tag=ovid_repro_quick
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/2
+50/50 - 4s - loss: 0.5592 - pr_auc: 0.7808 - roc_auc: 0.7873 - val_loss: 0.5952 - val_pr_auc: 0.7790 - val_roc_auc: 0.8185 - 4s/epoch - 72ms/step
+Epoch 2/2
+50/50 - 0s - loss: 0.4737 - pr_auc: 0.8415 - roc_auc: 0.8550 - val_loss: 0.5726 - val_pr_auc: 0.7753 - val_roc_auc: 0.8197 - 252ms/epoch - 5ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-075125_ovid_R1b_ovid_repro_quick
+
+ovid / R1b
+  test PR-AUC  0.7909  95% CI [0.7693, 0.8128]
+  test ROC-AUC 0.8174
+  PR-AUC at 1% prevalence 0.0452
+  ECE 0.12674
+[OK] 02 Ovid reproduction (R1b, Ovid's features and architecture) in 0.2 min
+
+================================================================================
+[07:51:32] 07 ensemble (deep + hybrid, weight chosen on validation)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/07_ensemble/ensemble.py --task ovid --feature-store /data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim --quick
+================================================================================
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/ensemble/20261007-075136_ovid_R1b_quick
+{
+ "deep_weight": 0.05,
+ "ensemble": {
+  "test_pr_auc": [
+   0.8992,
+   0.8884,
+   0.9103
+  ],
+  "test_roc_auc": [
+   0.8928,
+   0.882,
+   0.9032
+  ],
+  "test_pr_auc_at_1pct_prevalence": 0.2578,
+  "test_f1_at_val_threshold": 0.8118,
+  "test_ovid_table": {
+   "precision": 0.8172,
+   "recall": 0.8049,
+   "f1": 0.811,
+   "accuracy": 0.8134
+  },
+  "test_author_robust": {
+   "authors": 2562,
+   "one_per_author_n": 2593,
+   "one_per_author_pr_auc": 0.8333,
+   "author_weighted_pr_auc": 0.8253
+  },
+  "test_ece": 0.06431
+ },
+ "deep": [
+  0.8,
+  0.7798,
+  0.8206
+ ],
+ "hybrid": [
+  0.8986,
+  0.8867,
+  0.9101
+ ]
+}
+[OK] 07 ensemble (deep + hybrid, weight chosen on validation) in 0.1 min
+
+================================================================================
+[07:51:37] 03 stage2 ablations
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/03_stage2_ablations/run_ablations.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set train.epochs=1 --set seeds=[20260904]
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+
+=== base_edits_tabular  seed 20260904 ===
+50/50 - 5s - loss: 0.1082 - pr_auc: 0.6329 - roc_auc: 0.6540 - val_loss: 0.0736 - val_pr_auc: 0.7958 - val_roc_auc: 0.7951 - 5s/epoch - 97ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075141_ovid_R1b_base_edits_tabular_s20260904_quick
+
+=== plus_geometry  seed 20260904 ===
+50/50 - 4s - loss: 0.1080 - pr_auc: 0.6488 - roc_auc: 0.6696 - val_loss: 0.0756 - val_pr_auc: 0.7725 - val_roc_auc: 0.7985 - 4s/epoch - 82ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075153_ovid_R1b_plus_geometry_s20260904_quick
+
+=== plus_text  seed 20260904 ===
+50/50 - 6s - loss: 0.0943 - pr_auc: 0.6993 - roc_auc: 0.7188 - val_loss: 0.0694 - val_pr_auc: 0.8205 - val_roc_auc: 0.8329 - 6s/epoch - 123ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075202_ovid_R1b_plus_text_s20260904_quick
+
+=== plus_sequences  seed 20260904 ===
+2026-10-07 07:52:24.528673: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+50/50 - 12s - loss: 0.1065 - pr_auc: 0.6499 - roc_auc: 0.6782 - val_loss: 0.0798 - val_pr_auc: 0.7574 - val_roc_auc: 0.7898 - 12s/epoch - 231ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075214_ovid_R1b_plus_sequences_s20260904_quick
+
+=== plus_edit_meaning  seed 20260904 ===
+50/50 - 11s - loss: 0.1044 - pr_auc: 0.6418 - roc_auc: 0.6610 - val_loss: 0.0743 - val_pr_auc: 0.7897 - val_roc_auc: 0.7861 - 11s/epoch - 213ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075235_ovid_R1b_plus_edit_meaning_s20260904_quick
+
+=== full  seed 20260904 ===
+50/50 - 17s - loss: 0.1081 - pr_auc: 0.6593 - roc_auc: 0.6861 - val_loss: 0.0720 - val_pr_auc: 0.7874 - val_roc_auc: 0.8212 - 17s/epoch - 346ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075251_ovid_R1b_full_s20260904_quick
+
+=== full_meanpool  seed 20260904 ===
+50/50 - 16s - loss: 0.0879 - pr_auc: 0.6870 - roc_auc: 0.7233 - val_loss: 0.0708 - val_pr_auc: 0.7966 - val_roc_auc: 0.8237 - 16s/epoch - 323ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075318_ovid_R1b_full_meanpool_s20260904_quick
+
+=== full_unweighted  seed 20260904 ===
+50/50 - 18s - loss: 0.1082 - pr_auc: 0.6590 - roc_auc: 0.6858 - val_loss: 0.0721 - val_pr_auc: 0.7845 - val_roc_auc: 0.8199 - 18s/epoch - 354ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations/20261007-075345_ovid_R1b_full_unweighted_s20260904_quick
+skip full_pretrained: needs --set pretrained_encoder=<stage1 run dir>
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_ablations_grid/20261007-075409_ovid_R1b_grid_quick
+
+{
+  "base_edits_tabular": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7699,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.7835,
+    "test_pr_auc_at_1pct_mean": 0.0443,
+    "branches": [
+      "B5"
+    ],
+    "pr_auc_change_vs_base": 0.0
+  },
+  "plus_geometry": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7728,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.7933,
+    "test_pr_auc_at_1pct_mean": 0.0492,
+    "branches": [
+      "B1",
+      "B5"
+    ],
+    "pr_auc_change_vs_base": 0.0029
+  },
+  "plus_text": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7951,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.819,
+    "test_pr_auc_at_1pct_mean": 0.0523,
+    "branches": [
+      "B2",
+      "B5"
+    ],
+    "pr_auc_change_vs_base": 0.0252
+  },
+  "plus_sequences": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7455,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.7773,
+    "test_pr_auc_at_1pct_mean": 0.0405,
+    "branches": [
+      "B3",
+      "B4",
+      "B5"
+    ],
+    "pr_auc_change_vs_base": -0.0244
+  },
+  "plus_edit_meaning": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7549,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.7692,
+    "test_pr_auc_at_1pct_mean": 0.0505,
+    "branches": [
+      "B5",
+      "B6"
+    ],
+    "pr_auc_change_vs_base": -0.015
+  },
+  "full": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7751,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.8014,
+    "test_pr_auc_at_1pct_mean": 0.0405,
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ],
+    "pr_auc_change_vs_base": 0.0052
+  },
+  "full_meanpool": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7894,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.8066,
+    "test_pr_auc_at_1pct_mean": 0.056,
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ],
+    "pr_auc_change_vs_base": 0.0195
+  },
+  "full_unweighted": {
+    "n_seeds": 1,
+    "test_pr_auc_mean": 0.7732,
+    "test_pr_auc_std": null,
+    "test_roc_auc_mean": 0.8003,
+    "test_pr_auc_at_1pct_mean": 0.0398,
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ],
+    "pr_auc_change_vs_base": 0.0033
+  }
+}
+[OK] 03 stage2 ablations in 2.6 min
+
+================================================================================
+[07:54:10] 06 temporal
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/06_temporal_evaluation/temporal_train_eval.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set temporal.cutoff=2019-01-01T00:00:00Z --set reference_run="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-075043_ovid_R1b_quick" --set train.epochs=2
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'temporal', 'leaky': False, 'seed': 20260904, 'cutoff': '2019-01-01T00:00:00Z', 'n_train': 11940, 'n_val': 1334, 'n_test': 3342, 'pos_rate_train': 0.5331, 'pos_rate_val': 0.5412, 'pos_rate_test': 0.4135}
+Epoch 1/2
+2026-10-07 07:54:28.833225: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+47/47 - 21s - loss: 0.1083 - pr_auc: 0.6727 - roc_auc: 0.6716 - val_loss: 0.0637 - val_pr_auc: 0.8553 - val_roc_auc: 0.8470 - 21s/epoch - 448ms/step
+Epoch 2/2
+47/47 - 5s - loss: 0.0708 - pr_auc: 0.7989 - roc_auc: 0.7953 - val_loss: 0.0605 - val_pr_auc: 0.8768 - val_roc_auc: 0.8682 - 5s/epoch - 107ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_temporal/20261007-075415_ovid_temporal_past_to_future_quick
+{
+  "cutoff": "2019-01-01T00:00:00Z",
+  "train_window": [
+    "2014-01-01T00:16:15Z",
+    "2018-12-31T10:25:17Z"
+  ],
+  "test_window": [
+    "2019-01-01T11:21:16Z",
+    "2019-12-31T19:47:04Z"
+  ],
+  "headline": {
+    "test_pr_auc": [
+      0.7652,
+      0.7408,
+      0.789
+    ],
+    "test_roc_auc": [
+      0.8018,
+      0.7861,
+      0.8173
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0723,
+    "test_f1_at_val_threshold": 0.7457,
+    "test_ovid_table": {
+      "precision": 0.7005,
+      "recall": 0.7243,
+      "f1": 0.7122,
+      "accuracy": 0.7579
+    },
+    "test_author_robust": {
+      "authors": 1995,
+      "one_per_author_n": 2004,
+      "one_per_author_pr_auc": 0.7068,
+      "author_weighted_pr_auc": 0.686
+    },
+    "test_ece": 0.15217
+  }
+}
+[OK] 06 temporal in 0.7 min
+
+{
+  "started": "20261007-074814",
+  "task": "ovid",
+  "quick": true,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "00 wiring_check",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.9
+    },
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.5
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    },
+    {
+      "stage": "02 Ovid reproduction (R1b, Ovid's features and architecture)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.2
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "03 stage2 ablations",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 2.6
+    },
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261007-075012_ovid_R1b_quick",
+    "experiments/runs/stage2_supervised/20261007-075043_ovid_R1b_quick",
+    "experiments/runs/stage2_supervised/20261007-075125_ovid_R1b_ovid_repro_quick",
+    "experiments/runs/ensemble/20261007-075136_ovid_R1b_quick",
+    "experiments/runs/stage2_ablations/20261007-075141_ovid_R1b_base_edits_tabular_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075153_ovid_R1b_plus_geometry_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075202_ovid_R1b_plus_text_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075214_ovid_R1b_plus_sequences_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075235_ovid_R1b_plus_edit_meaning_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075251_ovid_R1b_full_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075318_ovid_R1b_full_meanpool_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261007-075345_ovid_R1b_full_unweighted_s20260904_quick",
+    "experiments/runs/stage2_ablations_grid/20261007-075409_ovid_R1b_grid_quick",
+    "experiments/runs/stage2_temporal/20261007-075415_ovid_temporal_past_to_future_quick"
+  ],
+  "all_ok": true
+}
+
+log: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/pipeline/20261007-074814_ovid_quick.log
+summary: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/pipeline/20261007-074814_ovid_quick.json

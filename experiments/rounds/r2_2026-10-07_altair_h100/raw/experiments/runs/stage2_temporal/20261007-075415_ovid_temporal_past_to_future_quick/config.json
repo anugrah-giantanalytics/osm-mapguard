@@ -1,0 +1,58 @@
+{
+  "stage": "stage2_temporal",
+  "task": "ovid",
+  "split": "temporal",
+  "seed": 20260904,
+  "device": "auto",
+  "resplit": false,
+  "reference_run": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-075043_ovid_R1b_quick",
+  "temporal": {
+    "cutoff": "2019-01-01T00:00:00Z",
+    "exclude_test_users_from_train": true
+  },
+  "data": {
+    "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ],
+    "max_edits": 64,
+    "user_steps": 50,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.3,
+    "raster": null,
+    "pooling": "mil"
+  },
+  "train": {
+    "epochs": 2,
+    "batch_size": "auto",
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2,
+    "mixed_precision": "auto",
+    "author_weighting": "sqrt",
+    "weight_decay": 0.0001
+  },
+  "init": {
+    "pretrained_encoder": null,
+    "freeze_encoder": false
+  },
+  "evaluate": {
+    "attribution": true,
+    "top_k": 20
+  },
+  "tag": "quick",
+  "_config_path": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/06_temporal_evaluation/config.json"
+}

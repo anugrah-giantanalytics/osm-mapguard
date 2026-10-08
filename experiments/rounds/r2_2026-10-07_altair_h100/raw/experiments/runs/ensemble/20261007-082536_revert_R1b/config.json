@@ -1,0 +1,8 @@
+{
+  "stage": "ensemble",
+  "task": "revert",
+  "split": "R1b",
+  "seed": 0,
+  "deep_run": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-082420_revert_R1b",
+  "hybrid_run": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/baselines/20261007-082357_revert_R1b"
+}

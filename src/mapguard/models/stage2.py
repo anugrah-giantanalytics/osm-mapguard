@@ -357,14 +357,20 @@ def scoring_model(model: keras.Model) -> keras.Model:
 
 
 def focal_loss(gamma: float = 2.0, alpha: float = 0.5):
-    """Focal loss (Lin et al.). Compared against BCE in the ablation, not assumed to help."""
+    """Focal loss (Lin et al.). Compared against BCE in the ablation, not assumed to help.
+
+    Returns one loss **per sample** (shape (batch,)), so Keras can apply `sample_weight`.
+    Round 2 returned the batch mean (a scalar); Keras then multiplied that scalar by the mean
+    weight of the batch (~1), so author weighting had no effect on the deep model (measured:
+    weighted and unweighted runs had near-identical losses, 0.10702 vs 0.10709 at epoch 1).
+    """
 
     def loss(y_true, y_pred):
         y_true = tf.cast(tf.reshape(y_true, tf.shape(y_pred)), y_pred.dtype)
         p = tf.clip_by_value(y_pred, 1e-7, 1 - 1e-7)
         pt = tf.where(tf.equal(y_true, 1.0), p, 1 - p)
         w = tf.where(tf.equal(y_true, 1.0), alpha, 1 - alpha)
-        return -tf.reduce_mean(w * tf.pow(1 - pt, gamma) * tf.math.log(pt))
+        return -tf.reduce_mean(w * tf.pow(1 - pt, gamma) * tf.math.log(pt), axis=-1)
 
     loss.__name__ = "focal_loss"
     return loss

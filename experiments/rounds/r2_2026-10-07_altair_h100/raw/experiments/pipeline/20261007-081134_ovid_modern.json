@@ -1,0 +1,39 @@
+{
+  "started": "20261007-081134",
+  "task": "ovid_modern",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 2.1
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 2.4
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261007-081142_ovid_modern_R1b",
+    "experiments/runs/stage2_supervised/20261007-081226_ovid_modern_R1b",
+    "experiments/runs/ensemble/20261007-081429_ovid_modern_R1b",
+    "experiments/runs/stage2_temporal/20261007-081437_ovid_modern_temporal_past_to_future"
+  ],
+  "all_ok": true
+}

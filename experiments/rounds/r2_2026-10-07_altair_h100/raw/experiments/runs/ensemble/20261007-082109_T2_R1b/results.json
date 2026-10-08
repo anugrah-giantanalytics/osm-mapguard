@@ -1,0 +1,256 @@
+{
+  "stage": "ensemble",
+  "task": "T2",
+  "split": "R1b",
+  "seed": 0,
+  "finished_utc": "2026-10-07T08:21:09+00:00",
+  "headline": {
+    "test_pr_auc": [
+      0.8987,
+      0.8807,
+      0.9159
+    ],
+    "test_roc_auc": [
+      0.889,
+      0.8721,
+      0.9042
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.2276,
+    "test_f1_at_val_threshold": 0.805,
+    "test_ovid_table": {
+      "precision": 0.736,
+      "recall": 0.9064,
+      "f1": 0.8124,
+      "accuracy": 0.7843
+    },
+    "test_author_robust": {
+      "authors": 1576,
+      "one_per_author_n": 1576,
+      "one_per_author_pr_auc": 0.8987,
+      "author_weighted_pr_auc": 0.8987
+    },
+    "test_ece": 0.04262
+  },
+  "evaluation": {
+    "threshold": {
+      "value": 0.331464,
+      "chosen_on": "validation",
+      "validation_f1": 0.8088
+    },
+    "validation": {
+      "pr_auc": 0.8797,
+      "roc_auc": 0.8778,
+      "n": 788
+    },
+    "test": {
+      "n": 1576,
+      "n_pos": 812,
+      "observed_prevalence": 0.515228,
+      "threshold": 0.33146448636055015,
+      "roc_auc": 0.8889884713589353,
+      "precision_at_k": {
+        "10": 1.0,
+        "50": 1.0,
+        "100": 0.98
+      },
+      "by_prevalence": {
+        "0.5": {
+          "precision": 0.724,
+          "recall": 0.9064,
+          "f1": 0.805,
+          "pr_auc": 0.8937
+        },
+        "0.01": {
+          "precision": 0.0258,
+          "recall": 0.9064,
+          "f1": 0.0502,
+          "pr_auc": 0.2276
+        },
+        "0.001": {
+          "precision": 0.0026,
+          "recall": 0.9064,
+          "f1": 0.0052,
+          "pr_auc": 0.1097
+        }
+      }
+    },
+    "test_intervals_95": {
+      "pr_auc": [
+        0.8987,
+        0.8807,
+        0.9159
+      ],
+      "roc_auc": [
+        0.889,
+        0.8721,
+        0.9042
+      ]
+    },
+    "test_calibration": {
+      "brier": 0.13818,
+      "ece": 0.04262,
+      "reliability": [
+        {
+          "bin": 0,
+          "n": 310,
+          "mean_score": 0.0506,
+          "observed_rate": 0.0774
+        },
+        {
+          "bin": 1,
+          "n": 160,
+          "mean_score": 0.1422,
+          "observed_rate": 0.1688
+        },
+        {
+          "bin": 2,
+          "n": 86,
+          "mean_score": 0.2434,
+          "observed_rate": 0.2326
+        },
+        {
+          "bin": 3,
+          "n": 81,
+          "mean_score": 0.3511,
+          "observed_rate": 0.2963
+        },
+        {
+          "bin": 4,
+          "n": 66,
+          "mean_score": 0.455,
+          "observed_rate": 0.4545
+        },
+        {
+          "bin": 5,
+          "n": 73,
+          "mean_score": 0.5515,
+          "observed_rate": 0.5205
+        },
+        {
+          "bin": 6,
+          "n": 91,
+          "mean_score": 0.6543,
+          "observed_rate": 0.5604
+        },
+        {
+          "bin": 7,
+          "n": 108,
+          "mean_score": 0.7503,
+          "observed_rate": 0.5833
+        },
+        {
+          "bin": 8,
+          "n": 205,
+          "mean_score": 0.8561,
+          "observed_rate": 0.7756
+        },
+        {
+          "bin": 9,
+          "n": 396,
+          "mean_score": 0.9397,
+          "observed_rate": 0.9495
+        }
+      ]
+    },
+    "ovid_table": {
+      "precision": 0.736,
+      "recall": 0.9064,
+      "f1": 0.8124,
+      "accuracy": 0.7843,
+      "positive_rate": 0.5152,
+      "threshold": 0.331464,
+      "reference_ovid_2021": {
+        "precision": 0.8035,
+        "recall": 0.8302,
+        "f1": 0.8166,
+        "accuracy": 0.8137
+      }
+    },
+    "author_robust": {
+      "authors": 1576,
+      "one_per_author_n": 1576,
+      "one_per_author_pr_auc": 0.8987,
+      "author_weighted_pr_auc": 0.8987
+    }
+  },
+  "deep_weight": 0.15,
+  "validation_pr_auc_by_weight": {
+    "0.0": 0.8777195480997905,
+    "0.05": 0.8788758072583748,
+    "0.1": 0.8791835812593237,
+    "0.15": 0.8797282151900332,
+    "0.2": 0.8796869727421708,
+    "0.25": 0.8795303392910592,
+    "0.3": 0.8791580992165535,
+    "0.35": 0.8787235583341828,
+    "0.4": 0.878589020197176,
+    "0.45": 0.8778466990679752,
+    "0.5": 0.8769148022571855,
+    "0.55": 0.8767378171264859,
+    "0.6": 0.8762435745137008,
+    "0.65": 0.8756860135149129,
+    "0.7": 0.8748316327416061,
+    "0.75": 0.8742786312151625,
+    "0.8": 0.8737753757278781,
+    "0.85": 0.8727066693413515,
+    "0.9": 0.8707875572297444,
+    "0.95": 0.8673974144631944,
+    "1.0": 0.8633554256009531
+  },
+  "components": {
+    "deep": {
+      "test_pr_auc": [
+        0.8516,
+        0.8235,
+        0.8781
+      ],
+      "test_roc_auc": [
+        0.8642,
+        0.8457,
+        0.8799
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.0711,
+      "test_f1_at_val_threshold": 0.8011,
+      "test_ovid_table": {
+        "precision": 0.7587,
+        "recall": 0.8633,
+        "f1": 0.8076,
+        "accuracy": 0.7881
+      },
+      "test_author_robust": {
+        "authors": 1576,
+        "one_per_author_n": 1576,
+        "one_per_author_pr_auc": 0.8516,
+        "author_weighted_pr_auc": 0.8516
+      },
+      "test_ece": 0.1087
+    },
+    "hybrid": {
+      "test_pr_auc": [
+        0.8949,
+        0.8756,
+        0.9123
+      ],
+      "test_roc_auc": [
+        0.8851,
+        0.8679,
+        0.9013
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.243,
+      "test_f1_at_val_threshold": 0.8018,
+      "test_ovid_table": {
+        "precision": 0.7288,
+        "recall": 0.9101,
+        "f1": 0.8094,
+        "accuracy": 0.7792
+      },
+      "test_author_robust": {
+        "authors": 1576,
+        "one_per_author_n": 1576,
+        "one_per_author_pr_auc": 0.8949,
+        "author_weighted_pr_auc": 0.8949
+      },
+      "test_ece": 0.07481
+    }
+  }
+}

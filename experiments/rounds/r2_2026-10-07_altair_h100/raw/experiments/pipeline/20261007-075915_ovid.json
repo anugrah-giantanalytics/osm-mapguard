@@ -1,0 +1,34 @@
+{
+  "started": "20261007-075915",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "03 stage2 ablations",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 12.3
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_ablations/20261007-075921_ovid_R1b_base_edits_tabular_s20260904",
+    "experiments/runs/stage2_ablations/20261007-075937_ovid_R1b_base_edits_tabular_s20260905",
+    "experiments/runs/stage2_ablations/20261007-075955_ovid_R1b_plus_geometry_s20260904",
+    "experiments/runs/stage2_ablations/20261007-080012_ovid_R1b_plus_geometry_s20260905",
+    "experiments/runs/stage2_ablations/20261007-080031_ovid_R1b_plus_text_s20260904",
+    "experiments/runs/stage2_ablations/20261007-080050_ovid_R1b_plus_text_s20260905",
+    "experiments/runs/stage2_ablations/20261007-080113_ovid_R1b_plus_sequences_s20260904",
+    "experiments/runs/stage2_ablations/20261007-080203_ovid_R1b_plus_sequences_s20260905",
+    "experiments/runs/stage2_ablations/20261007-080245_ovid_R1b_plus_edit_meaning_s20260904",
+    "experiments/runs/stage2_ablations/20261007-080333_ovid_R1b_plus_edit_meaning_s20260905",
+    "experiments/runs/stage2_ablations/20261007-080428_ovid_R1b_full_s20260904",
+    "experiments/runs/stage2_ablations/20261007-080534_ovid_R1b_full_s20260905",
+    "experiments/runs/stage2_ablations/20261007-080651_ovid_R1b_full_meanpool_s20260904",
+    "experiments/runs/stage2_ablations/20261007-080759_ovid_R1b_full_meanpool_s20260905",
+    "experiments/runs/stage2_ablations/20261007-080914_ovid_R1b_full_unweighted_s20260904",
+    "experiments/runs/stage2_ablations/20261007-081020_ovid_R1b_full_unweighted_s20260905",
+    "experiments/runs/stage2_ablations_grid/20261007-081132_ovid_R1b_grid"
+  ],
+  "all_ok": true
+}

@@ -1,0 +1,135 @@
+
+================================================================================
+[08:22:20] 01 baselines
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/01_baselines/baselines_train.py --set task=revert_vandalism --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'revert_vandalism', 'n_changesets': 7080, 'n_positive': 3540, 'n_negative': 3540, 'n_edit_rows': 294878, 'n_user_seq_rows': 407081, 'missing_optional_columns': [], 'by_corpus': {'R': 7080}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 4956, 'n_val': 708, 'n_test': 1416, 'pos_rate_train': 0.5006, 'pos_rate_val': 0.5, 'pos_rate_test': 0.4979}
+B0 tripwire  ROC-AUC 0.8393  -> PASS - weak prior, not leakage
+LogReg       PR-AUC [0.9487, 0.9366, 0.9601]
+XGBoost      PR-AUC [0.9542, 0.9431, 0.9649]
+Hybrid       PR-AUC [0.9622, 0.9517, 0.9716]  one-per-author 0.9531
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/baselines/20261007-082224_revert_vandalism_R1b
+
+================================================================================
+[08:22:36] 02 stage2 R1b
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/stage2_train.py --set task=revert_vandalism --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'revert_vandalism', 'n_changesets': 7080, 'n_positive': 3540, 'n_negative': 3540, 'n_edit_rows': 294878, 'n_user_seq_rows': 407081, 'missing_optional_columns': [], 'by_corpus': {'R': 7080}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 4956, 'n_val': 708, 'n_test': 1416, 'pos_rate_train': 0.5006, 'pos_rate_val': 0.5, 'pos_rate_test': 0.4979}
+Epoch 1/40
+2026-10-07 08:22:53.795951: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+20/20 - 18s - loss: 0.1123 - pr_auc: 0.7748 - roc_auc: 0.7847 - val_loss: 0.0459 - val_pr_auc: 0.9366 - val_roc_auc: 0.9366 - 18s/epoch - 921ms/step
+Epoch 2/40
+20/20 - 3s - loss: 0.0494 - pr_auc: 0.9233 - roc_auc: 0.9209 - val_loss: 0.0368 - val_pr_auc: 0.9592 - val_roc_auc: 0.9602 - 3s/epoch - 170ms/step
+Epoch 3/40
+20/20 - 4s - loss: 0.0408 - pr_auc: 0.9432 - roc_auc: 0.9427 - val_loss: 0.0381 - val_pr_auc: 0.9620 - val_roc_auc: 0.9623 - 4s/epoch - 176ms/step
+Epoch 4/40
+20/20 - 3s - loss: 0.0358 - pr_auc: 0.9574 - roc_auc: 0.9564 - val_loss: 0.0337 - val_pr_auc: 0.9628 - val_roc_auc: 0.9638 - 3s/epoch - 158ms/step
+Epoch 5/40
+20/20 - 3s - loss: 0.0348 - pr_auc: 0.9583 - roc_auc: 0.9593 - val_loss: 0.0359 - val_pr_auc: 0.9657 - val_roc_auc: 0.9661 - 3s/epoch - 146ms/step
+Epoch 6/40
+20/20 - 3s - loss: 0.0307 - pr_auc: 0.9687 - roc_auc: 0.9682 - val_loss: 0.0368 - val_pr_auc: 0.9645 - val_roc_auc: 0.9644 - 3s/epoch - 140ms/step
+Epoch 7/40
+20/20 - 2s - loss: 0.0298 - pr_auc: 0.9696 - roc_auc: 0.9703 - val_loss: 0.0332 - val_pr_auc: 0.9667 - val_roc_auc: 0.9675 - 2s/epoch - 124ms/step
+Epoch 8/40
+20/20 - 3s - loss: 0.0277 - pr_auc: 0.9748 - roc_auc: 0.9737 - val_loss: 0.0366 - val_pr_auc: 0.9617 - val_roc_auc: 0.9653 - 3s/epoch - 129ms/step
+Epoch 9/40
+20/20 - 2s - loss: 0.0264 - pr_auc: 0.9766 - roc_auc: 0.9758 - val_loss: 0.0329 - val_pr_auc: 0.9659 - val_roc_auc: 0.9677 - 2s/epoch - 100ms/step
+Epoch 10/40
+20/20 - 2s - loss: 0.0237 - pr_auc: 0.9816 - roc_auc: 0.9806 - val_loss: 0.0330 - val_pr_auc: 0.9680 - val_roc_auc: 0.9688 - 2s/epoch - 106ms/step
+Epoch 11/40
+20/20 - 2s - loss: 0.0222 - pr_auc: 0.9834 - roc_auc: 0.9832 - val_loss: 0.0351 - val_pr_auc: 0.9653 - val_roc_auc: 0.9671 - 2s/epoch - 100ms/step
+Epoch 12/40
+20/20 - 2s - loss: 0.0208 - pr_auc: 0.9859 - roc_auc: 0.9851 - val_loss: 0.0355 - val_pr_auc: 0.9691 - val_roc_auc: 0.9692 - 2s/epoch - 106ms/step
+Epoch 13/40
+20/20 - 2s - loss: 0.0188 - pr_auc: 0.9883 - roc_auc: 0.9879 - val_loss: 0.0352 - val_pr_auc: 0.9665 - val_roc_auc: 0.9677 - 2s/epoch - 106ms/step
+Epoch 14/40
+20/20 - 2s - loss: 0.0188 - pr_auc: 0.9874 - roc_auc: 0.9882 - val_loss: 0.0373 - val_pr_auc: 0.9642 - val_roc_auc: 0.9668 - 2s/epoch - 89ms/step
+Epoch 15/40
+20/20 - 2s - loss: 0.0179 - pr_auc: 0.9891 - roc_auc: 0.9892 - val_loss: 0.0421 - val_pr_auc: 0.9601 - val_roc_auc: 0.9641 - 2s/epoch - 106ms/step
+Epoch 16/40
+20/20 - 2s - loss: 0.0167 - pr_auc: 0.9907 - roc_auc: 0.9904 - val_loss: 0.0384 - val_pr_auc: 0.9624 - val_roc_auc: 0.9656 - 2s/epoch - 95ms/step
+Epoch 17/40
+20/20 - 2s - loss: 0.0151 - pr_auc: 0.9927 - roc_auc: 0.9923 - val_loss: 0.0388 - val_pr_auc: 0.9646 - val_roc_auc: 0.9667 - 2s/epoch - 107ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261007-082240_revert_vandalism_R1b
+
+revert_vandalism / R1b
+  test PR-AUC  0.9655  95% CI [0.9565, 0.9739]
+  test ROC-AUC 0.9628
+  PR-AUC at 1% prevalence 0.5645
+  ECE 0.05764
+
+================================================================================
+[08:23:49] 07 ensemble (deep + hybrid, weight chosen on validation)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/07_ensemble/ensemble.py --task revert_vandalism --feature-store /data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim
+================================================================================
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/ensemble/20261007-082352_revert_vandalism_R1b
+{
+ "deep_weight": 0.25,
+ "ensemble": {
+  "test_pr_auc": [
+   0.9677,
+   0.9591,
+   0.9758
+  ],
+  "test_roc_auc": [
+   0.9663,
+   0.9587,
+   0.9743
+  ],
+  "test_pr_auc_at_1pct_prevalence": 0.5468,
+  "test_f1_at_val_threshold": 0.9033,
+  "test_ovid_table": {
+   "precision": 0.9217,
+   "recall": 0.8851,
+   "f1": 0.903,
+   "accuracy": 0.9054
+  },
+  "test_author_robust": {
+   "authors": 1163,
+   "one_per_author_n": 1168,
+   "one_per_author_pr_auc": 0.9607,
+   "author_weighted_pr_auc": 0.9594
+  },
+  "test_ece": 0.03434
+ },
+ "deep": [
+  0.9655,
+  0.9565,
+  0.9739
+ ],
+ "hybrid": [
+  0.9622,
+  0.9517,
+  0.9716
+ ]
+}

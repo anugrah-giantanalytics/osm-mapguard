@@ -1,0 +1,209 @@
+{
+  "stage": "stage2_ablations",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-10-07T07:52:00+00:00",
+  "headline": {
+    "test_pr_auc": [
+      0.7728,
+      0.7502,
+      0.7941
+    ],
+    "test_roc_auc": [
+      0.7933,
+      0.7788,
+      0.808
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0492,
+    "test_f1_at_val_threshold": 0.745,
+    "test_ovid_table": {
+      "precision": 0.6642,
+      "recall": 0.8445,
+      "f1": 0.7436,
+      "accuracy": 0.7103
+    },
+    "test_author_robust": {
+      "authors": 2562,
+      "one_per_author_n": 2593,
+      "one_per_author_pr_auc": 0.635,
+      "author_weighted_pr_auc": 0.6173
+    },
+    "test_ece": 0.10147
+  },
+  "evaluation": {
+    "threshold": {
+      "value": 0.468265,
+      "chosen_on": "validation",
+      "validation_f1": 0.75
+    },
+    "validation": {
+      "pr_auc": 0.773,
+      "roc_auc": 0.7985,
+      "n": 1804
+    },
+    "test": {
+      "n": 3607,
+      "n_pos": 1794,
+      "observed_prevalence": 0.497366,
+      "threshold": 0.46826467394828797,
+      "roc_auc": 0.7933271473644145,
+      "precision_at_k": {
+        "10": 1.0,
+        "50": 0.86,
+        "100": 0.88
+      },
+      "by_prevalence": {
+        "0.5": {
+          "precision": 0.6665,
+          "recall": 0.8445,
+          "f1": 0.745,
+          "pr_auc": 0.7745
+        },
+        "0.01": {
+          "precision": 0.0198,
+          "recall": 0.8445,
+          "f1": 0.0387,
+          "pr_auc": 0.0492
+        },
+        "0.001": {
+          "precision": 0.002,
+          "recall": 0.8445,
+          "f1": 0.004,
+          "pr_auc": 0.0141
+        }
+      }
+    },
+    "test_intervals_95": {
+      "pr_auc": [
+        0.7728,
+        0.7502,
+        0.7941
+      ],
+      "roc_auc": [
+        0.7933,
+        0.7788,
+        0.808
+      ]
+    },
+    "test_calibration": {
+      "brier": 0.19607,
+      "ece": 0.10147,
+      "reliability": [
+        {
+          "bin": 1,
+          "n": 17,
+          "mean_score": 0.1902,
+          "observed_rate": 0.0588
+        },
+        {
+          "bin": 2,
+          "n": 290,
+          "mean_score": 0.2623,
+          "observed_rate": 0.1241
+        },
+        {
+          "bin": 3,
+          "n": 538,
+          "mean_score": 0.3538,
+          "observed_rate": 0.2082
+        },
+        {
+          "bin": 4,
+          "n": 676,
+          "mean_score": 0.4484,
+          "observed_rate": 0.2914
+        },
+        {
+          "bin": 5,
+          "n": 604,
+          "mean_score": 0.55,
+          "observed_rate": 0.5017
+        },
+        {
+          "bin": 6,
+          "n": 733,
+          "mean_score": 0.6514,
+          "observed_rate": 0.7217
+        },
+        {
+          "bin": 7,
+          "n": 736,
+          "mean_score": 0.7431,
+          "observed_rate": 0.8193
+        },
+        {
+          "bin": 8,
+          "n": 13,
+          "mean_score": 0.8061,
+          "observed_rate": 1.0
+        }
+      ]
+    },
+    "ovid_table": {
+      "precision": 0.6642,
+      "recall": 0.8445,
+      "f1": 0.7436,
+      "accuracy": 0.7103,
+      "positive_rate": 0.4974,
+      "threshold": 0.468265,
+      "reference_ovid_2021": {
+        "precision": 0.8035,
+        "recall": 0.8302,
+        "f1": 0.8166,
+        "accuracy": 0.8137
+      }
+    },
+    "author_robust": {
+      "authors": 2562,
+      "one_per_author_n": 2593,
+      "one_per_author_pr_auc": 0.635,
+      "author_weighted_pr_auc": 0.6173
+    }
+  },
+  "attribution": null,
+  "top_test_examples": null,
+  "masking_checks": {
+    "before_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "noise_scale": 3.0,
+      "note": "padded edits perturbed with noise; a correct model does not move"
+    },
+    "after_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "noise_scale": 3.0,
+      "note": "padded edits perturbed with noise; a correct model does not move"
+    }
+  },
+  "training": {
+    "epochs_run": 1,
+    "best_epoch": 1,
+    "best_val_pr_auc": 0.7725,
+    "n_train": 12626,
+    "n_val": 1804,
+    "n_test": 3607,
+    "class_weight": null,
+    "loss": "focal",
+    "author_weighting": "sqrt",
+    "weight_decay": 0.0001,
+    "pooling": "mil",
+    "params": 37442,
+    "tensorflow": "2.12.0",
+    "keras": "2.12.0",
+    "precision": "mixed_float16",
+    "batch_size": 256
+  },
+  "branches": [
+    "B1",
+    "B5"
+  ],
+  "pretrained_encoder": null,
+  "notes": [
+    "1006 changesets had no user history; a null history step was inserted"
+  ],
+  "ablation_row": "plus_geometry"
+}

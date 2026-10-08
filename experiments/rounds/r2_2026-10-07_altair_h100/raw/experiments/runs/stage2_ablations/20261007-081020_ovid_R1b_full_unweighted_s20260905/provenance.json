@@ -1,0 +1,77 @@
+{
+  "started_utc": "2026-10-07T08:10:20+00:00",
+  "git_sha": "8631018734ea917afb07271a7fa894f68e7c36e4 (bundle)",
+  "git_dirty_src_or_train": null,
+  "command": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/03_stage2_ablations/run_ablations.py --set task=ovid --set data.feature_store=\"/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim\" --set device=auto",
+  "platform": "Linux-4.18.0-553.40.1.el8_10.x86_64-x86_64-with-glibc2.35",
+  "machine": "x86_64",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ],
+  "libraries": {
+    "python": "3.10.6",
+    "numpy": "1.22.2",
+    "tensorflow": "2.12.0",
+    "keras": "2.12.0",
+    "sklearn": "1.2.0",
+    "xgboost": "1.7.5",
+    "pandas": "1.5.2",
+    "pyarrow": "11.0.0"
+  },
+  "data": {
+    "changesets": {
+      "bytes": 10265168,
+      "mtime": 1791359288,
+      "sha256_16mb": "2ff8fc42d320bb57"
+    },
+    "edits": {
+      "bytes": 44471070,
+      "mtime": 1791359288,
+      "sha256_16mb": "019afb27fc4bae6a"
+    },
+    "user_seq": {
+      "bytes": 22251369,
+      "mtime": 1791359288,
+      "sha256_16mb": "b49fe6a34fc00fcd"
+    }
+  },
+  "split_file": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/splits/ovid_R1b_seed20260904.json",
+  "split_fingerprint": {
+    "bytes": 180768,
+    "mtime": 1791359288,
+    "sha256_16mb": "1791464a8620b0d9"
+  },
+  "split_summary": {
+    "kind": "R1b",
+    "leaky": false,
+    "seed": 20260904,
+    "cutoff": null,
+    "n_train": 12626,
+    "n_val": 1804,
+    "n_test": 3607,
+    "pos_rate_train": 0.5103,
+    "pos_rate_val": 0.4956,
+    "pos_rate_test": 0.4974
+  },
+  "ablation_row": {
+    "name": "full_unweighted",
+    "purpose": "v2 without author-balanced weights - does weighting help the one-per-author score?",
+    "overrides": {
+      "model": {
+        "branches": [
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "B6"
+        ]
+      },
+      "train": {
+        "author_weighting": null
+      }
+    }
+  }
+}
