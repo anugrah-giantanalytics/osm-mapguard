@@ -1,64 +1,59 @@
-# MapGuard on Altair (SVKM cluster) — round 2
+# MapGuard on Altair (SVKM cluster)
 
-One zip, one job script. The job script finds the folder, unpacks code + data, installs what
-the image lacks, runs every round-2 step, and writes logs, timings and a results zip.
+One zip per training round. The job script unpacks it into its own round folder, runs every
+training step on the GPU, then the WHERE data job on the CPU, and writes logs, timings and one
+results zip for the round.
 
-## Files
+## Build (laptop)
 
-| File | What |
-|---|---|
-| `_dist/mapguard_altair.zip` | code + pseudonymised feature store + these scripts (built by `build_zip.py`) |
-| `_dist/run_round2.sh` | **Job Script**: the full round 2, resumable |
-| `_dist/smoke_test.sh` | optional Job Script: only the ~10 min smoke test |
+```bash
+python altair/build_zip.py --round r2c_v21_residual
+```
 
-## Before the first job
+Writes `altair/_dist/mapguard_altair.zip` (git-ignored: it carries data, and
+`where_targets.parquet` holds raw OSM user ids for the WHERE job).
 
-Put `mapguard_altair.zip` in `/data/mpstme-tanay/deepLearning_osm/` (or upload it as Job Files;
-both work).
+## Run (Jupyter terminal on the cluster)
 
-## The form
+Upload the zip to `/data/mpstme-tanay/deepLearning_osm/`, then:
 
-| Field | Value |
-|---|---|
-| Job Name | `mapguard_r2` |
-| Container Image | `tensorflow_pbs:23.07-tf2-py3` |
-| Job Script | `run_round2.sh` |
-| Job Files | `mapguard_altair.zip` |
-| Output Directory | `/data/mpstme-tanay/deepLearning_osm/altair_output` |
-| Number of GPUs per Node | `1` (default) |
-| Processors per Node / Memory (MB) | `8` / `32768` if you can change them (the data needs a few GB) |
+```bash
+cd /data/mpstme-tanay/deepLearning_osm && unzip -o -j mapguard_altair.zip altair/run_round2.sh -d . && MAPGUARD_BASE="$(pwd)" setsid nohup bash run_round2.sh > launch.out 2>&1 < /dev/null &
+```
 
-## What it runs
+The first command takes the job script out of the zip, so only the zip needs uploading.
+Close the browser tab afterwards; do not press Quit and do not stop the Jupyter job.
 
-| Step | Task / stages | GPU time (estimate) |
+## Folder layout on the cluster
+
+```
+deepLearning_osm/
+  mapguard_altair.zip, run_round2.sh, launch.out
+  rounds/<round>/                 one per zip; the same zip again = resume
+    app/                          code + data + experiments/runs
+    logs/job.log  STATUS  timing.csv  env.txt  steps/<step>.log
+    <round>_results.zip           send this back
+  where/                          WHERE job, shared by all rounds (done once)
+    changesets-latest.osm.bz2     the planet changeset dump (~9 GB)
+    author_points.npz             target authors' changeset locations
+    where_features.parquet        one row per changeset id - also inside the results zip
+    where.log  STATUS
+```
+
+## Check progress
+
+```bash
+cd /data/mpstme-tanay/deepLearning_osm && cat rounds/*/logs/STATUS where/STATUS 2>/dev/null
+```
+
+## Steps
+
+| Step | What | Time (H100) |
 |---|---|---|
-| smoke | ovid, quick, all stages — stops the job if it fails | ~10 min |
-| main | ovid 00,01,02,07 | ~15–30 min |
-| ablations | ovid 03 (8 rows × 2 seeds) | ~1–2 h |
-| modern | ovid_modern 01,02,07,06 | ~20–30 min |
-| T1, T2 | 01,02,07,06 | ~20 min each |
-| revert_vandalism, revert | 01,02,07 | ~15 min each |
+| smoke | ovid quick chain; stops the job if it fails | ~7 min |
+| main | ovid 00,01,02,07 | ~5 min |
+| ablations | ovid 03 | ~15 min |
+| modern, T1, T2, revert_vandalism, revert | 01,02,07(,06) | ~15 min total |
+| where | download dump, extract target authors, features (CPU) | hours (download speed dependent) |
 
-## Where things land
-
-`/data/mpstme-tanay/deepLearning_osm/outputs/<job>_<id>_<time>/`
-
-- `job.log` — everything, live
-- `STATUS` — current step, or how it ended
-- `timing.csv` — start, end, seconds and exit code per step
-- `env.txt` — GPU, TensorFlow, packages
-- `steps/<step>.log` — one log per step
-- `round2_results.zip` — all runs (metrics, predictions, `best.weights.h5` checkpoints,
-  per-epoch `training_log.csv`) + logs. **Send this back.**
-
-Runs accumulate in `deepLearning_osm/mapguard_v2/experiments/runs/` across jobs.
-
-## If it stops
-
-Submit the same job again. Finished steps are skipped (markers in `mapguard_v2/.done/`); it
-resumes at the first unfinished one. A new zip re-runs everything. Run one job at a time —
-two jobs would share the same `mapguard_v2/` folder.
-
-If the Jupyter profile starts a notebook instead of running the script: open a Terminal in
-Jupyter and run `bash /data/mpstme-tanay/deepLearning_osm/mapguard_v2/altair/run_round2.sh`
-(after the zip has been unpacked once), or unzip it there first.
+Training results are packed into the results zip **before** WHERE starts, and again at the end.
