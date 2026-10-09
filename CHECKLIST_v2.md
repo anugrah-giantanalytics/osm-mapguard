@@ -365,7 +365,9 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 
 ## Final v2 go/no-go checklist
 
-- [ ] One defensible supervised result exists on R1b.
+- [x] One defensible supervised result exists on R1b. Hybrid, ovid: PR-AUC 0.899 [0.887, 0.910],
+  F1 0.811, Acc 0.813, one-per-author 0.832; author-bootstrap tests in
+  `experiments/rounds/r2b_2026-10-08_altair_h100_weightfix/analysis/deep_dive.json`.
 - [ ] The temporal result on Corpus D is reproducible and label-source differences are
   disclosed.
 - [ ] No leakage, future information, or pretraining/evaluation overlap remains
@@ -397,7 +399,8 @@ Deadline 2026-10-02. Ordered by what the results say matters. Details in
 - [ ] Hybrid: XGBoost on tabular features plus the deep model's text/edit embeddings. If
   nothing beats XGBoost, report the tie honestly - the ablation insight (text matters, geometry
   does not) is still a result.
-- [ ] Optional: get Metal working (pin tensorflow 2.18 + tensorflow-metal) - speed only.
+- [x] Optional: get Metal working - the M4 sees `GPU:0` with tensorflow-metal (2026-09-22,
+  matmul 3.7x CPU; masked BiLSTM 15% slower). Superseded: training moved to the Altair H100.
 
 ### R2-C. Demo (~3 days)
 - [ ] `score_changeset(cid)`: fetch → build rows with the same builder → saved normaliser →
@@ -426,9 +429,34 @@ Evidence and reasoning: `docs/MODEL_V2.md`. Round 1 results: `experiments/rounds
   author-balanced weights.
 - [x] Hybrid baseline (trees + out-of-fold token/text models) and stage 07 ensemble.
 - [x] Ablation rows redesigned to test each v2 claim (edit meaning, MIL vs mean, weighting).
-- [ ] Rebuild store v4, rerun baselines + hybrid on all tasks (CPU), re-freeze splits if ids change.
-- [ ] Bundle v1.1.0, run round 2 on the M4 (RUNBOOK training plan), analyse into
-  `experiments/rounds/r2_*`.
+- [x] Rebuild store v4, rerun baselines + hybrid on all tasks (CPU), re-freeze splits if ids change.
+  Done 2026-09-22; the 12 splits did not change (byte-identical on the cluster too).
+- [x] Bundle v1.1.0, run round 2 (RUNBOOK training plan), analyse into `experiments/rounds/r2_*`.
+  Ran on the Altair H100 instead of the M4 (2026-10-07, 37 min): `r2_2026-10-07_altair_h100/`.
 - [ ] If Stage 1 is retried: pretrain on edit tokens (masked-token), not on edit numbers.
 - [ ] WHERE signal (author's usual area vs this edit) needs history locations, which means a refetch.
   Decide after round 2.
+
+## Round 2 results and round 2.1 (2026-10-07 → 2026-10-09)
+
+Evidence: `experiments/rounds/r2_2026-10-07_altair_h100/README.md`,
+`experiments/rounds/r2b_2026-10-08_altair_h100_weightfix/README.md`.
+
+- [x] Altair job script: one resumable job, logs, STATUS, timing, results zip (`altair/`).
+- [x] Round 2 on the H100: all 8 steps exit 0 in 37 min; every masking check passed under float16.
+- [x] float16 overflow can no longer leak through padded rows (pools use `where`, not multiply).
+- [x] Bug found and fixed: focal loss returned a batch mean, so author weights never reached the
+  deep model. Round 2b (fixed): ovid full ablation 0.878 vs 0.863 unweighted; deep one-per-author
+  0.763 → 0.801.
+- [x] Ablations settle: edit meaning (B6) is the largest single gain; geometry adds nothing;
+  MIL vs mean pooling no difference.
+- [x] Attention is now saved per edit. Finding: MIL weights exactly uniform (top/(1/n) = 1.00)
+  - self-attention had no residual, so edits were blended before pooling.
+- [x] v2.1: residual + LayerNorm around edit self-attention; ablation row `full_no_residual`.
+- [ ] Round 2c on the H100 with v2.1 - does per-edit identity make MIL attention work?
+- [ ] Beat Ovid (+2 F1 needed for a claim): object-context features (what the edited object
+  was) probed on the hybrid first, CPU.
+- [ ] Ensemble weight overfits small validation sets (T1: −0.016 vs hybrid). Constrain or
+  cross-validate the blend weight.
+- [ ] Final run: 3–5 seeds of the chosen setup for every headline number.
+- [ ] Temporal baselines (XGBoost / hybrid on the temporal splits) - still open from R2-A.

@@ -1,6 +1,6 @@
-# MapGuard dataset — v1.0.1
+# MapGuard dataset — v1.1.0
 
-Generated 2026-09-19T05:54:10+00:00 from commit `c0431215f21a`.
+Generated 2026-09-21T19:28:46+00:00 from commit `58cb92d3f0d2`.
 
 Training-ready: `feature_store/` is the exact input of `train/` (pseudonymised), with the
 frozen splits in `splits/`. Build provenance and per-label coverage are in
