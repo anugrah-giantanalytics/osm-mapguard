@@ -24,7 +24,8 @@
     "heads": 4,
     "dropout": 0.3,
     "raster": null,
-    "pooling": "mil"
+    "pooling": "mil",
+    "residual": true
   },
   "train": {
     "epochs": 40,

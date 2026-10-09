@@ -1,0 +1,210 @@
+
+================================================================================
+[07:37:42] 00 wiring_check
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/00_wiring_check/wiring_check.py --device auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+PASS  stage2 train B5  (5.3s)
+PASS  stage2 train B1+B5  (4.2s)
+PASS  stage2 train B2+B5  (5.6s)
+2026-10-08 07:38:07.468446: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+PASS  stage2 train B3+B4+B5  (14.0s)
+WARNING:tensorflow:5 out of the last 9 calls to <function Model.make_test_function.<locals>.test_function at 0x7f25a47f2b90> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B5+B6  (5.7s)
+WARNING:tensorflow:6 out of the last 11 calls to <function Model.make_test_function.<locals>.test_function at 0x7f2584483f40> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B1+B2+B3+B4+B5+B6  (16.5s)
+PASS  stage2 full model with round-1 mean pooling  (15.6s)
+PASS  weights save -> rebuild -> load  (6.7s)
+PASS  stage1 corruptions + encoder pretrain  (0.6s)
+PASS  stage1 encoder -> stage2 edit_encoder transfer  (16.0s)
+PASS  stage2 full model under mixed precision  (18.9s)
+PASS  encoder from a different split is refused  (0.0s)
+
+{
+  "verdict": "PASS",
+  "tensorflow": "2.12.0",
+  "keras": "2.12.0",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ]
+}
+
+================================================================================
+[07:39:33] 01 baselines
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/01_baselines/baselines_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+B0 tripwire  ROC-AUC 0.6617  -> PASS - weak prior, not leakage
+LogReg       PR-AUC [0.8081, 0.788, 0.8282]
+XGBoost      PR-AUC [0.8602, 0.846, 0.8743]
+Hybrid       PR-AUC [0.8986, 0.8867, 0.9101]  one-per-author 0.8324
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/baselines/20261008-073940_ovid_R1b
+
+================================================================================
+[07:40:06] 02 stage2 R1b
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/stage2_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/40
+2026-10-08 07:40:27.272359: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+50/50 - 23s - loss: 0.1022 - pr_auc: 0.6419 - roc_auc: 0.6558 - val_loss: 0.0646 - val_pr_auc: 0.8433 - val_roc_auc: 0.8582 - 23s/epoch - 468ms/step
+Epoch 2/40
+50/50 - 7s - loss: 0.0607 - pr_auc: 0.7814 - roc_auc: 0.7840 - val_loss: 0.0672 - val_pr_auc: 0.8501 - val_roc_auc: 0.8636 - 7s/epoch - 135ms/step
+Epoch 3/40
+50/50 - 6s - loss: 0.0565 - pr_auc: 0.8174 - roc_auc: 0.8235 - val_loss: 0.0643 - val_pr_auc: 0.8746 - val_roc_auc: 0.8788 - 6s/epoch - 119ms/step
+Epoch 4/40
+50/50 - 5s - loss: 0.0530 - pr_auc: 0.8443 - roc_auc: 0.8526 - val_loss: 0.0680 - val_pr_auc: 0.8824 - val_roc_auc: 0.8803 - 5s/epoch - 107ms/step
+Epoch 5/40
+50/50 - 5s - loss: 0.0497 - pr_auc: 0.8724 - roc_auc: 0.8760 - val_loss: 0.0587 - val_pr_auc: 0.8957 - val_roc_auc: 0.8928 - 5s/epoch - 90ms/step
+Epoch 6/40
+50/50 - 4s - loss: 0.0468 - pr_auc: 0.8922 - roc_auc: 0.8917 - val_loss: 0.0684 - val_pr_auc: 0.8990 - val_roc_auc: 0.8952 - 4s/epoch - 80ms/step
+Epoch 7/40
+50/50 - 4s - loss: 0.0446 - pr_auc: 0.9070 - roc_auc: 0.9066 - val_loss: 0.0603 - val_pr_auc: 0.8970 - val_roc_auc: 0.8951 - 4s/epoch - 82ms/step
+Epoch 8/40
+50/50 - 4s - loss: 0.0423 - pr_auc: 0.9189 - roc_auc: 0.9153 - val_loss: 0.0642 - val_pr_auc: 0.8925 - val_roc_auc: 0.8930 - 4s/epoch - 73ms/step
+Epoch 9/40
+50/50 - 4s - loss: 0.0413 - pr_auc: 0.9255 - roc_auc: 0.9212 - val_loss: 0.0652 - val_pr_auc: 0.8911 - val_roc_auc: 0.8937 - 4s/epoch - 82ms/step
+Epoch 10/40
+50/50 - 4s - loss: 0.0393 - pr_auc: 0.9334 - roc_auc: 0.9302 - val_loss: 0.0655 - val_pr_auc: 0.8957 - val_roc_auc: 0.8989 - 4s/epoch - 84ms/step
+Epoch 11/40
+50/50 - 4s - loss: 0.0372 - pr_auc: 0.9404 - roc_auc: 0.9365 - val_loss: 0.0648 - val_pr_auc: 0.8924 - val_roc_auc: 0.8953 - 4s/epoch - 81ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261008-074012_ovid_R1b
+
+ovid / R1b
+  test PR-AUC  0.8731  95% CI [0.8602, 0.8868]
+  test ROC-AUC 0.8713
+  PR-AUC at 1% prevalence 0.1714
+  ECE 0.1185
+
+================================================================================
+[07:41:37] 02 Ovid reproduction (R1b, Ovid's features and architecture)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/stage2_train.py --config /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/ovid_repro.json --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set tag=ovid_repro
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/40
+50/50 - 4s - loss: 0.5594 - pr_auc: 0.7811 - roc_auc: 0.7869 - val_loss: 0.5916 - val_pr_auc: 0.7819 - val_roc_auc: 0.8194 - 4s/epoch - 80ms/step
+Epoch 2/40
+50/50 - 1s - loss: 0.4731 - pr_auc: 0.8417 - roc_auc: 0.8555 - val_loss: 0.5728 - val_pr_auc: 0.7748 - val_roc_auc: 0.8190 - 618ms/epoch - 12ms/step
+Epoch 3/40
+50/50 - 1s - loss: 0.4440 - pr_auc: 0.8613 - roc_auc: 0.8744 - val_loss: 0.5496 - val_pr_auc: 0.8076 - val_roc_auc: 0.8369 - 661ms/epoch - 13ms/step
+Epoch 4/40
+50/50 - 1s - loss: 0.4284 - pr_auc: 0.8754 - roc_auc: 0.8836 - val_loss: 0.5581 - val_pr_auc: 0.7998 - val_roc_auc: 0.8310 - 617ms/epoch - 12ms/step
+Epoch 5/40
+50/50 - 1s - loss: 0.4145 - pr_auc: 0.8820 - roc_auc: 0.8913 - val_loss: 0.5998 - val_pr_auc: 0.7907 - val_roc_auc: 0.8270 - 616ms/epoch - 12ms/step
+Epoch 6/40
+50/50 - 1s - loss: 0.4070 - pr_auc: 0.8853 - roc_auc: 0.8953 - val_loss: 0.5616 - val_pr_auc: 0.8011 - val_roc_auc: 0.8298 - 618ms/epoch - 12ms/step
+Epoch 7/40
+50/50 - 1s - loss: 0.3972 - pr_auc: 0.8929 - roc_auc: 0.9005 - val_loss: 0.5816 - val_pr_auc: 0.7905 - val_roc_auc: 0.8259 - 617ms/epoch - 12ms/step
+Epoch 8/40
+50/50 - 1s - loss: 0.3914 - pr_auc: 0.8986 - roc_auc: 0.9041 - val_loss: 0.5647 - val_pr_auc: 0.8048 - val_roc_auc: 0.8342 - 626ms/epoch - 13ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261008-074143_ovid_R1b_ovid_repro
+
+ovid / R1b
+  test PR-AUC  0.8195  95% CI [0.8003, 0.8394]
+  test ROC-AUC 0.8348
+  PR-AUC at 1% prevalence 0.0581
+  ECE 0.11508
+
+================================================================================
+[07:41:56] 07 ensemble (deep + hybrid, weight chosen on validation)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/07_ensemble/ensemble.py --task ovid --feature-store /data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim
+================================================================================
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/ensemble/20261008-074200_ovid_R1b
+{
+ "deep_weight": 0.5,
+ "ensemble": {
+  "test_pr_auc": [
+   0.8978,
+   0.8865,
+   0.9098
+  ],
+  "test_roc_auc": [
+   0.8957,
+   0.8858,
+   0.9057
+  ],
+  "test_pr_auc_at_1pct_prevalence": 0.2109,
+  "test_f1_at_val_threshold": 0.8199,
+  "test_ovid_table": {
+   "precision": 0.7969,
+   "recall": 0.8423,
+   "f1": 0.819,
+   "accuracy": 0.8148
+  },
+  "test_author_robust": {
+   "authors": 2562,
+   "one_per_author_n": 2593,
+   "one_per_author_pr_auc": 0.8332,
+   "author_weighted_pr_auc": 0.824
+  },
+  "test_ece": 0.07067
+ },
+ "deep": [
+  0.8731,
+  0.8602,
+  0.8868
+ ],
+ "hybrid": [
+  0.8986,
+  0.8867,
+  0.9101
+ ]
+}

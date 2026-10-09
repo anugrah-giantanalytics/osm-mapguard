@@ -1,0 +1,106 @@
+{
+ "base_edits_tabular": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8512,
+   0.0028
+  ],
+  "one_per_author": [
+   0.7682,
+   0.003
+  ],
+  "f1": 0.7815,
+  "accuracy": 0.7717
+ },
+ "plus_geometry": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8521,
+   0.0008
+  ],
+  "one_per_author": [
+   0.7712,
+   0.0022
+  ],
+  "f1": 0.7827,
+  "accuracy": 0.7748
+ },
+ "plus_text": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8709,
+   0.0034
+  ],
+  "one_per_author": [
+   0.7834,
+   0.016
+  ],
+  "f1": 0.8028,
+  "accuracy": 0.7934
+ },
+ "plus_sequences": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8514,
+   0.004
+  ],
+  "one_per_author": [
+   0.768,
+   0.0075
+  ],
+  "f1": 0.7822,
+  "accuracy": 0.771
+ },
+ "plus_edit_meaning": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8728,
+   0.0027
+  ],
+  "one_per_author": [
+   0.7902,
+   0.0015
+  ],
+  "f1": 0.8008,
+  "accuracy": 0.79
+ },
+ "full": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8778,
+   0.003
+  ],
+  "one_per_author": [
+   0.8058,
+   0.0023
+  ],
+  "f1": 0.8049,
+  "accuracy": 0.8016
+ },
+ "full_meanpool": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8772,
+   0.0022
+  ],
+  "one_per_author": [
+   0.8063,
+   0.0021
+  ],
+  "f1": 0.8034,
+  "accuracy": 0.795
+ },
+ "full_unweighted": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8628,
+   0.0034
+  ],
+  "one_per_author": [
+   0.7528,
+   0.0118
+  ],
+  "f1": 0.7986,
+  "accuracy": 0.7919
+ }
+}

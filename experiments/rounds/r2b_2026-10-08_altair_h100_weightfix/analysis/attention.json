@@ -1,0 +1,32 @@
+{
+ "main_ovid_mil": {
+  "bags_with_5plus_edits": 2562,
+  "median_edits": 28.0,
+  "median_top_weight": 0.036,
+  "median_top_over_uniform": 1.0,
+  "share_top_edit_over_50pct": 0.0,
+  "median_normalised_entropy": 1.0,
+  "positives_median_top_over_uniform": 1.0,
+  "negatives_median_top_over_uniform": 1.0
+ },
+ "ablation_full_mil": {
+  "bags_with_5plus_edits": 2562,
+  "median_edits": 28.0,
+  "median_top_weight": 0.036,
+  "median_top_over_uniform": 1.0,
+  "share_top_edit_over_50pct": 0.0,
+  "median_normalised_entropy": 1.0,
+  "positives_median_top_over_uniform": 1.0,
+  "negatives_median_top_over_uniform": 1.0
+ },
+ "ablation_full_meanpool": {
+  "bags_with_5plus_edits": 2562,
+  "median_edits": 28.0,
+  "median_top_weight": 0.072,
+  "median_top_over_uniform": 1.83,
+  "share_top_edit_over_50pct": 0.0,
+  "median_normalised_entropy": 0.989,
+  "positives_median_top_over_uniform": 1.76,
+  "negatives_median_top_over_uniform": 1.87
+ }
+}

@@ -1,0 +1,1 @@
+{"name": "full_no_residual", "purpose": "v2.1 without the residual around edit self-attention - does keeping per-edit identity let MIL pooling work?", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "residual": false}}}

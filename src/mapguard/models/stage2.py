@@ -197,6 +197,7 @@ def build_model(
     edit_text_len: int = 24,
     token_buckets: int = 1 << 14,
     pooling: str = "mil",
+    residual: bool = False,
 ) -> keras.Model:
     """The full model, or any subset of branches for the ablation grid.
 
@@ -269,6 +270,14 @@ def build_model(
         num_heads=heads, key_dim=max(8, embed // heads), name="edit_attention"
     )(x, x, attention_mask=PairwiseMask(name="edit_pair_mask")(mask_in),
       return_attention_scores=True)
+    # Residual + LayerNorm around self-attention, as in every transformer block. Without it
+    # each edit is *replaced* by a mixture of all edits, so per-edit identity is lost before
+    # pooling. Measured in round 2b: the MIL weights came out exactly uniform (top weight /
+    # (1/n) = 1.00 at the median over 2,562 test changesets) - nothing left to choose between.
+    # Default False only so round-1/2 saved configs rebuild unchanged; v2.1 configs set True.
+    if residual:
+        attended = layers.Add(name="edit_residual")([x, attended])
+        attended = layers.LayerNormalization(name="edit_residual_norm")(attended)
     if pooling == "mil":
         z_att, a = GatedAttentionPool(32, name="edit_mil_attention")([attended, mask_in])
         z_max = MaskedMax(name="edit_max")([attended, mask_in])

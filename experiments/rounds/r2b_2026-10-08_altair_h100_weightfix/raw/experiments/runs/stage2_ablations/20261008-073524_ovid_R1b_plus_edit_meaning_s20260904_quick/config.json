@@ -1,0 +1,52 @@
+{
+  "stage": "stage2_ablations",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "seeds": [
+    20260904
+  ],
+  "device": "auto",
+  "resplit": false,
+  "pretrained_encoder": null,
+  "rows": null,
+  "data": {
+    "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim"
+  },
+  "model": {
+    "max_edits": 64,
+    "user_steps": 50,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.3,
+    "raster": null,
+    "pooling": "mil",
+    "branches": [
+      "B5",
+      "B6"
+    ]
+  },
+  "train": {
+    "epochs": 1,
+    "batch_size": "auto",
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2,
+    "mixed_precision": "auto",
+    "author_weighting": "sqrt",
+    "weight_decay": 0.0001
+  },
+  "evaluate": {
+    "attribution": false,
+    "top_k": 0
+  },
+  "tag": "quick",
+  "_config_path": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/03_stage2_ablations/config.json",
+  "split_seed": 20260904,
+  "ablation_row": "plus_edit_meaning"
+}

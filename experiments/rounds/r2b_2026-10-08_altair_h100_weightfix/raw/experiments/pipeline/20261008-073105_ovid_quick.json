@@ -1,0 +1,67 @@
+{
+  "started": "20261008-073105",
+  "task": "ovid",
+  "quick": true,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "00 wiring_check",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.9
+    },
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.5
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    },
+    {
+      "stage": "02 Ovid reproduction (R1b, Ovid's features and architecture)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.2
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "03 stage2 ablations",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 2.6
+    },
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261008-073302_ovid_R1b_quick",
+    "experiments/runs/stage2_supervised/20261008-073333_ovid_R1b_quick",
+    "experiments/runs/stage2_supervised/20261008-073414_ovid_R1b_ovid_repro_quick",
+    "experiments/runs/ensemble/20261008-073426_ovid_R1b_quick",
+    "experiments/runs/stage2_ablations/20261008-073431_ovid_R1b_base_edits_tabular_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073442_ovid_R1b_plus_geometry_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073451_ovid_R1b_plus_text_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073503_ovid_R1b_plus_sequences_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073524_ovid_R1b_plus_edit_meaning_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073540_ovid_R1b_full_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073608_ovid_R1b_full_meanpool_s20260904_quick",
+    "experiments/runs/stage2_ablations/20261008-073634_ovid_R1b_full_unweighted_s20260904_quick",
+    "experiments/runs/stage2_ablations_grid/20261008-073658_ovid_R1b_grid_quick",
+    "experiments/runs/stage2_temporal/20261008-073705_ovid_temporal_past_to_future_quick"
+  ],
+  "all_ok": true
+}

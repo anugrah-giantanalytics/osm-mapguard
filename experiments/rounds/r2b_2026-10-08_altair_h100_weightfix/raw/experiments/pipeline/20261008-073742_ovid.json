@@ -1,0 +1,45 @@
+{
+  "started": "20261008-073742",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "00 wiring_check",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.9
+    },
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.5
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.5
+    },
+    {
+      "stage": "02 Ovid reproduction (R1b, Ovid's features and architecture)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.3
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261008-073940_ovid_R1b",
+    "experiments/runs/stage2_supervised/20261008-074012_ovid_R1b",
+    "experiments/runs/stage2_supervised/20261008-074143_ovid_R1b_ovid_repro",
+    "experiments/runs/ensemble/20261008-074200_ovid_R1b"
+  ],
+  "all_ok": true
+}

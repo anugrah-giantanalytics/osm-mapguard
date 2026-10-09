@@ -1,0 +1,32 @@
+{
+  "started": "20261008-080605",
+  "task": "revert_vandalism",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.3
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.2
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.0
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261008-080610_revert_vandalism_R1b",
+    "experiments/runs/stage2_supervised/20261008-080626_revert_vandalism_R1b",
+    "experiments/runs/ensemble/20261008-080733_revert_vandalism_R1b"
+  ],
+  "all_ok": true
+}

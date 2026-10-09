@@ -19,7 +19,8 @@
     "heads": 4,
     "dropout": 0.2,
     "raster": null,
-    "pooling": "mean"
+    "pooling": "mean",
+    "residual": false
   },
   "train": {
     "epochs": 40,

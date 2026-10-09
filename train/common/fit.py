@@ -60,6 +60,7 @@ def model_kwargs(prep, cfg: dict) -> dict:
         "dropout": float(m.get("dropout", 0.2)),
         "branches": list(m.get("branches", ["B1", "B2", "B3", "B4", "B5", "B6"])),
         "pooling": m.get("pooling", "mil"),
+        "residual": bool(m.get("residual", True)),
     }
 
 
@@ -291,6 +292,7 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
             "class_weight": class_weight, "loss": loss_name,
             "author_weighting": t_cfg.get("author_weighting"),
             "weight_decay": t_cfg.get("weight_decay"), "pooling": kwargs.get("pooling"),
+            "residual": kwargs.get("residual"),
             "params": int(model.count_params()),
             "tensorflow": tf.__version__, "keras": keras_version(), "precision": precision,
             "batch_size": batch_size,

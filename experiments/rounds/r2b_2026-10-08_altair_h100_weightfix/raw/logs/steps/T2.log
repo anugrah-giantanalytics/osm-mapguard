@@ -1,0 +1,290 @@
+
+================================================================================
+[08:03:20] 01 baselines
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/01_baselines/baselines_train.py --set task=T2 --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'T2', 'n_changesets': 7878, 'n_positive': 3947, 'n_negative': 3931, 'n_edit_rows': 345293, 'n_user_seq_rows': 570983, 'missing_optional_columns': [], 'by_corpus': {'M': 3947, 'N': 3931}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 5514, 'n_val': 788, 'n_test': 1576, 'pos_rate_train': 0.4949, 'pos_rate_val': 0.5152, 'pos_rate_test': 0.5152}
+B0 tripwire  ROC-AUC 0.6679  -> PASS - weak prior, not leakage
+LogReg       PR-AUC [0.8603, 0.8362, 0.8814]
+XGBoost      PR-AUC [0.8789, 0.8588, 0.897]
+Hybrid       PR-AUC [0.8949, 0.8756, 0.9123]  one-per-author 0.8949
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/baselines/20261008-080324_T2_R1b
+[OK] 01 baselines in 0.3 min
+
+================================================================================
+[08:03:37] 02 stage2 R1b
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/02_stage2_supervised/stage2_train.py --set task=T2 --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'T2', 'n_changesets': 7878, 'n_positive': 3947, 'n_negative': 3931, 'n_edit_rows': 345293, 'n_user_seq_rows': 570983, 'missing_optional_columns': [], 'by_corpus': {'M': 3947, 'N': 3931}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 5514, 'n_val': 788, 'n_test': 1576, 'pos_rate_train': 0.4949, 'pos_rate_val': 0.5152, 'pos_rate_test': 0.5152}
+Epoch 1/40
+2026-10-08 08:03:54.291770: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+22/22 - 19s - loss: 0.1475 - pr_auc: 0.5909 - roc_auc: 0.6185 - val_loss: 0.0689 - val_pr_auc: 0.8307 - val_roc_auc: 0.8422 - 19s/epoch - 868ms/step
+Epoch 2/40
+22/22 - 4s - loss: 0.0818 - pr_auc: 0.7055 - roc_auc: 0.7165 - val_loss: 0.0611 - val_pr_auc: 0.8495 - val_roc_auc: 0.8657 - 4s/epoch - 172ms/step
+Epoch 3/40
+22/22 - 3s - loss: 0.0709 - pr_auc: 0.7639 - roc_auc: 0.7748 - val_loss: 0.0597 - val_pr_auc: 0.8504 - val_roc_auc: 0.8666 - 3s/epoch - 146ms/step
+Epoch 4/40
+22/22 - 3s - loss: 0.0678 - pr_auc: 0.7883 - roc_auc: 0.7941 - val_loss: 0.0594 - val_pr_auc: 0.8592 - val_roc_auc: 0.8742 - 3s/epoch - 135ms/step
+Epoch 5/40
+22/22 - 3s - loss: 0.0671 - pr_auc: 0.7965 - roc_auc: 0.8014 - val_loss: 0.0584 - val_pr_auc: 0.8603 - val_roc_auc: 0.8744 - 3s/epoch - 140ms/step
+Epoch 6/40
+22/22 - 3s - loss: 0.0648 - pr_auc: 0.8125 - roc_auc: 0.8156 - val_loss: 0.0568 - val_pr_auc: 0.8638 - val_roc_auc: 0.8778 - 3s/epoch - 144ms/step
+Epoch 7/40
+22/22 - 3s - loss: 0.0630 - pr_auc: 0.8246 - roc_auc: 0.8353 - val_loss: 0.0575 - val_pr_auc: 0.8625 - val_roc_auc: 0.8798 - 3s/epoch - 124ms/step
+Epoch 8/40
+22/22 - 2s - loss: 0.0609 - pr_auc: 0.8431 - roc_auc: 0.8485 - val_loss: 0.0579 - val_pr_auc: 0.8612 - val_roc_auc: 0.8771 - 2s/epoch - 88ms/step
+Epoch 9/40
+22/22 - 2s - loss: 0.0587 - pr_auc: 0.8590 - roc_auc: 0.8634 - val_loss: 0.0568 - val_pr_auc: 0.8665 - val_roc_auc: 0.8789 - 2s/epoch - 109ms/step
+Epoch 10/40
+22/22 - 3s - loss: 0.0561 - pr_auc: 0.8715 - roc_auc: 0.8767 - val_loss: 0.0573 - val_pr_auc: 0.8715 - val_roc_auc: 0.8765 - 3s/epoch - 114ms/step
+Epoch 11/40
+22/22 - 3s - loss: 0.0536 - pr_auc: 0.8884 - roc_auc: 0.8891 - val_loss: 0.0572 - val_pr_auc: 0.8722 - val_roc_auc: 0.8773 - 3s/epoch - 124ms/step
+Epoch 12/40
+22/22 - 3s - loss: 0.0518 - pr_auc: 0.8977 - roc_auc: 0.8999 - val_loss: 0.0576 - val_pr_auc: 0.8724 - val_roc_auc: 0.8782 - 3s/epoch - 114ms/step
+Epoch 13/40
+22/22 - 2s - loss: 0.0498 - pr_auc: 0.9062 - roc_auc: 0.9062 - val_loss: 0.0656 - val_pr_auc: 0.8564 - val_roc_auc: 0.8685 - 2s/epoch - 103ms/step
+Epoch 14/40
+22/22 - 2s - loss: 0.0482 - pr_auc: 0.9132 - roc_auc: 0.9127 - val_loss: 0.0618 - val_pr_auc: 0.8655 - val_roc_auc: 0.8727 - 2s/epoch - 98ms/step
+Epoch 15/40
+22/22 - 2s - loss: 0.0466 - pr_auc: 0.9206 - roc_auc: 0.9171 - val_loss: 0.0642 - val_pr_auc: 0.8582 - val_roc_auc: 0.8704 - 2s/epoch - 82ms/step
+Epoch 16/40
+22/22 - 2s - loss: 0.0454 - pr_auc: 0.9256 - roc_auc: 0.9223 - val_loss: 0.0664 - val_pr_auc: 0.8571 - val_roc_auc: 0.8699 - 2s/epoch - 93ms/step
+Epoch 17/40
+22/22 - 2s - loss: 0.0437 - pr_auc: 0.9314 - roc_auc: 0.9291 - val_loss: 0.0663 - val_pr_auc: 0.8554 - val_roc_auc: 0.8662 - 2s/epoch - 89ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261008-080341_T2_R1b
+
+T2 / R1b
+  test PR-AUC  0.8684  95% CI [0.843, 0.8912]
+  test ROC-AUC 0.8716
+  PR-AUC at 1% prevalence 0.0938
+  ECE 0.10727
+[OK] 02 stage2 R1b in 1.3 min
+
+================================================================================
+[08:04:52] 07 ensemble (deep + hybrid, weight chosen on validation)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/07_ensemble/ensemble.py --task T2 --feature-store /data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim
+================================================================================
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/ensemble/20261008-080455_T2_R1b
+{
+ "deep_weight": 0.3,
+ "ensemble": {
+  "test_pr_auc": [
+   0.9015,
+   0.8841,
+   0.9183
+  ],
+  "test_roc_auc": [
+   0.8918,
+   0.8753,
+   0.9065
+  ],
+  "test_pr_auc_at_1pct_prevalence": 0.229,
+  "test_f1_at_val_threshold": 0.8063,
+  "test_ovid_table": {
+   "precision": 0.8106,
+   "recall": 0.8116,
+   "f1": 0.8111,
+   "accuracy": 0.8052
+  },
+  "test_author_robust": {
+   "authors": 1576,
+   "one_per_author_n": 1576,
+   "one_per_author_pr_auc": 0.9015,
+   "author_weighted_pr_auc": 0.9015
+  },
+  "test_ece": 0.03586
+ },
+ "deep": [
+  0.8684,
+  0.843,
+  0.8912
+ ],
+ "hybrid": [
+  0.8949,
+  0.8756,
+  0.9123
+ ]
+}
+[OK] 07 ensemble (deep + hybrid, weight chosen on validation) in 0.0 min
+
+================================================================================
+[08:04:55] 06 temporal
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/mapguard_v2/train/06_temporal_evaluation/temporal_train_eval.py --set task=T2 --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim" --set device=auto --set temporal.cutoff=2025-07-01T00:00:00Z --set reference_run="/data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_supervised/20261008-080341_T2_R1b"
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim', 'task': 'T2', 'n_changesets': 7878, 'n_positive': 3947, 'n_negative': 3931, 'n_edit_rows': 345293, 'n_user_seq_rows': 570983, 'missing_optional_columns': [], 'by_corpus': {'M': 3947, 'N': 3931}}
+split: {'kind': 'temporal', 'leaky': False, 'seed': 20260904, 'cutoff': '2025-07-01T00:00:00Z', 'n_train': 4289, 'n_val': 463, 'n_test': 2639, 'pos_rate_train': 0.5211, 'pos_rate_val': 0.4968, 'pos_rate_test': 0.5006}
+Epoch 1/40
+2026-10-08 08:05:12.737267: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+17/17 - 18s - loss: 0.1647 - pr_auc: 0.5839 - roc_auc: 0.5757 - val_loss: 0.0806 - val_pr_auc: 0.7503 - val_roc_auc: 0.7668 - 18s/epoch - 1s/step
+Epoch 2/40
+17/17 - 3s - loss: 0.0886 - pr_auc: 0.7066 - roc_auc: 0.6921 - val_loss: 0.0712 - val_pr_auc: 0.7670 - val_roc_auc: 0.7847 - 3s/epoch - 189ms/step
+Epoch 3/40
+17/17 - 3s - loss: 0.0750 - pr_auc: 0.7469 - roc_auc: 0.7403 - val_loss: 0.0707 - val_pr_auc: 0.7691 - val_roc_auc: 0.7924 - 3s/epoch - 169ms/step
+Epoch 4/40
+17/17 - 2s - loss: 0.0722 - pr_auc: 0.7787 - roc_auc: 0.7714 - val_loss: 0.0723 - val_pr_auc: 0.7762 - val_roc_auc: 0.7972 - 2s/epoch - 136ms/step
+Epoch 5/40
+17/17 - 3s - loss: 0.0696 - pr_auc: 0.7914 - roc_auc: 0.7881 - val_loss: 0.0734 - val_pr_auc: 0.7885 - val_roc_auc: 0.8036 - 3s/epoch - 163ms/step
+Epoch 6/40
+17/17 - 2s - loss: 0.0682 - pr_auc: 0.8080 - roc_auc: 0.8004 - val_loss: 0.0682 - val_pr_auc: 0.7936 - val_roc_auc: 0.8131 - 2s/epoch - 142ms/step
+Epoch 7/40
+17/17 - 2s - loss: 0.0669 - pr_auc: 0.8149 - roc_auc: 0.8117 - val_loss: 0.0707 - val_pr_auc: 0.7904 - val_roc_auc: 0.8126 - 2s/epoch - 135ms/step
+Epoch 8/40
+17/17 - 3s - loss: 0.0654 - pr_auc: 0.8258 - roc_auc: 0.8207 - val_loss: 0.0683 - val_pr_auc: 0.8012 - val_roc_auc: 0.8177 - 3s/epoch - 149ms/step
+Epoch 9/40
+17/17 - 2s - loss: 0.0629 - pr_auc: 0.8392 - roc_auc: 0.8337 - val_loss: 0.0696 - val_pr_auc: 0.8023 - val_roc_auc: 0.8218 - 2s/epoch - 116ms/step
+Epoch 10/40
+17/17 - 2s - loss: 0.0606 - pr_auc: 0.8551 - roc_auc: 0.8488 - val_loss: 0.0679 - val_pr_auc: 0.8056 - val_roc_auc: 0.8294 - 2s/epoch - 129ms/step
+Epoch 11/40
+17/17 - 2s - loss: 0.0590 - pr_auc: 0.8649 - roc_auc: 0.8589 - val_loss: 0.0695 - val_pr_auc: 0.8037 - val_roc_auc: 0.8277 - 2s/epoch - 102ms/step
+Epoch 12/40
+17/17 - 2s - loss: 0.0562 - pr_auc: 0.8805 - roc_auc: 0.8746 - val_loss: 0.0691 - val_pr_auc: 0.8192 - val_roc_auc: 0.8384 - 2s/epoch - 109ms/step
+Epoch 13/40
+17/17 - 2s - loss: 0.0534 - pr_auc: 0.8961 - roc_auc: 0.8866 - val_loss: 0.0766 - val_pr_auc: 0.8210 - val_roc_auc: 0.8433 - 2s/epoch - 130ms/step
+Epoch 14/40
+17/17 - 1s - loss: 0.0526 - pr_auc: 0.8988 - roc_auc: 0.8904 - val_loss: 0.0786 - val_pr_auc: 0.8148 - val_roc_auc: 0.8350 - 1s/epoch - 69ms/step
+Epoch 15/40
+17/17 - 2s - loss: 0.0498 - pr_auc: 0.9086 - roc_auc: 0.9029 - val_loss: 0.0783 - val_pr_auc: 0.8118 - val_roc_auc: 0.8351 - 2s/epoch - 102ms/step
+Epoch 16/40
+17/17 - 2s - loss: 0.0474 - pr_auc: 0.9197 - roc_auc: 0.9133 - val_loss: 0.0833 - val_pr_auc: 0.8084 - val_roc_auc: 0.8336 - 2s/epoch - 102ms/step
+Epoch 17/40
+17/17 - 2s - loss: 0.0459 - pr_auc: 0.9254 - roc_auc: 0.9180 - val_loss: 0.0925 - val_pr_auc: 0.7954 - val_roc_auc: 0.8241 - 2s/epoch - 89ms/step
+Epoch 18/40
+17/17 - 1s - loss: 0.0447 - pr_auc: 0.9305 - roc_auc: 0.9243 - val_loss: 0.0897 - val_pr_auc: 0.7974 - val_roc_auc: 0.8291 - 1s/epoch - 83ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/runs/stage2_temporal/20261008-080500_T2_temporal_past_to_future
+{
+  "cutoff": "2025-07-01T00:00:00Z",
+  "train_window": [
+    "2023-01-01T01:17:54Z",
+    "2025-06-30T18:34:17Z"
+  ],
+  "test_window": [
+    "2025-07-01T09:40:35Z",
+    "2026-09-16T19:27:04Z"
+  ],
+  "headline": {
+    "test_pr_auc": [
+      0.8249,
+      0.8018,
+      0.8464
+    ],
+    "test_roc_auc": [
+      0.8314,
+      0.8158,
+      0.8477
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0632,
+    "test_f1_at_val_threshold": 0.7644,
+    "test_ovid_table": {
+      "precision": 0.7572,
+      "recall": 0.7721,
+      "f1": 0.7646,
+      "accuracy": 0.762
+    },
+    "test_author_robust": {
+      "authors": 2074,
+      "one_per_author_n": 2111,
+      "one_per_author_pr_auc": 0.8247,
+      "author_weighted_pr_auc": 0.8217
+    },
+    "test_ece": 0.09086
+  }
+}
+[OK] 06 temporal in 1.2 min
+
+{
+  "started": "20261008-080320",
+  "task": "T2",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/mapguard_v2/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.3
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.3
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.0
+    },
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.2
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261008-080324_T2_R1b",
+    "experiments/runs/stage2_supervised/20261008-080341_T2_R1b",
+    "experiments/runs/ensemble/20261008-080455_T2_R1b",
+    "experiments/runs/stage2_temporal/20261008-080500_T2_temporal_past_to_future"
+  ],
+  "all_ok": true
+}
+
+log: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/pipeline/20261008-080320_T2.log
+summary: /data/mpstme-tanay/deepLearning_osm/mapguard_v2/experiments/pipeline/20261008-080320_T2.json
