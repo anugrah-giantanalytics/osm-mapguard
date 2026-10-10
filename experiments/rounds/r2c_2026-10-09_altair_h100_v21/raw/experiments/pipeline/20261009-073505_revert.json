@@ -1,0 +1,32 @@
+{
+  "started": "20261009-073505",
+  "task": "revert",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.4
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.5
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261009-073511_revert_R1b",
+    "experiments/runs/stage2_supervised/20261009-073534_revert_R1b",
+    "experiments/runs/ensemble/20261009-073701_revert_R1b"
+  ],
+  "all_ok": true
+}

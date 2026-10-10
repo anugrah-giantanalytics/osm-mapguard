@@ -434,8 +434,7 @@ Evidence and reasoning: `docs/MODEL_V2.md`. Round 1 results: `experiments/rounds
 - [x] Bundle v1.1.0, run round 2 (RUNBOOK training plan), analyse into `experiments/rounds/r2_*`.
   Ran on the Altair H100 instead of the M4 (2026-10-07, 37 min): `r2_2026-10-07_altair_h100/`.
 - [ ] If Stage 1 is retried: pretrain on edit tokens (masked-token), not on edit numbers.
-- [ ] WHERE signal (author's usual area vs this edit) needs history locations, which means a refetch.
-  Decide after round 2.
+- [x] WHERE signal: fetched from the planet changeset dump on the cluster, tested - no gain on ovid.
 
 ## Round 2 results and round 2.1 (2026-10-07 → 2026-10-09)
 
@@ -453,7 +452,10 @@ Evidence: `experiments/rounds/r2_2026-10-07_altair_h100/README.md`,
 - [x] Attention is now saved per edit. Finding: MIL weights exactly uniform (top/(1/n) = 1.00)
   - self-attention had no residual, so edits were blended before pooling.
 - [x] v2.1: residual + LayerNorm around edit self-attention; ablation row `full_no_residual`.
-- [ ] Round 2c on the H100 with v2.1 - does per-edit identity make MIL attention work?
+- [x] Round 2c on the H100 with v2.1 (2026-10-09): yes. MIL top weight 1.00 → 2.64× uniform,
+  sharper on damaging changesets; deep ovid 0.873 → 0.882, F1 0.813 (Ovid 0.817).
+- [x] WHERE collected on the cluster (planet dump, 59 min; 93% of changesets have a distance
+  from prior history). Probe on the hybrid: no gain (−0.0005 [−0.006, +0.004]). Negative result.
 - [ ] Beat Ovid (+2 F1 needed for a claim): object-context features (what the edited object
   was) probed on the hybrid first, CPU.
 - [ ] Ensemble weight overfits small validation sets (T1: −0.016 vs hybrid). Constrain or

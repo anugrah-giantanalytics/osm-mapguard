@@ -1,0 +1,8 @@
+{
+  "stage": "ensemble",
+  "task": "ovid_modern",
+  "split": "R1b",
+  "seed": 0,
+  "deep_run": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/experiments/runs/stage2_supervised/20261009-072304_ovid_modern_R1b",
+  "hybrid_run": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/experiments/runs/baselines/20261009-072221_ovid_modern_R1b"
+}

@@ -1,0 +1,36 @@
+{
+  "started": "20261009-070504",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/data/interim",
+  "stages": [
+    {
+      "stage": "03 stage2 ablations",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 17.1
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_ablations/20261009-070511_ovid_R1b_base_edits_tabular_s20260904",
+    "experiments/runs/stage2_ablations/20261009-070536_ovid_R1b_base_edits_tabular_s20260905",
+    "experiments/runs/stage2_ablations/20261009-070600_ovid_R1b_plus_geometry_s20260904",
+    "experiments/runs/stage2_ablations/20261009-070624_ovid_R1b_plus_geometry_s20260905",
+    "experiments/runs/stage2_ablations/20261009-070650_ovid_R1b_plus_text_s20260904",
+    "experiments/runs/stage2_ablations/20261009-070717_ovid_R1b_plus_text_s20260905",
+    "experiments/runs/stage2_ablations/20261009-070744_ovid_R1b_plus_sequences_s20260904",
+    "experiments/runs/stage2_ablations/20261009-070824_ovid_R1b_plus_sequences_s20260905",
+    "experiments/runs/stage2_ablations/20261009-070904_ovid_R1b_plus_edit_meaning_s20260904",
+    "experiments/runs/stage2_ablations/20261009-071003_ovid_R1b_plus_edit_meaning_s20260905",
+    "experiments/runs/stage2_ablations/20261009-071105_ovid_R1b_full_s20260904",
+    "experiments/runs/stage2_ablations/20261009-071235_ovid_R1b_full_s20260905",
+    "experiments/runs/stage2_ablations/20261009-071405_ovid_R1b_full_meanpool_s20260904",
+    "experiments/runs/stage2_ablations/20261009-071526_ovid_R1b_full_meanpool_s20260905",
+    "experiments/runs/stage2_ablations/20261009-071643_ovid_R1b_full_unweighted_s20260904",
+    "experiments/runs/stage2_ablations/20261009-071801_ovid_R1b_full_unweighted_s20260905",
+    "experiments/runs/stage2_ablations/20261009-071944_ovid_R1b_full_no_residual_s20260904",
+    "experiments/runs/stage2_ablations/20261009-072056_ovid_R1b_full_no_residual_s20260905",
+    "experiments/runs/stage2_ablations_grid/20261009-072210_ovid_R1b_grid"
+  ],
+  "all_ok": true
+}

@@ -1,0 +1,40 @@
+[2026-10-09 07:37:12] download: https://osm-planet-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com/changesets/osm/2026/changesets-261005.osm.bz2 (8.81 GB, Thu, 08 Oct 2026 14:52:23 GMT)
+[2026-10-09 07:38:21] download: 0.54/8.81 GB (7.8 MB/s)
+[2026-10-09 07:39:28] download: 1.07/8.81 GB (7.9 MB/s)
+[2026-10-09 07:40:46] download: 1.61/8.81 GB (7.5 MB/s)
+[2026-10-09 07:41:57] download: 2.15/8.81 GB (7.5 MB/s)
+[2026-10-09 07:42:33] download: 2.68/8.81 GB (8.4 MB/s)
+[2026-10-09 07:43:36] download: 3.22/8.81 GB (8.4 MB/s)
+[2026-10-09 07:44:19] download: 3.76/8.81 GB (8.8 MB/s)
+[2026-10-09 07:45:25] download: 4.29/8.81 GB (8.7 MB/s)
+[2026-10-09 07:46:29] download: 4.83/8.81 GB (8.7 MB/s)
+[2026-10-09 07:49:29] download: 5.37/8.81 GB (7.3 MB/s)
+[2026-10-09 07:51:44] download: 5.91/8.81 GB (6.8 MB/s)
+[2026-10-09 07:52:52] download: 6.44/8.81 GB (6.9 MB/s)
+[2026-10-09 07:53:28] download: 6.98/8.81 GB (7.1 MB/s)
+[2026-10-09 07:55:11] download: 7.52/8.81 GB (7.0 MB/s)
+[2026-10-09 07:56:40] download: 8.05/8.81 GB (6.9 MB/s)
+[2026-10-09 07:57:33] download: 8.59/8.81 GB (7.0 MB/s)
+[2026-10-09 07:58:07] download: complete
+[2026-10-09 07:58:07] extract: decompressing with bzip2; 24,189 target authors
+[2026-10-09 07:59:22] extract: 10M changesets read, 2,020,210 kept, 1.2 min
+[2026-10-09 08:00:47] extract: 20M changesets read, 5,206,434 kept, 2.7 min
+[2026-10-09 08:02:13] extract: 30M changesets read, 9,373,869 kept, 4.1 min
+[2026-10-09 08:03:53] extract: 40M changesets read, 14,209,322 kept, 5.8 min
+[2026-10-09 08:05:39] extract: 50M changesets read, 18,929,931 kept, 7.5 min
+[2026-10-09 08:07:34] extract: 60M changesets read, 23,460,095 kept, 9.4 min
+[2026-10-09 08:09:33] extract: 70M changesets read, 28,183,825 kept, 11.4 min
+[2026-10-09 08:11:37] extract: 80M changesets read, 32,916,024 kept, 13.5 min
+[2026-10-09 08:13:42] extract: 90M changesets read, 36,843,303 kept, 15.6 min
+[2026-10-09 08:15:46] extract: 100M changesets read, 40,504,697 kept, 17.6 min
+[2026-10-09 08:17:50] extract: 110M changesets read, 44,093,835 kept, 19.7 min
+[2026-10-09 08:19:58] extract: 120M changesets read, 48,825,415 kept, 21.8 min
+[2026-10-09 08:22:06] extract: 130M changesets read, 53,944,812 kept, 24.0 min
+[2026-10-09 08:24:17] extract: 140M changesets read, 59,353,488 kept, 26.2 min
+[2026-10-09 08:26:29] extract: 150M changesets read, 65,089,999 kept, 28.4 min
+[2026-10-09 08:28:41] extract: 160M changesets read, 70,510,881 kept, 30.6 min
+[2026-10-09 08:30:54] extract: 170M changesets read, 76,080,135 kept, 32.8 min
+[2026-10-09 08:33:10] extract: 180M changesets read, 81,822,360 kept, 35.0 min
+[2026-10-09 08:35:34] extract: done - 189,976,300 changesets in dump, 86,558,549 by target authors, 46,538/46,578 target changesets have a bbox, 37.4 min
+[2026-10-09 08:36:26] features: wrote /data/mpstme-tanay/deepLearning_osm/where/where_features.parquet - 46,578 rows, 93.0% with a location relative to prior history
+[2026-10-09 08:36:27] WHERE FINISHED in 0.99 h

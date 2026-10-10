@@ -1,0 +1,119 @@
+{
+ "base_edits_tabular": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8552,
+   0.0032
+  ],
+  "one_per_author": [
+   0.7756,
+   0.0029
+  ],
+  "f1": 0.7863,
+  "accuracy": 0.7816
+ },
+ "plus_geometry": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8566,
+   0.0014
+  ],
+  "one_per_author": [
+   0.7782,
+   0.001
+  ],
+  "f1": 0.7864,
+  "accuracy": 0.7843
+ },
+ "plus_text": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8764,
+   0.0007
+  ],
+  "one_per_author": [
+   0.7954,
+   0.0011
+  ],
+  "f1": 0.8058,
+  "accuracy": 0.798
+ },
+ "plus_sequences": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8507,
+   0.0035
+  ],
+  "one_per_author": [
+   0.773,
+   0.0085
+  ],
+  "f1": 0.7844,
+  "accuracy": 0.7776
+ },
+ "plus_edit_meaning": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8806,
+   0.0043
+  ],
+  "one_per_author": [
+   0.8038,
+   0.0014
+  ],
+  "f1": 0.8018,
+  "accuracy": 0.7952
+ },
+ "full": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8838,
+   0.0012
+  ],
+  "one_per_author": [
+   0.8062,
+   0.0024
+  ],
+  "f1": 0.8075,
+  "accuracy": 0.7997
+ },
+ "full_meanpool": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8802,
+   0.0001
+  ],
+  "one_per_author": [
+   0.8046,
+   0.003
+  ],
+  "f1": 0.8005,
+  "accuracy": 0.7945
+ },
+ "full_unweighted": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8678,
+   0.004
+  ],
+  "one_per_author": [
+   0.7588,
+   0.0081
+  ],
+  "f1": 0.8016,
+  "accuracy": 0.7886
+ },
+ "full_no_residual": {
+  "seeds": 2,
+  "pr_auc": [
+   0.8772,
+   0.0029
+  ],
+  "one_per_author": [
+   0.8052,
+   0.0015
+  ],
+  "f1": 0.8042,
+  "accuracy": 0.8004
+ }
+}

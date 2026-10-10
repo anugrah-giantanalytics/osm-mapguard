@@ -1,0 +1,71 @@
+{
+  "started_utc": "2026-10-09T06:59:44+00:00",
+  "git_sha": "deb6f1f893da22032a983bf43f8b2b3da24003ff (bundle)",
+  "git_dirty_src_or_train": null,
+  "command": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/train/06_temporal_evaluation/temporal_train_eval.py --set task=ovid --set data.feature_store=\"/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/data/interim\" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set temporal.cutoff=2019-01-01T00:00:00Z --set reference_run=\"/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/experiments/runs/stage2_supervised/20261009-065542_ovid_R1b_quick\" --set train.epochs=2",
+  "platform": "Linux-4.18.0-553.40.1.el8_10.x86_64-x86_64-with-glibc2.35",
+  "machine": "x86_64",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ],
+  "libraries": {
+    "python": "3.10.6",
+    "numpy": "1.22.2",
+    "tensorflow": "2.12.0",
+    "keras": "2.12.0",
+    "sklearn": "1.2.0",
+    "xgboost": "1.7.5",
+    "pandas": "1.5.2",
+    "pyarrow": "11.0.0"
+  },
+  "data": {
+    "changesets": {
+      "bytes": 10265168,
+      "mtime": 1791528790,
+      "sha256_16mb": "2ff8fc42d320bb57"
+    },
+    "edits": {
+      "bytes": 44471070,
+      "mtime": 1791528790,
+      "sha256_16mb": "019afb27fc4bae6a"
+    },
+    "user_seq": {
+      "bytes": 22251369,
+      "mtime": 1791528790,
+      "sha256_16mb": "b49fe6a34fc00fcd"
+    }
+  },
+  "split_file": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/experiments/splits/ovid_temporal_seed20260904_2019-01-01.json",
+  "split_fingerprint": {
+    "bytes": 166604,
+    "mtime": 1791528790,
+    "sha256_16mb": "ae1529cfbd50e22d"
+  },
+  "data_summary": {
+    "root": "/data/mpstme-tanay/deepLearning_osm/rounds/r2c_v21_residual/app/data/interim",
+    "task": "ovid",
+    "n_changesets": 18037,
+    "n_positive": 9131,
+    "n_negative": 8906,
+    "n_edit_rows": 825311,
+    "n_user_seq_rows": 1187051,
+    "missing_optional_columns": [],
+    "by_corpus": {
+      "A": 18037
+    }
+  },
+  "split_summary": {
+    "kind": "temporal",
+    "leaky": false,
+    "seed": 20260904,
+    "cutoff": "2019-01-01T00:00:00Z",
+    "n_train": 11940,
+    "n_val": 1334,
+    "n_test": 3342,
+    "pos_rate_train": 0.5331,
+    "pos_rate_val": 0.5412,
+    "pos_rate_test": 0.4135
+  }
+}
