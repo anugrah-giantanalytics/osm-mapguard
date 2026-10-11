@@ -479,7 +479,10 @@ Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured 
   `edit_layers`; stage 08 text embeddings; stage 09 stacking (5 author folds, out-of-fold).
 - [x] Ablation rows 11–14 (full_text_emb, full_context, full_2layers, full_v3); wiring check v3.
 - [x] Job script reads a per-round step plan (`altair/plans/`); zip ships side tables.
-- [ ] Independent review of the v3 code before the cluster run.
+- [x] Independent review of the v3 code before the cluster run (two passes, 2026-10-11): pass 1
+  found 5 problem groups (incl. ovid_modern stacking columns, silent ablation fallback, split
+  seed in 4 stages, job-script parsing); pass 2 confirmed the fixes and found 1 exit-code bug.
+  All fixed and retested; zip `r3_v3_explore` built from commit 80dc678.
 - [ ] Round 3 on the H100 (`altair/plans/r3_v3_explore.txt`, ~2 h).
 - [ ] Decide the final setup from round 3 (adopt only gains beyond seed spread and with an
   author-bootstrap interval excluding zero).
