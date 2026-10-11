@@ -7,7 +7,7 @@ results zip for the round.
 ## Build (laptop)
 
 ```bash
-python altair/build_zip.py --round r2c_v21_residual
+python altair/build_zip.py --round r3_v3_explore --plan altair/plans/r3_v3_explore.txt
 ```
 
 Writes `altair/_dist/mapguard_altair.zip` (git-ignored: it carries data, and
@@ -46,14 +46,20 @@ deepLearning_osm/
 cd /data/mpstme-tanay/deepLearning_osm && cat rounds/*/logs/STATUS where/STATUS 2>/dev/null
 ```
 
-## Steps
+## Steps = the round's plan
 
-| Step | What | Time (H100) |
+Each zip carries `altair/PLAN.txt` (copied from `altair/plans/<round>.txt`), one step per line:
+
+```
+name | flags | run_pipeline.py arguments
+```
+
+flags: `fatal` (stop the job if it fails), `install_st` (install torch + sentence-transformers
+into `.pydeps_st`, visible to that step only), `where` (run the WHERE job). Re-running the
+same zip skips finished steps. Plans so far:
+
+| Plan | What | Time (H100, 1 CPU core) |
 |---|---|---|
-| smoke | ovid quick chain; stops the job if it fails | ~7 min |
-| main | ovid 00,01,02,07 | ~5 min |
-| ablations | ovid 03 | ~15 min |
-| modern, T1, T2, revert_vandalism, revert | 01,02,07(,06) | ~15 min total |
-| where | download dump, extract target authors, features (CPU) | hours (download speed dependent) |
+| `r3_v3_explore.txt` | embeddings, smoke, v3 ablations (5 rows × 3 seeds), all six tasks with hybrid variants + stacking | ~2 h |
 
 Training results are packed into the results zip **before** WHERE starts, and again at the end.

@@ -53,9 +53,11 @@ def main() -> int:
     meta_path = store / f"text_embeddings{suffix}.json"
     if out.exists() and meta_path.exists() and args.limit is None:
         meta = json.loads(meta_path.read_text())
-        if meta.get("model") == args.model and meta.get("limit") is None:
+        n_store = pd.read_parquet(store / "changesets.parquet", columns=["cid"]).shape[0]
+        if meta.get("model") == args.model and meta.get("limit") is None and meta.get("rows") == n_store:
             print(f"already embedded with {args.model}: {out}")
             return 0
+        print("existing embeddings are stale (model or row count differs) - recomputing")
 
     import torch
     from sentence_transformers import SentenceTransformer

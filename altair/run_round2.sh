@@ -226,7 +226,7 @@ while IFS='|' read -r name flags pargs <&3; do
     if [[ ",$flags," == *",where,"* ]]; then
         if [ -f "$APP/altair/where_targets.parquet" ]; then
             run_step "$name" "$PY" -u altair/where_job.py \
-                --targets altair/where_targets.parquet --workdir "$BASE/where"
+                --targets altair/where_targets.parquet --workdir "$BASE/where"; rc=$?
         else
             say "skip $name - this zip has no altair/where_targets.parquet"; continue
         fi
@@ -235,13 +235,19 @@ while IFS='|' read -r name flags pargs <&3; do
         if [[ ",$flags," == *",install_st,"* ]]; then
             install_st
             export PYTHONPATH="$ST_DIR${PYTHONPATH:+:$PYTHONPATH}"
-            run_step "$name" pipeline "${ARGV[@]}"
+            run_step "$name" pipeline "${ARGV[@]}"; rc=$?
             export PYTHONPATH="${PYTHONPATH#"$ST_DIR"}"; PYTHONPATH="${PYTHONPATH#:}"
+            # embeddings are optional for the pipeline (exit 0 without them), but this step
+            # only counts as done if they exist - otherwise a rerun retries it
+            if [ "$rc" -eq 0 ] && [ ! -f "$APP/data/interim/text_embeddings.json" ]; then
+                rm -f "$RDIR/.done/$name"
+                say "WARNING: $name finished without text_embeddings.json - embedding variants will be skipped"
+                FAILED+=("$name")
+            fi
         else
-            run_step "$name" pipeline "${ARGV[@]}"
+            run_step "$name" pipeline "${ARGV[@]}"; rc=$?
         fi
     fi
-    rc=$?
     if [ "$rc" -ne 0 ] && [[ ",$flags," == *",fatal,"* ]]; then
         FINAL="failed"
         status "FAILED at $name - nothing after it was run. Send logs/steps/$name.log"

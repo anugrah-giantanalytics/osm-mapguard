@@ -309,8 +309,8 @@ def prepare(store, cfg: dict) -> Prepared:
 
 
 def add_side_tables(prep: Prepared, store, m: dict) -> Prepared:
-    """v3 options (default off). A requested table that is missing is noted, not fatal, so the
-    same config runs before and after the side tables exist.
+    """v3 options (default off). A requested table that is missing is an error: a run must never
+    silently train without the input its config names (ablation rows skip such rows instead).
 
       model.text_emb         pretrained multilingual sentence embeddings (comment ++ tag text)
                              as input `text_emb`; needs B2.
