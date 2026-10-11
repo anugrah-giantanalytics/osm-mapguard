@@ -1,0 +1,1 @@
+{"name": "full_2layers", "purpose": "v3: two transformer encoder blocks over edits instead of one attention layer", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "edit_layers": 2}}}

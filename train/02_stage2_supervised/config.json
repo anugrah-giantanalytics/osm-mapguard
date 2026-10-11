@@ -49,5 +49,12 @@
   "evaluate": {
     "attribution": true,
     "top_k": 20
+  },
+  "stack": {
+    "folds": 5,
+    "hybrid_variants": [
+      "base",
+      "emb"
+    ]
   }
 }

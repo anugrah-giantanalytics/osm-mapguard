@@ -39,7 +39,10 @@ def setup(args: argparse.Namespace, *, needs_split: bool = True, tag: str | None
     masks = split_path = summary = None
     if needs_split:
         masks, split_path, summary = splits_io.get_split(
-            prep, task=task, split=cfg["split"], seed=int(cfg.get("seed", 0)),
+            # split_seed fixes the frozen split; seed varies only initialisation and sampling,
+            # so a multi-seed run is evaluated on one test set
+            prep, task=task, split=cfg["split"],
+            seed=int(cfg.get("split_seed", cfg.get("seed", 0))),
             cutoff=cfg.get("temporal", {}).get("cutoff"),
             resplit=bool(cfg.get("resplit", False)),
             exclude_test_users_from_train=bool(

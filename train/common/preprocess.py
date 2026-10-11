@@ -86,6 +86,7 @@ class Prepared:
             "edit_tokens_len": int(a["edit_tokens"].shape[2]) if "edit_tokens" in a else TOKENS_PER_EDIT,
             "edit_text_len": int(a["edit_text"].shape[2]) if "edit_text" in a else EDIT_TEXT_LEN,
             "token_buckets": int(TOKEN_BUCKETS),
+            "text_emb_dim": int(a["text_emb"].shape[1]) if "text_emb" in a else 0,
         }
 
     def subset(self, rows: np.ndarray) -> "Prepared":
@@ -303,7 +304,39 @@ def prepare(store, cfg: dict) -> Prepared:
     excl = m.get("exclude_columns")
     if excl == "adiff_only":
         excl = ADIFF_ONLY_COLUMNS
-    return exclude_columns(prep, excl)
+    prep = exclude_columns(prep, excl)
+    return add_side_tables(prep, store, m)
+
+
+def add_side_tables(prep: Prepared, store, m: dict) -> Prepared:
+    """v3 options (default off). A requested table that is missing is noted, not fatal, so the
+    same config runs before and after the side tables exist.
+
+      model.text_emb         pretrained multilingual sentence embeddings (comment ++ tag text)
+                             as input `text_emb`; needs B2.
+      model.context_tabular  object-context numerics appended to the tabular columns; needs B5.
+    """
+    from . import extras
+
+    arrays, notes, cols = dict(prep.arrays), list(prep.notes), prep.tabular_columns
+    branches = set(m.get("branches", ()))
+    if m.get("text_emb") and "B2" in branches:
+        emb = extras.text_embeddings(store, prep.cids)
+        if emb is None:
+            raise SystemExit("model.text_emb is on but text_embeddings.npz is not in the feature "
+                             "store - run stage 08 first, or switch text_emb off")
+        else:
+            arrays["text_emb"] = np.concatenate([emb["comment"], emb["tags"]], axis=1).astype("float32")
+    if m.get("context_tabular") and "B5" in branches:
+        got = extras.object_context(store, prep.cids)
+        if got is None:
+            raise SystemExit("model.context_tabular is on but object_context.parquet is not in the "
+                             "feature store - build it (scripts/probes/object_context_extract.py)")
+        else:
+            _, num, names = got
+            arrays["tabular"] = np.concatenate([arrays["tabular"], num.astype("float32")], axis=1)
+            cols = tuple(cols) + tuple(names)
+    return replace(prep, arrays=arrays, notes=notes, tabular_columns=tuple(cols))
 
 
 def text_len() -> int:

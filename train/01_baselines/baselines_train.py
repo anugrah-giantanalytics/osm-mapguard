@@ -85,9 +85,20 @@ def author_weights(uids, rows) -> np.ndarray:
     return np.array([1.0 / np.sqrt(counts.get(u, 1)) if u is not None else 1.0 for u in uids])
 
 
-def fit_hybrid(store, prep, tr, va, te, y, seed, params, weighting=True):
+def fit_hybrid(store, prep, tr, va, te, y, seed, params, weighting=True, *,
+               extra_tokens=None, extra_tab=None, dense_views=None, extra_stack=None, tune=False):
     """Out-of-fold stacking: text models are fitted on 4/5 of the training authors and score
-    the held-out fifth, so the tree never sees a text score that was fitted on its own row."""
+    the held-out fifth, so the tree never sees a text score that was fitted on its own row.
+
+    v3 options (all None = the round-2 hybrid, unchanged):
+      extra_tokens  list[str] per row appended to the edit-token bag (object context tokens)
+      extra_tab     (N, k) extra columns for the tree (object-context numerics)
+      dense_views   {name: (N, d)} dense matrices, each gets its own out-of-fold logistic score
+                    (pretrained text embeddings)
+      extra_stack   {name: (N,)} scores already out-of-fold for training rows (deep OOF score)
+      tune          pick the tree settings from TUNE_GRID by 3-fold author-grouped CV on the
+                    training rows only (validation and test are never looked at)
+    """
     import xgboost as xgb
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.linear_model import LogisticRegression
@@ -99,43 +110,123 @@ def fit_hybrid(store, prep, tr, va, te, y, seed, params, weighting=True):
     if "diff_tokens" not in cs.columns:
         return None
     tokens = cs["diff_tokens"].fillna("").astype(str).tolist()
+    if extra_tokens is not None:
+        tokens = [f"{a} {b}" for a, b in zip(tokens, extra_tokens)]
     texts = [text_input(c, b) for c, b in zip(cs.get("comment", [""] * len(cs)), cs["text_blob"])]
     tri, vai, tei = (np.flatnonzero(m) for m in (tr, va, te))
     sw = author_weights(prep.uids, tr) if weighting else np.ones(len(y))
 
-    def views():
-        tv = TfidfVectorizer(token_pattern=r"\S+", min_df=3, sublinear_tf=True)
-        cv = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), min_df=3,
-                             max_features=200_000, sublinear_tf=True)
-        tv.fit([tokens[i] for i in tri])
-        cv.fit([texts[i] for i in tri])
-        return tv.transform(tokens), cv.transform(texts), tv
+    tv = TfidfVectorizer(token_pattern=r"\S+", min_df=3, sublinear_tf=True)
+    cv = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), min_df=3,
+                         max_features=200_000, sublinear_tf=True)
+    tv.fit([tokens[i] for i in tri])
+    cv.fit([texts[i] for i in tri])
+    views = [("tokens_score", tv.transform(tokens), 1.0), ("text_score", cv.transform(texts), 2.0)]
+    for name, mat in (dense_views or {}).items():
+        views.append((f"{name}_score", np.asarray(mat, dtype="float32"), 1.0))
 
-    Xk, Xc, tv = views()
-    oof = np.zeros((len(y), 2))
+    oof = np.zeros((len(y), len(views)))
     groups = np.array([-1 if u is None else u for u in prep.uids])[tri]
     for a, b in GroupKFold(5).split(tri, groups=groups):
         A, B = tri[a], tri[b]
-        for j, (X, C) in enumerate(((Xk, 1.0), (Xc, 2.0))):
+        for j, (_, X, C) in enumerate(views):
             m = LogisticRegression(C=C, max_iter=4000).fit(X[A], y[A], sample_weight=sw[A])
             oof[B, j] = m.predict_proba(X[B])[:, 1]
-    lk = LogisticRegression(C=1.0, max_iter=4000).fit(Xk[tri], y[tri], sample_weight=sw[tri])
-    lc = LogisticRegression(C=2.0, max_iter=4000).fit(Xc[tri], y[tri], sample_weight=sw[tri])
     rest = np.concatenate([vai, tei])
-    oof[rest, 0] = lk.predict_proba(Xk[rest])[:, 1]
-    oof[rest, 1] = lc.predict_proba(Xc[rest])[:, 1]
+    fitted = []
+    for j, (_, X, C) in enumerate(views):
+        m = LogisticRegression(C=C, max_iter=4000).fit(X[tri], y[tri], sample_weight=sw[tri])
+        oof[rest, j] = m.predict_proba(X[rest])[:, 1]
+        fitted.append(m)
 
     raw = np.nan_to_num(prep.arrays["tabular"], nan=0.0, posinf=0.0, neginf=0.0)
-    X2 = np.column_stack([raw, oof])
+    blocks, names = [raw], [f"tab:{c}" for c in prep.tabular_columns]
+    if extra_tab is not None:
+        blocks.append(np.asarray(extra_tab, dtype="float64"))
+        names += [f"extra:{j}" for j in range(np.asarray(extra_tab).shape[1])]
+    blocks.append(oof)
+    names += [v[0] for v in views]
+    for name, col in (extra_stack or {}).items():
+        blocks.append(np.asarray(col, dtype="float64").reshape(-1, 1))
+        names.append(name)
+    X2 = np.column_stack(blocks)
+    tuning = None
+    if tune:
+        params, tuning = tune_tree(X2, y, tri, groups, sw, seed)
     clf = xgb.XGBClassifier(**params, eval_metric="aucpr", random_state=seed, n_jobs=-1)
     clf.fit(X2[tri], y[tri], sample_weight=sw[tri], eval_set=[(X2[vai], y[vai])], verbose=False)
-    coef = sorted(zip(tv.get_feature_names_out(), lk.coef_[0]), key=lambda kv: kv[1])
+    coef = sorted(zip(tv.get_feature_names_out(), fitted[0].coef_[0]), key=lambda kv: kv[1])
+    stacked = [n for n in names if not n.startswith(("tab:", "extra:"))]
+    imp = dict(zip(names, clf.feature_importances_))
     info = {"author_weighting": "1/sqrt(n)" if weighting else None,
             "most_damaging_tokens": [k for k, _ in coef[-20:][::-1]],
             "most_benign_tokens": [k for k, _ in coef[:20]],
-            "stack_importance": {"tokens_score": round(float(clf.feature_importances_[-2]), 4),
-                                 "text_score": round(float(clf.feature_importances_[-1]), 4)}}
+            "stack_importance": {n: round(float(imp[n]), 4) for n in stacked},
+            "tree_params": params, "tuning": tuning}
     return clf.predict_proba(X2[vai])[:, 1], clf.predict_proba(X2[tei])[:, 1], info
+
+
+TUNE_GRID = [  # (max_depth, learning_rate, n_estimators); the round-2 setting is (6, 0.08, 400)
+    (4, 0.03, 800), (4, 0.08, 400), (6, 0.03, 800), (6, 0.08, 400), (8, 0.03, 800), (8, 0.08, 400),
+]
+
+
+def tune_tree(X, y, tri, groups, sw, seed):
+    """Choose tree settings by 3-fold GroupKFold (authors) on training rows only.
+
+    The stacked text scores in X are out-of-fold over 5 author folds of the same training rows,
+    so a tuning fold's scores were fitted partly on its sibling folds: selection is slightly
+    optimistic, evaluation is not (validation/test never enter)."""
+    import xgboost as xgb
+    from sklearn.model_selection import GroupKFold
+
+    from mapguard.evaluation.metrics import average_precision
+
+    scores = []
+    for depth, lr, n in TUNE_GRID:
+        cand = {"max_depth": depth, "learning_rate": lr, "n_estimators": n,
+                "subsample": 0.8, "colsample_bytree": 0.8}
+        aps = []
+        for a, b in GroupKFold(3).split(tri, groups=groups):
+            A, B = tri[a], tri[b]
+            m = xgb.XGBClassifier(**cand, eval_metric="aucpr", random_state=seed, n_jobs=-1)
+            m.fit(X[A], y[A], sample_weight=sw[A], verbose=False)
+            aps.append(float(average_precision(y[B], m.predict_proba(X[B])[:, 1])))
+        scores.append((float(np.mean(aps)), cand))
+        print(f"  tune depth={depth} lr={lr} n={n}: cv PR-AUC {np.mean(aps):.4f}", flush=True)
+    best = max(scores, key=lambda s: s[0])
+    return best[1], {"grid": [{"cv_pr_auc": round(s, 4), **c} for s, c in scores],
+                     "chosen": best[1], "rule": "3-fold GroupKFold on training rows"}
+
+
+def hybrid_inputs(store, prep, variant: str):
+    """Keyword arguments for fit_hybrid for one named variant, or None if its data is missing.
+
+    base      round-2 hybrid
+    ctx       + object context (tokens into the token bag, numerics into the tree)
+    emb       + pretrained multilingual sentence embeddings of comment and tag text
+    ctx_emb   both
+    where     + WHERE distances (kept to report the negative result reproducibly)
+    """
+    from common import extras
+
+    kw: dict = {"tune": "tuned" in variant}
+    if "ctx" in variant:
+        got = extras.object_context(store, prep.cids)
+        if got is None:
+            return None
+        kw["extra_tokens"], kw["extra_tab"], _ = got
+    if "emb" in variant:
+        got = extras.text_embeddings(store, prep.cids)
+        if got is None:
+            return None
+        kw["dense_views"] = {"emb_comment": got["comment"], "emb_tags": got["tags"]}
+    if variant == "where":
+        got = extras.where_features(store, prep.cids)
+        if got is None:
+            return None
+        kw["extra_tab"] = got[0]
+    return kw
 
 
 def main() -> int:
@@ -208,20 +299,28 @@ def main() -> int:
             print(f"XGBoost      PR-AUC {rep['test_intervals_95']['pr_auc']}")
 
     if b.get("hybrid", True):
-        try:
-            got = fit_hybrid(store, prep, tr, va, te, y, seed, b.get("xgboost_params", {}),
-                             weighting=b.get("author_weighting", "sqrt") == "sqrt")
-        except ImportError as exc:
-            got, results["models"]["hybrid"] = None, {"skipped": repr(exc)}
-        if got is None:
-            results["models"].setdefault("hybrid", {"skipped": "store has no diff_tokens (schema < 4)"})
-        else:
+        for variant in b.get("hybrid_variants", ["base"]):
+            key = "hybrid" if variant == "base" else f"hybrid_{variant}"
+            kw = hybrid_inputs(store, prep, variant)
+            if kw is None:
+                results["models"][key] = {"skipped": f"side table for '{variant}' not in the store"}
+                print(f"{key:24s} skipped (no side table)")
+                continue
+            try:
+                got = fit_hybrid(store, prep, tr, va, te, y, seed, b.get("xgboost_params", {}),
+                                 weighting=b.get("author_weighting", "sqrt") == "sqrt", **kw)
+            except ImportError as exc:
+                got, results["models"][key] = None, {"skipped": repr(exc)}
+            if got is None:
+                results["models"].setdefault(key, {"skipped": "store has no diff_tokens (schema < 4)"})
+                continue
             pv, pt, info = got
             rep = scoring.report(y[va], pv, y[te], pt, seed=seed, test_groups=prep.uids[te])
-            results["models"]["hybrid"] = {**info, "headline": scoring.headline(rep), "evaluation": rep}
-            np.savez_compressed(run.path("predictions_hybrid.npz"), test_cids=prep.cids[te],
+            results["models"][key] = {**info, "variant": variant, "headline": scoring.headline(rep),
+                                      "evaluation": rep}
+            np.savez_compressed(run.path(f"predictions_{key}.npz"), test_cids=prep.cids[te],
                                 test_y=y[te], test_p=pt, val_cids=prep.cids[va], val_y=y[va], val_p=pv)
-            print(f"Hybrid       PR-AUC {rep['test_intervals_95']['pr_auc']}  "
+            print(f"{key:24s} PR-AUC {rep['test_intervals_95']['pr_auc']}  "
                   f"one-per-author {rep['author_robust'].get('one_per_author_pr_auc')}")
 
     best = max(((k, v["headline"]["test_pr_auc"][0]) for k, v in results["models"].items()

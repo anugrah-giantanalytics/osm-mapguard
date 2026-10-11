@@ -17,18 +17,15 @@
 #   <BASE>/where/                              WHERE job: dump download, extract, features
 #                                              (shared by all rounds; done once)
 #
-# Steps, in order. If smoke fails the job stops; later failures are recorded and skipped.
-#   smoke      ovid --quick                 proves the model trains on this GPU (~7 min)
-#   main       ovid 00,01,02,07             headline: deep, XGBoost, hybrid, ensemble
-#   ablations  ovid 03                      which part helps
-#   modern     ovid_modern 01,02,07,06
-#   T1, T2     01,02,07,06
-#   revert_vandalism, revert  01,02,07
-#   where      CPU: planet changeset dump -> distance from the author's usual area (hours)
+# Steps come from altair/PLAN.txt inside the zip (one round = one plan), one per line:
+#     name | flags | run_pipeline.py arguments
+# flags: fatal (stop the job if it fails), install_st (install sentence-transformers first),
+#        where (run the WHERE data job instead of the pipeline).
+# MAPGUARD_STEPS=a,b limits the run to those step names.
 
 set -uo pipefail
 
-STEPS="${MAPGUARD_STEPS:-smoke,main,ablations,modern,T1,T2,revert_vandalism,revert,where}"
+ONLY="${MAPGUARD_STEPS:-}"
 ZIP_NAME="mapguard_altair.zip"
 
 ts() { date '+%Y-%m-%d %H:%M:%S'; }
@@ -88,7 +85,7 @@ say "MapGuard | round $ROUND | job $JOB_ID | host $(hostname)"
 say "base   : $BASE"
 say "zip    : $ZIP"
 say "round  : $RDIR"
-say "steps  : $STEPS"
+say "only   : ${ONLY:-all steps in PLAN.txt}"
 
 # ---------------------------------------------------------------- 2. unpack once per round
 "$PY" - "$ZIP" "$APP" <<'EOF' || { status "FAILED: could not unpack $ZIP"; exit 1; }
@@ -112,6 +109,7 @@ export PATH="$PYTHONUSERBASE/bin:$PATH"
 export PIP_CACHE_DIR="$BASE/.pipcache"
 export PYTHONUNBUFFERED=1
 export TF_CPP_MIN_LOG_LEVEL=1
+export HF_HOME="$BASE/.hfcache"
 NC="${NCPUS:-$(nproc 2>/dev/null || echo 4)}"
 export OMP_NUM_THREADS="$NC"
 
@@ -201,33 +199,55 @@ run_step() {
 }
 pipeline() { "$PY" -u train/run_pipeline.py --feature-store data/interim "$@"; }
 
-IFS=',' read -r -a STEP_LIST <<< "$STEPS"
-for step in "${STEP_LIST[@]}"; do
-    case "$step" in
-        smoke)
-            if ! run_step smoke pipeline --task ovid --stages 00,01,02,07,03,06 --quick; then
-                FINAL="failed"
-                status "FAILED at smoke test - nothing else was run. Send logs/steps/smoke.log"
-                exit 1
-            fi ;;
-        main)             run_step main pipeline --task ovid --stages 00,01,02,07 ;;
-        ablations)        run_step ablations pipeline --task ovid --stages 03 ;;
-        modern)           run_step modern pipeline --task ovid_modern --stages 01,02,07,06 ;;
-        T1)               run_step T1 pipeline --task T1 --stages 01,02,07,06 ;;
-        T2)               run_step T2 pipeline --task T2 --stages 01,02,07,06 ;;
-        revert_vandalism) run_step revert_vandalism pipeline --task revert_vandalism --stages 01,02,07 ;;
-        revert)           run_step revert pipeline --task revert --stages 01,02,07 ;;
-        where)
-            package       # training results are safe before the long CPU job starts
-            if [ -f "$APP/altair/where_targets.parquet" ]; then
-                run_step where "$PY" -u altair/where_job.py \
-                    --targets altair/where_targets.parquet --workdir "$BASE/where"
-            else
-                say "skip where - this zip has no altair/where_targets.parquet"
-            fi ;;
-        *) say "unknown step '$step' - skipped" ;;
-    esac
-done
+# torch + sentence-transformers live in their own folder, seen only by steps flagged
+# install_st: they must not shadow packages the image's TensorFlow depends on.
+ST_DIR="$BASE/.pydeps_st"
+install_st() {
+    if PYTHONPATH="$ST_DIR" "$PY" -c "import sentence_transformers" >/dev/null 2>&1; then return 0; fi
+    local NUMPY
+    NUMPY="$("$PY" -c 'import numpy; print(numpy.__version__)')"
+    say "installing sentence-transformers + torch into $ST_DIR (numpy pinned at $NUMPY) - a few minutes"
+    "$PY" -m pip install -q --target "$ST_DIR" sentence-transformers "numpy==$NUMPY" \
+        || say "WARNING: sentence-transformers install failed - embedding variants will be skipped"
+}
+
+trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; printf '%s' "$s"; }
+
+PLAN="$APP/altair/PLAN.txt"
+if [ ! -f "$PLAN" ]; then status "FAILED: no altair/PLAN.txt in this zip"; FINAL="failed"; exit 1; fi
+say "plan:"; grep -v '^#' "$PLAN" | grep -v '^[[:space:]]*$' | sed 's/^/    /'
+PLAN_N="$LOGS/plan.normalized"          # CRLF removed, trailing newline guaranteed
+{ cat "$PLAN"; echo; } | tr -d '\r' > "$PLAN_N"
+while IFS='|' read -r name flags pargs <&3; do
+    name="$(trim "${name:-}")"; flags="$(trim "${flags:-}")"; pargs="$(trim "${pargs:-}")"
+    [ -z "$name" ] && continue
+    case "$name" in \#*) continue ;; esac
+    if [ -n "$ONLY" ] && [[ ",$ONLY," != *",$name,"* ]]; then continue; fi
+    if [[ ",$flags," == *",where,"* ]]; then
+        if [ -f "$APP/altair/where_targets.parquet" ]; then
+            run_step "$name" "$PY" -u altair/where_job.py \
+                --targets altair/where_targets.parquet --workdir "$BASE/where"
+        else
+            say "skip $name - this zip has no altair/where_targets.parquet"; continue
+        fi
+    else
+        read -r -a ARGV <<< "$pargs"          # plain word split: no quotes, no globbing in plans
+        if [[ ",$flags," == *",install_st,"* ]]; then
+            install_st
+            export PYTHONPATH="$ST_DIR${PYTHONPATH:+:$PYTHONPATH}"
+            run_step "$name" pipeline "${ARGV[@]}"
+            export PYTHONPATH="${PYTHONPATH#"$ST_DIR"}"; PYTHONPATH="${PYTHONPATH#:}"
+        else
+            run_step "$name" pipeline "${ARGV[@]}"
+        fi
+    fi
+    rc=$?
+    if [ "$rc" -ne 0 ] && [[ ",$flags," == *",fatal,"* ]]; then
+        FINAL="failed"
+        status "FAILED at $name - nothing after it was run. Send logs/steps/$name.log"
+        exit 1
+    fi
+done 3< "$PLAN_N"
 
 if [ ${#FAILED[@]} -eq 0 ]; then
     FINAL="ok"

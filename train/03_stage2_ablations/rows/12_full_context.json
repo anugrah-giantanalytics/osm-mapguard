@@ -1,0 +1,1 @@
+{"name": "full_context", "purpose": "v3: + object context numerics (what the edited objects were before the edit) in the tabular branch", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "context_tabular": true}}}

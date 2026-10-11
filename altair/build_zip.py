@@ -1,11 +1,13 @@
 """Build altair/_dist/mapguard_altair.zip - everything one Altair round needs.
 
-    python altair/build_zip.py --round r2c_v21_residual
-    python altair/build_zip.py --round r3_x --data dist/mapguard-dataset-v1.1.0/feature_store
+    python altair/build_zip.py --round r3_v3_explore --plan altair/plans/r3_v3_explore.txt
+    python altair/build_zip.py --round r3_x --plan ... --data dist/mapguard-dataset-v1.1.0/feature_store
 
 Contents: the training bundle (src/, train/, data/interim, frozen splits, BUNDLE_MANIFEST.json -
 see cluster/bundle.py) plus altair/: the job script, the WHERE job, README, ROUND.txt (the
-round's folder name on the cluster) and where_targets.parquet.
+round's folder name on the cluster), PLAN.txt (the steps), where_targets.parquet.
+Side tables keyed by changeset id go into data/interim next to the store when they exist:
+object_context.parquet (laptop-built) and where_features.parquet (cluster-built).
 
 Privacy: the feature store in the zip is the pseudonymised one. where_targets.parquet holds
 raw OSM user ids (public data, needed to find each author in the planet changeset dump) for
@@ -26,6 +28,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 DIST = REPO / "altair" / "_dist"
 SHIPPED = ("run_round2.sh", "where_job.py", "README.md")
+SIDE_TABLES = {
+    "object_context.parquet": Path("C:/osm-data/probes/object_context_A_MN.parquet"),
+    "where_features.parquet": Path("C:/osm-data/where/where_features.parquet"),
+}
 
 
 def newest_store() -> Path:
@@ -53,6 +59,7 @@ def where_targets() -> bytes:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--round", required=True, help="folder name of this round on the cluster")
+    ap.add_argument("--plan", required=True, help="step plan, e.g. altair/plans/r3_v3_explore.txt")
     ap.add_argument("--data", default=None, help="feature store dir (default: newest packaged)")
     args = ap.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", args.round):
@@ -80,6 +87,15 @@ def main() -> int:
             add(name, (REPO / "altair" / name).read_bytes().replace(b"\r\n", b"\n"),
                 0o755 if name.endswith(".sh") else 0o644)
         add("ROUND.txt", (args.round + "\n").encode())
+        add("PLAN.txt", Path(args.plan).read_bytes().replace(b"\r\n", b"\n"))
+        for name, src_path in SIDE_TABLES.items():
+            if src_path.exists():
+                info = zipfile.ZipInfo(f"data/interim/{name}")
+                info.compress_type = zipfile.ZIP_STORED
+                z.writestr(info, src_path.read_bytes())
+                print(f"side table: {name} ({src_path.stat().st_size / 1e6:.1f} MB)")
+            else:
+                print(f"side table: {name} not found at {src_path} - not shipped")
         add("where_targets.parquet", where_targets())
     inner.unlink()
     (DIST / "run_round2.sh").write_bytes((REPO / "altair" / "run_round2.sh").read_bytes()

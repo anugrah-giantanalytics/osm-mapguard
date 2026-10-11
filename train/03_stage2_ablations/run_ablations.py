@@ -36,6 +36,18 @@ from common.run import Run, configure_device, seed_everything  # noqa: E402
 ROWS = Path(__file__).with_name("rows")
 
 
+def _missing_side_tables(row, store) -> list[str]:
+    from common import extras
+
+    m = row.get("overrides", {}).get("model", {})
+    need = []
+    if m.get("text_emb") and not extras.has_text_embeddings(store):
+        need.append(extras.EMBED_FILE)
+    if m.get("context_tabular") and not extras.has_object_context(store):
+        need.append(extras.CONTEXT_FILE)
+    return need
+
+
 def load_rows(selected):
     rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(ROWS.glob("*.json"))]
     if selected:
@@ -51,7 +63,7 @@ def main() -> int:
     args = stage.parse_args(__doc__.splitlines()[0], Path(__file__).with_name("config.json"))
     base = config_mod.load(args.config, args.set)
     devices = configure_device(base.get("device", "auto"))
-    task, split, split_seed = base["task"], base["split"], int(base["seed"])
+    task, split, split_seed = base["task"], base["split"], int(base.get("split_seed", base["seed"]))
     seeds = [int(s) for s in base.get("seeds", [split_seed])]
     rows = load_rows(base.get("rows"))
 
@@ -72,6 +84,12 @@ def main() -> int:
         if row.get("requires_pretrained_encoder") and not base.get("pretrained_encoder"):
             skipped.append({"row": row["name"], "reason": "no pretrained_encoder given"})
             print(f"skip {row['name']}: needs --set pretrained_encoder=<stage1 run dir>")
+            continue
+
+        missing = _missing_side_tables(row, store)
+        if missing:
+            skipped.append({"row": row["name"], "reason": f"side table missing: {missing}"})
+            print(f"skip {row['name']}: needs {missing} in the feature store")
             continue
 
         row_cfg = config_mod.deep_merge(base, row.get("overrides", {}))

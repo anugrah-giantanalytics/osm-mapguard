@@ -61,6 +61,7 @@ def model_kwargs(prep, cfg: dict) -> dict:
         "branches": list(m.get("branches", ["B1", "B2", "B3", "B4", "B5", "B6"])),
         "pooling": m.get("pooling", "mil"),
         "residual": bool(m.get("residual", True)),
+        "edit_layers": int(m.get("edit_layers", 1)),
     }
 
 
@@ -103,7 +104,8 @@ def check_encoder_split(enc_dir: Path, cfg: dict) -> None:
     """
     enc_cfg = json.loads((enc_dir / "config.json").read_text(encoding="utf-8"))
     mine = (cfg.get("task"), cfg.get("split"), int(cfg.get("split_seed", cfg.get("seed", 0))))
-    theirs = (enc_cfg.get("task"), enc_cfg.get("split"), int(enc_cfg.get("seed", 0)))
+    theirs = (enc_cfg.get("task"), enc_cfg.get("split"),
+              int(enc_cfg.get("split_seed", enc_cfg.get("seed", 0))))
     if mine != theirs:
         raise SystemExit(
             f"pretrained encoder was built for (task, split, seed) = {theirs} but this run "
@@ -140,7 +142,7 @@ def make_optimizer(keras, t_cfg: dict):
     return keras.optimizers.Adam(learning_rate=lr, clipnorm=clip)
 
 
-def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> dict:
+def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None, extra_rows=None) -> dict:
     import tensorflow as tf
     from tensorflow import keras
 
@@ -253,8 +255,13 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
     rep = scoring.report(y[val_rows], p_val, y[test_rows], p_test, seed=int(cfg.get("seed", 0)),
                          test_groups=prep.uids[test_rows])
 
+    extra = {}
+    if extra_rows is not None:          # stacking: score held-out training rows of this fold
+        p_extra, _ = model.predict(pack(model, a, extra_rows), batch_size=bs, verbose=0)
+        extra = {"extra_cids": prep.cids[extra_rows], "extra_y": y[extra_rows],
+                 "extra_p": p_extra.ravel()}
     np.savez_compressed(
-        run.path("predictions.npz"),
+        run.path("predictions.npz"), **extra,
         val_cids=prep.cids[val_rows], val_y=y[val_rows], val_p=p_val.ravel(),
         test_cids=prep.cids[test_rows], test_y=y[test_rows], test_p=p_test.ravel(),
         # per-edit attention (MIL weights, or attention received under mean pooling) and the
@@ -292,7 +299,9 @@ def train_stage2(cfg: dict, prep_raw, masks: dict, run, *, train_rows=None) -> d
             "class_weight": class_weight, "loss": loss_name,
             "author_weighting": t_cfg.get("author_weighting"),
             "weight_decay": t_cfg.get("weight_decay"), "pooling": kwargs.get("pooling"),
-            "residual": kwargs.get("residual"),
+            "residual": kwargs.get("residual"), "edit_layers": kwargs.get("edit_layers"),
+            "text_emb_dim": kwargs.get("text_emb_dim"),
+            "tabular_columns": len(prep.tabular_columns),
             "params": int(model.count_params()),
             "tensorflow": tf.__version__, "keras": keras_version(), "precision": precision,
             "batch_size": batch_size,

@@ -52,7 +52,7 @@ def main() -> int:
 
     task = args.task or src_cfg["task"]
     split = args.split or src_cfg["split"]
-    seed = int(src_cfg.get("seed", 0))
+    seed = int(src_cfg.get("split_seed", src_cfg.get("seed", 0)))
 
     cfg = {**src_cfg, "stage": "stage2_evaluation", "task": task, "split": split,
            "source_run": str(src), "tag": f"from_{src_cfg['task']}"}

@@ -65,7 +65,7 @@ def main() -> int:
         raise SystemExit(f"{enc} has no edit_encoder.npz")
 
     devices = configure_device(base.get("device", "auto"))
-    task, split, split_seed = base["task"], base["split"], int(base["seed"])
+    task, split, split_seed = base["task"], base["split"], int(base.get("split_seed", base["seed"]))
     fractions = [float(f) for f in base.get("fractions", [0.1, 0.25, 0.5, 1.0])]
     seeds = [int(s) for s in base.get("seeds", [split_seed])]
 

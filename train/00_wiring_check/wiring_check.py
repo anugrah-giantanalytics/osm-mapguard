@@ -174,6 +174,45 @@ def main() -> int:
         return {"pooling": res["training"]["pooling"]}
     check("stage2 full model with round-1 mean pooling", meanpool)
 
+    def v3():
+        """v3 options together: pretrained text embeddings as an input, two transformer blocks
+        over edits, and fold scoring for stacking (extra_rows)."""
+        from dataclasses import replace as dc_replace
+
+        tf.keras.backend.clear_session()
+        cfg = base_cfg(branch_sets[-1])
+        cfg["model"]["edit_layers"] = 2
+        cfg["train"]["mixed_precision"] = "auto"
+        prep = select_branches(raw, branch_sets[-1])
+        emb = np.random.default_rng(3).normal(size=(len(prep.y), 768)).astype("float32")
+        emb /= np.linalg.norm(emb, axis=1, keepdims=True)
+        prep = dc_replace(prep, arrays={**prep.arrays, "text_emb": emb})
+        held = np.zeros(len(prep.y), bool)
+        held[np.flatnonzero(masks["train"])[:20]] = True
+        fold_train = masks["train"] & ~held
+        run = Run(cfg, tag="v3", root=tmp)
+        try:
+            res = train_stage2(cfg, prep, masks, run, train_rows=fold_train, extra_rows=held)
+        finally:
+            tf.keras.mixed_precision.set_global_policy("float32")
+        for when in ("before_training", "after_training"):
+            if not res["masking_checks"][when]["masking_holds"]:
+                raise AssertionError(f"masking leaks with v3 options {when}")
+        z = np.load(run.path("predictions.npz"))
+        if len(z["extra_p"]) != 20 or not np.isfinite(z["extra_p"]).all():
+            raise AssertionError("fold scoring (extra_rows) did not return 20 finite scores")
+        kw = json.loads(run.path("model_config.json").read_text())["build_kwargs"]
+        if kw.get("text_emb_dim") != 768 or kw.get("edit_layers") != 2:
+            raise AssertionError(f"v3 options not recorded in model_config: {kw}")
+        tf.keras.backend.clear_session()
+        m = build(kw)
+        m.load_weights(str(run.path("model.weights.h5")))
+        if "text_emb" not in [n for n in (t.name.split(":")[0] for t in m.inputs)]:
+            raise AssertionError("rebuilt model has no text_emb input")
+        return {"params": res["training"]["params"], "precision": res["training"]["precision"],
+                "extra_scored": int(len(z["extra_p"]))}
+    check("v3: text embeddings + 2 transformer blocks + fold scoring", v3)
+
     # 2. weights round-trip through model_config + rebuild -----------------------------
     def roundtrip():
         tf.keras.backend.clear_session()

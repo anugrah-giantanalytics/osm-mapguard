@@ -46,7 +46,7 @@ def main() -> int:
 
     from mapguard.evaluation.metrics import average_precision, bootstrap_ci, roc_auc
 
-    task, split, seed = src_cfg["task"], src_cfg["split"], int(src_cfg["seed"])
+    task, split, seed = src_cfg["task"], src_cfg["split"], int(src_cfg.get("split_seed", src_cfg["seed"]))
     store = data_contract.load(src_cfg.get("data", {}).get("feature_store"), task=task)
     prep = preprocess.prepare(store, src_cfg)
     if list(prep.edit_columns) != mcfg["edit_columns"]:

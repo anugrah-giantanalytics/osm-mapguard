@@ -32,6 +32,12 @@
     },
     "b0_leak_auc": 0.85,
     "hybrid": true,
-    "author_weighting": "sqrt"
+    "author_weighting": "sqrt",
+    "hybrid_variants": [
+      "base",
+      "ctx",
+      "emb",
+      "ctx_emb"
+    ]
   }
 }

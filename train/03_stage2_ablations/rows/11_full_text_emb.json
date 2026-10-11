@@ -1,0 +1,1 @@
+{"name": "full_text_emb", "purpose": "v3: + pretrained multilingual sentence embeddings of comment and tag text (frozen) next to the char-CNN", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "text_emb": true}}}

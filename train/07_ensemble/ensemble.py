@@ -81,13 +81,27 @@ def main() -> int:
         return (np.array([d["y"][c] for c in ids]), np.array([d[f][c] for c in ids]),
                 np.array([h[f][c] for c in ids]), [uid.get(c) for c in ids])
 
-    yv, dv, hv, _ = arrays("val")
+    yv, dv, hv, gv = arrays("val")
     yt, dt, ht, gt = arrays("test")
     from mapguard.evaluation.metrics import average_precision
 
     grid = [round(w, 2) for w in np.linspace(0, 1, 21)]
     val_scores = {w: float(average_precision(yv, w * dv + (1 - w) * hv)) for w in grid}
-    best_w = max(val_scores, key=val_scores.get)
+    single_w = max(val_scores, key=val_scores.get)
+    # v3: bagged weight - the best weight on each of 200 author-bootstrap resamples of the
+    # validation rows, averaged. One argmax on a small validation set overfits (T1, round 2c);
+    # measured on round-2c predictions it is never worse than +-0.0007 and +0.003 on T2.
+    rng = np.random.default_rng(0)
+    g = np.array([str(u) if u is not None else f"unknown_{i}" for i, u in enumerate(gv)])
+    authors, inv = np.unique(g, return_inverse=True)
+    rows_of = [np.flatnonzero(inv == i) for i in range(len(authors))]
+    picks = []
+    for _ in range(200):
+        idx = np.concatenate([rows_of[i] for i in rng.integers(0, len(authors), len(authors))])
+        if yv[idx].min() == yv[idx].max():
+            continue
+        picks.append(max(grid, key=lambda w: average_precision(yv[idx], w * dv[idx] + (1 - w) * hv[idx])))
+    best_w = round(float(np.mean(picks)), 3) if picks else single_w
     rep = scoring.report(yv, best_w * dv + (1 - best_w) * hv, yt, best_w * dt + (1 - best_w) * ht,
                          test_groups=gt)
     parts = {name: scoring.headline(scoring.report(yv, pv, yt, pt, test_groups=gt))
@@ -98,6 +112,9 @@ def main() -> int:
            "deep_run": str(deep), "hybrid_run": str(hyb)}
     run = Run(cfg)
     run.finish({"headline": scoring.headline(rep), "evaluation": rep, "deep_weight": best_w,
+                "single_argmax_weight": single_w, "weight_rule": "mean over 200 author bootstraps",
+                "bootstrap_weight_spread": [round(float(np.percentile(picks, 5)), 3),
+                                            round(float(np.percentile(picks, 95)), 3)] if picks else None,
                 "validation_pr_auc_by_weight": val_scores, "components": parts})
     print(json.dumps({"deep_weight": best_w, "ensemble": scoring.headline(rep),
                       "deep": parts["deep"]["test_pr_auc"], "hybrid": parts["hybrid"]["test_pr_auc"]},

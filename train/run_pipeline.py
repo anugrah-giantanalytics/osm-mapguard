@@ -11,7 +11,9 @@ training logic of its own - and wires one stage's output into the next:
     00 wiring_check            proves TensorFlow and the model work here; stops if it fails
     01 baselines               also freezes the split every later stage reuses
     02 stage2_supervised       R1b full model, plus the Ovid-equivalent reproduction (ovid task)
+    08 text_embeddings         v3: pretrained multilingual sentence embeddings (runs before 01)
     07 ensemble                deep model + hybrid trees, blend weight chosen on validation
+    09 stack                   v3: deep model as an out-of-fold feature inside the trees
     04 stage1_pretrain         runs before 03 so the ablation grid can include row 07
        stage1_zero_shot        on the encoder 04 just wrote
     03 stage2_ablations        7 rows x 2 seeds, row 07 uses the stage 04 encoder
@@ -41,7 +43,8 @@ from pathlib import Path
 TRAIN = Path(__file__).resolve().parent
 REPO = TRAIN.parent
 RUNS = REPO / "experiments" / "runs"
-ORDER = ["00", "01", "02", "07", "04", "03", "05", "06"]
+ORDER = ["00", "08", "01", "02", "07", "09", "04", "03", "05", "06"]
+SPLIT_SEED = 20260904            # the frozen splits; --seed never changes the test set
 
 # Temporal cutoffs chosen so both sides hold both classes (see RUNBOOK.md):
 #   ovid: train 2014-2018, test 2019 (3,360 changesets, 41% damaging)
@@ -98,6 +101,10 @@ class Pipeline:
              "--set", f"device={self.args.device}"]
         if self.args.float32:
             s += ["--set", "train.mixed_precision=off"]
+        if self.args.seed is not None:
+            s += ["--set", f"seed={self.args.seed}", "--set", f"split_seed={SPLIT_SEED}"]
+            if not self.args.quick:
+                s += ["--set", f"tag=s{self.args.seed}"]
         if self.args.task == "ovid_modern":
             # train on A, test on R: R has no adiff geometry, so neither may the model
             s += ["--set", "model.exclude_columns=adiff_only"]
@@ -159,6 +166,11 @@ def main() -> int:
     ap.add_argument("--quick", action="store_true", help="smoke test: tiny epochs, never report")
     ap.add_argument("--cutoff", default=None, help="override the temporal cutoff")
     ap.add_argument("--keep-going", action="store_true", help="continue after a failed stage")
+    ap.add_argument("--ablation-rows", default=None,
+                    help="comma list of ablation row names for stage 03 (default: all rows)")
+    ap.add_argument("--ablation-seeds", default=None, help="comma list of seeds for stage 03")
+    ap.add_argument("--seed", type=int, default=None,
+                    help="model seed for a multi-seed run; the split stays frozen")
     args = ap.parse_args()
     args.feature_store = Path(args.feature_store).resolve()
     wanted = {s.strip().zfill(2) for s in args.stages.split(",") if s.strip()}
@@ -181,6 +193,18 @@ def main() -> int:
             continue
         if s == "00":
             if stop(p.run("00 wiring_check", "00_wiring_check/wiring_check.py", "--device", args.device)):
+                break
+        elif s == "08":
+            # optional input: a failure (no network, no torch) only removes the emb variants
+            # never --limit here: a partial file in the real store would be read as complete
+            if not p.run("08 text embeddings", "08_text_embeddings/embed_text.py",
+                         "--feature-store", str(args.feature_store)):
+                p.summary["stages"][-1].update(ok=True, optional_failed=True)
+                print("08 failed - embedding variants and rows will be skipped", flush=True)
+        elif s == "09":
+            q = p.quick("train.epochs=1", "stack.folds=2")
+            if stop(p.run("09 stack (deep out-of-fold score inside the trees)",
+                          "09_stack/stack_train.py", *p.common(), *q)):
                 break
         elif s == "01":
             if stop(p.run("01 baselines", "01_baselines/baselines_train.py", *p.common())):
@@ -207,6 +231,10 @@ def main() -> int:
         elif s == "03":
             extra = ["--set", f"pretrained_encoder={json.dumps(str(encoder))}"] if encoder else []
             q = p.quick("train.epochs=1", "seeds=[20260904]")
+            if args.ablation_rows:
+                extra += ["--set", "rows=" + json.dumps(args.ablation_rows.split(","))]
+            if args.ablation_seeds and not args.quick:
+                extra += ["--set", "seeds=" + json.dumps([int(s) for s in args.ablation_seeds.split(",")])]
             if stop(p.run("03 stage2 ablations", "03_stage2_ablations/run_ablations.py",
                           *p.common(), *extra, *q)):
                 break

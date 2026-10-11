@@ -1,0 +1,166 @@
+{
+ "note": "laptop CPU, R1b, same code path as stage 01 (train/01_baselines); object_context from scripts/probes/object_context_extract.py; where from altair/where_job.py",
+ "ovid": {
+  "hybrid": {
+   "pr_auc": [
+    0.899,
+    0.887,
+    0.9105
+   ],
+   "one_per_author": 0.8347,
+   "f1": 0.8181
+  },
+  "hybrid_ctx": {
+   "pr_auc": [
+    0.8966,
+    0.8845,
+    0.9079
+   ],
+   "one_per_author": 0.8311,
+   "f1": 0.8118
+  },
+  "hybrid_where": {
+   "pr_auc": [
+    0.8985,
+    0.8868,
+    0.9098
+   ],
+   "one_per_author": 0.833,
+   "f1": 0.8165
+  },
+  "run_dir": "20261011-180122_ovid_R1b_v3probe"
+ },
+ "T1": {
+  "hybrid": {
+   "pr_auc": [
+    0.8507,
+    0.8227,
+    0.8746
+   ],
+   "one_per_author": 0.8681,
+   "f1": 0.7886
+  },
+  "hybrid_ctx": {
+   "pr_auc": [
+    0.8464,
+    0.8183,
+    0.8696
+   ],
+   "one_per_author": 0.8651,
+   "f1": 0.7772
+  },
+  "run_dir": "20261011-180304_T1_R1b_v3probe"
+ },
+ "revert": {
+  "hybrid": {
+   "pr_auc": [
+    0.9152,
+    0.9008,
+    0.928
+   ],
+   "one_per_author": 0.9135,
+   "f1": 0.8326
+  },
+  "hybrid_ctx": {
+   "pr_auc": [
+    0.9179,
+    0.9033,
+    0.9303
+   ],
+   "one_per_author": 0.9164,
+   "f1": 0.8377
+  },
+  "run_dir": "20261011-180357_revert_R1b_v3probe"
+ },
+ "ovid_modern": {
+  "hybrid": {
+   "pr_auc": [
+    0.9359,
+    0.9289,
+    0.9429
+   ],
+   "one_per_author": 0.8882,
+   "f1": 0.8531
+  },
+  "hybrid_ctx": {
+   "pr_auc": [
+    0.9352,
+    0.9275,
+    0.9424
+   ],
+   "one_per_author": 0.8858,
+   "f1": 0.8511
+  },
+  "run_dir": "20261011-180523_ovid_modern_R1b_v3probe"
+ },
+ "ovid_tuned": {
+  "pr_auc": [
+   0.8997,
+   0.8877,
+   0.9107
+  ],
+  "one_per_author": 0.8381,
+  "f1": 0.8198,
+  "tuning": {
+   "grid": [
+    {
+     "cv_pr_auc": 0.8799,
+     "max_depth": 4,
+     "learning_rate": 0.03,
+     "n_estimators": 800,
+     "subsample": 0.8,
+     "colsample_bytree": 0.8
+    },
+    {
+     "cv_pr_auc": 0.8746,
+     "max_depth": 4,
+     "learning_rate": 0.08,
+     "n_estimators": 400,
+     "subsample": 0.8,
+     "colsample_bytree": 0.8
+    },
+    {
+     "cv_pr_auc": 0.8779,
+     "max_depth": 6,
+     "learning_rate": 0.03,
+     "n_estimators": 800,
+     "subsample": 0.8,
+     "colsample_bytree": 0.8
+    },
+    {
+     "cv_pr_auc": 0.8734,
+     "max_depth": 6,
+     "learning_rate": 0.08,
+     "n_estimators": 400,
+     "subsample": 0.8,
+     "colsample_bytree": 0.8
+    },
+    {
+     "cv_pr_auc": 0.8775,
+     "max_depth": 8,
+     "learning_rate": 0.03,
+     "n_estimators": 800,
+     "subsample": 0.8,
+     "colsample_bytree": 0.8
+    },
+    {
+     "cv_pr_auc": 0.8737,
+     "max_depth": 8,
+     "learning_rate": 0.08,
+     "n_estimators": 400,
+     "subsample": 0.8,
+     "colsample_bytree": 0.8
+    }
+   ],
+   "chosen": {
+    "max_depth": 4,
+    "learning_rate": 0.03,
+    "n_estimators": 800,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8
+   },
+   "rule": "3-fold GroupKFold on training rows"
+  },
+  "run_dir": "20261011-180753_ovid_R1b_v3probe_tune"
+ }
+}

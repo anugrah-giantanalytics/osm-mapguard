@@ -462,3 +462,26 @@ Evidence: `experiments/rounds/r2_2026-10-07_altair_h100/README.md`,
   cross-validate the blend weight.
 - [ ] Final run: 3–5 seeds of the chosen setup for every headline number.
 - [ ] Temporal baselines (XGBoost / hybrid on the temporal splits) - still open from R2-A.
+
+## Round 3 — model v3 (built 2026-10-11, demo 2026-10-19..21)
+
+Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured against v2.1.
+
+- [x] Ensemble blend weight: bagged over 200 author bootstraps of validation (stage 07). Tested on
+  round-2c predictions: within ±0.0007 everywhere, T2 +0.003; T1 weight spread 0.0–0.7 shows a
+  single weight is unreliable there.
+- [x] `split_seed` separate from `seed`: multi-seed runs keep the frozen test set.
+- [x] Object context extracted (what each modified/deleted object was) - `C:/osm-data/probes/`.
+- [x] Object context probe on the hybrid (CPU, 4 tasks): no gain (ovid −0.002, ovid_modern −0.001,
+  T1 −0.004, revert +0.003; all inside 95% intervals). Negative result; real but redundant signal.
+  `results/probes_v3_2026-10-11.json`.
+- [x] Code: hybrid variants base / ctx / emb / ctx_emb; deep `text_emb`, `context_tabular`,
+  `edit_layers`; stage 08 text embeddings; stage 09 stacking (5 author folds, out-of-fold).
+- [x] Ablation rows 11–14 (full_text_emb, full_context, full_2layers, full_v3); wiring check v3.
+- [x] Job script reads a per-round step plan (`altair/plans/`); zip ships side tables.
+- [ ] Independent review of the v3 code before the cluster run.
+- [ ] Round 3 on the H100 (`altair/plans/r3_v3_explore.txt`, ~2 h).
+- [ ] Decide the final setup from round 3 (adopt only gains beyond seed spread and with an
+  author-bootstrap interval excluding zero).
+- [ ] Final round: adopted setup × 5 seeds on all six tasks + temporal.
+- [ ] Report, README, dataset release v1.2.0 (side tables), visual (after the model is final).

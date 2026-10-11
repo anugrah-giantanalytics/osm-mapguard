@@ -1,0 +1,1 @@
+{"name": "full_v3", "purpose": "v3: text embeddings + object context + two transformer blocks together", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "text_emb": true, "context_tabular": true, "edit_layers": 2}}}

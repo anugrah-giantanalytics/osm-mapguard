@@ -37,6 +37,8 @@ def _occlude(arrays: dict, branch: str, edit_columns, tabular_columns, rng) -> d
         a["tabular"][:, t_idx] = 0.0
     elif branch == "B2":
         a["text"][:] = 0
+        if "text_emb" in a:
+            a["text_emb"][:] = 0.0
         t_idx = [i for i, c in enumerate(tabular_columns) if c in TEXT_TABULAR_COLUMNS]
         a["tabular"][:, t_idx] = 0.0
     elif branch == "B3":

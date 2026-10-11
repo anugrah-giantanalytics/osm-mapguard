@@ -198,6 +198,8 @@ def build_model(
     token_buckets: int = 1 << 14,
     pooling: str = "mil",
     residual: bool = False,
+    edit_layers: int = 1,
+    text_emb_dim: int = 0,
 ) -> keras.Model:
     """The full model, or any subset of branches for the ablation grid.
 
@@ -278,6 +280,23 @@ def build_model(
     if residual:
         attended = layers.Add(name="edit_residual")([x, attended])
         attended = layers.LayerNormalization(name="edit_residual_norm")(attended)
+    # v3: further full transformer encoder blocks over the edits (feed-forward + self-attention,
+    # each with residual + LayerNorm). edit_layers=1 is exactly v2.1. Requires residual.
+    if edit_layers > 1 and not residual:
+        raise ValueError("edit_layers > 1 needs residual=True")
+    pair_mask = PairwiseMask(name="edit_pair_mask_deep")(mask_in) if edit_layers > 1 else None
+    width = int(attended.shape[-1])
+    for i in range(2, edit_layers + 1):
+        ff = layers.Dense(2 * width, activation="relu", name=f"edit_ffn{i}_a")(attended)
+        ff = layers.Dense(width, name=f"edit_ffn{i}_b")(ff)
+        ff = layers.Dropout(dropout, name=f"edit_ffn{i}_dropout")(ff)
+        attended = layers.LayerNormalization(name=f"edit_ffn{i}_norm")(
+            layers.Add(name=f"edit_ffn{i}_residual")([attended, ff]))
+        att_i, scores = layers.MultiHeadAttention(
+            num_heads=heads, key_dim=max(8, embed // heads), name=f"edit_attention{i}"
+        )(attended, attended, attention_mask=pair_mask, return_attention_scores=True)
+        attended = layers.LayerNormalization(name=f"edit_attention{i}_norm")(
+            layers.Add(name=f"edit_attention{i}_residual")([attended, att_i]))
     if pooling == "mil":
         z_att, a = GatedAttentionPool(32, name="edit_mil_attention")([attended, mask_in])
         z_max = MaskedMax(name="edit_max")([attended, mask_in])
@@ -301,6 +320,13 @@ def build_model(
             for w in (3, 5, 7)
         ]
         fusion.append(layers.Concatenate(name="b2_text")(conv))
+        # v3: pretrained multilingual sentence embeddings of comment + tag text (frozen,
+        # precomputed by train/08_text_embeddings), next to the char-CNN.
+        if text_emb_dim:
+            temb_in = keras.Input(shape=(text_emb_dim,), name="text_emb")
+            inputs["text_emb"] = temb_in
+            te = layers.Dense(64, activation="relu", name="b2_text_emb_dense")(temb_in)
+            fusion.append(layers.Dropout(dropout, name="b2_text_emb_dropout")(te))
 
     # --- B4 user history
     if "B4" in branches:
