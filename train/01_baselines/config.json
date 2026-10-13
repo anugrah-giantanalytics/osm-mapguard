@@ -35,9 +35,7 @@
     "author_weighting": "sqrt",
     "hybrid_variants": [
       "base",
-      "ctx",
-      "emb",
-      "ctx_emb"
+      "emb"
     ]
   }
 }

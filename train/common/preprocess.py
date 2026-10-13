@@ -320,7 +320,15 @@ def add_side_tables(prep: Prepared, store, m: dict) -> Prepared:
 
     arrays, notes, cols = dict(prep.arrays), list(prep.notes), prep.tabular_columns
     branches = set(m.get("branches", ()))
-    if m.get("text_emb") and "B2" in branches:
+    if m.get("text_emb") == "auto" and "B2" in branches:
+        # main runs: use the embeddings when stage 08 produced them; recorded either way
+        # (results.json training.text_emb_dim is 0 when they were absent)
+        emb = extras.text_embeddings(store, prep.cids)
+        if emb is None:
+            notes.append("text_emb=auto: no complete text_embeddings.npz - trained without it")
+        else:
+            arrays["text_emb"] = np.concatenate([emb["comment"], emb["tags"]], axis=1).astype("float32")
+    elif m.get("text_emb") and "B2" in branches:
         emb = extras.text_embeddings(store, prep.cids)
         if emb is None:
             raise SystemExit("model.text_emb is on but text_embeddings.npz is not in the feature "

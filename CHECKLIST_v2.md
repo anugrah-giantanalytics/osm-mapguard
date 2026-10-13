@@ -487,8 +487,11 @@ Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured 
   Stack lifts ovid above the hybrid (0.903 vs 0.899, F1 0.821 vs 0.811; Ovid 0.817) - to be
   confirmed with seeds + author bootstrap. edit_layers=2: +0.0034 (~2x seed sd). Object context
   in the deep model: −0.004. Ran twice concurrently (double launch); embeddings failed (numpy).
-- [ ] Fix round-3 problems: launch lock, embedding env without the numpy pin, explicit run
-  pairing in stage 07, summarise_results without a base row.
+- [x] Fix round-3 problems (2026-10-13): launch lock with PID + heartbeat (tested: second launch
+  refused, lock released at the end); embedding env pinned to numpy-1.22-compatible versions in a
+  fresh folder; stage 07 pairs this invocation's own runs; summary works without a base row.
+- [x] Adopted from round 3: edit_layers=2 as deep default; object context dropped.
+- [ ] Round 4 (`altair/plans/r4_seeds.txt`): embeddings + 3 seeds × 6 tasks + temporal.
 - [ ] Embeddings run (hybrid emb, full_text_emb, full_v3) - untested so far.
 - [ ] Decide the final setup from round 3 (adopt only gains beyond seed spread and with an
   author-bootstrap interval excluding zero).

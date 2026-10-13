@@ -29,7 +29,9 @@
     "dropout": 0.3,
     "raster": null,
     "pooling": "mil",
-    "residual": true
+    "residual": true,
+    "edit_layers": 2,
+    "text_emb": "auto"
   },
   "train": {
     "epochs": 40,

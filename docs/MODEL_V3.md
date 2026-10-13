@@ -1,6 +1,6 @@
 # MapGuard v3 — what changes after rounds 2–2c, and how each change is tested
 
-Status 2026-10-11: code ready, **not trained yet**. Round 3 (`altair/plans/r3_v3_explore.txt`)
+Status 2026-10-13: round 3 run (2026-10-12); round 4 (embeddings + 3 seeds) built. Round 3 (`altair/plans/r3_v3_explore.txt`)
 measures every item below against v2.1 on the same frozen split. Nothing here is a result until
 that round reports it. Round evidence: `experiments/rounds/r2*/README.md`.
 
@@ -54,6 +54,28 @@ bottleneck. Kept as an option (`hybrid_variants: tuned`), not run by default.
 (WHERE, object context, tuning). The likely ceiling is label noise: a revert is not always
 vandalism. The remaining candidates (embeddings, transformer blocks, stacking) are measured
 in round 3.
+
+
+## Round 3 results (2026-10-12) and the round-4 decision
+
+Full report: `experiments/rounds/r3_2026-10-12_altair_h100_v3explore/README.md`.
+
+| Change | Round 3 | Decision |
+|---|---|---|
+| Stacking (stage 09) | ovid 0.903 vs hybrid 0.899, F1 0.821 vs 0.811 (Ovid 0.817); T1 worse (0.847 vs 0.855) | candidate - confirm with 3 seeds + author bootstrap |
+| `edit_layers=2` | +0.0034 PR-AUC (~2× seed sd), +0.004 one-per-author | **adopted** as the deep default |
+| Object context (deep) | −0.004 | dropped |
+| Object context (hybrid) | within ±0.007 on all tasks | dropped |
+| Text embeddings | not tested - install failed (numpy conflict) | round 4, fixed environment |
+| Ensemble | best on ovid_modern and both revert tasks | kept, explicit run pairing |
+
+GPU nondeterminism measured: the same seed twice differs by up to 0.004 PR-AUC.
+
+Round 4 (`altair/plans/r4_seeds.txt`): embeddings, ablation rows full / full_2layers /
+full_text_emb / full_2layers_text_emb × 3 seeds, then every task × 3 seeds (frozen split) with
+hybrid (base, emb), deep v3 (edit_layers 2, text_emb auto), ensemble and stack, plus temporal
+evaluation. The deep model uses the embeddings only if stage 08 succeeds; whether it did is
+recorded in every run (`training.text_emb_dim`).
 
 ## Leakage rules (unchanged, extended)
 

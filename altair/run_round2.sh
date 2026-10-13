@@ -73,6 +73,35 @@ RDIR="$BASE/rounds/$ROUND"
 APP="$RDIR/app"
 LOGS="$RDIR/logs"
 mkdir -p "$LOGS/steps" "$RDIR/.done" "$BASE/where"
+
+# One job per round. Round 3 was launched twice and both copies ran the whole plan at once on one
+# GPU (3-5x slower, duplicate runs). A second launch now stops here. mkdir is atomic on NFS.
+LOCK="$RDIR/.lock"
+if ! mkdir "$LOCK" 2>/dev/null; then
+    other="$(cat "$LOCK/pid" 2>/dev/null)"
+    beat="$(cat "$LOCK/heartbeat" 2>/dev/null || echo 0)"
+    age=$(( $(date +%s) - ${beat:-0} ))
+    # alive if its PID answers here, or (another Jupyter job = other PID namespace) if its
+    # heartbeat is fresh: the running job rewrites it every 60 s
+    same_host=0; [ "$(cat "$LOCK/host" 2>/dev/null)" = "$(hostname)" ] && same_host=1
+    if { [ "$same_host" = 1 ] && [ -n "$other" ] && kill -0 "$other" 2>/dev/null; } || [ "$age" -lt 300 ]; then
+        echo "[$(ts)] round $ROUND is already running (PID $other, $(cat "$LOCK/started" 2>/dev/null))."
+        echo "Check progress: cat $LOGS/STATUS - nothing was started."
+        exit 3
+    fi
+    echo "[$(ts)] stale lock from PID ${other:-unknown} (not running) - taking over"
+    rm -rf "$LOCK"; mkdir "$LOCK" || { echo "could not take the lock"; exit 3; }
+fi
+echo $$ > "$LOCK/pid"; hostname > "$LOCK/host"; date > "$LOCK/started"; date +%s > "$LOCK/heartbeat"
+# rewritten every 60 s while this job lives (temp + mv: a reader never sees an empty file);
+# stops by itself if this job is killed, so the lock goes stale after 5 minutes
+( while [ -d "$LOCK" ] && kill -0 $$ 2>/dev/null; do
+      date +%s > "$LOCK/heartbeat.tmp" 2>/dev/null && mv -f "$LOCK/heartbeat.tmp" "$LOCK/heartbeat" 2>/dev/null
+      sleep 60
+  done ) &
+HEARTBEAT_PID=$!
+# until on_exit is installed (below), any early exit still releases the lock
+trap 'kill "$HEARTBEAT_PID" 2>/dev/null; rm -rf "$LOCK"' EXIT
 exec > >(tee -a "$LOGS/job.log") 2>&1
 
 status() { echo "$(ts)  $*" > "$LOGS/STATUS"; say "STATUS: $*"; }
@@ -168,6 +197,8 @@ on_exit() {
     echo "JOB_TOTAL,,,${total},,$JOB_ID" >> "$LOGS/timing.csv"
     [ "$FINAL" = "unknown" ] && status "STOPPED before finishing (killed or error) - run the same command again to resume"
     package
+    kill "$HEARTBEAT_PID" 2>/dev/null
+    [ "$(cat "$LOCK/pid" 2>/dev/null)" = "$$" ] && rm -rf "$LOCK"
 }
 trap on_exit EXIT
 trap 'say "received TERM"; exit 143' TERM
@@ -201,14 +232,27 @@ pipeline() { "$PY" -u train/run_pipeline.py --feature-store data/interim "$@"; }
 
 # torch + sentence-transformers live in their own folder, seen only by steps flagged
 # install_st: they must not shadow packages the image's TensorFlow depends on.
-ST_DIR="$BASE/.pydeps_st"
+# Round 3: the latest transformers (5.x) needs a newer numpy than the image's 1.22.2 and crashed
+# on import. The embedding step reads the store with pandas built for numpy 1.22, so numpy stays
+# pinned and the libraries are pinned to versions that support it (2024 releases).
+# .pydeps_st holds the broken round-3 install and is not used any more.
+ST_DIR="$BASE/.pydeps_st2"
+ST_PINS=("sentence-transformers==2.7.0" "transformers==4.40.2" "tokenizers<0.20" "huggingface-hub<0.26" "torch==2.5.1")
+st_ok() { PYTHONPATH="$ST_DIR" "$PY" -c "import numpy, torch; from sentence_transformers import SentenceTransformer; print('embedding env ok: numpy', numpy.__version__, 'torch', torch.__version__, 'cuda', torch.cuda.is_available())"; }
 install_st() {
-    if PYTHONPATH="$ST_DIR" "$PY" -c "import sentence_transformers" >/dev/null 2>&1; then return 0; fi
+    if st_ok >/dev/null 2>&1; then st_ok; return 0; fi
     local NUMPY
     NUMPY="$("$PY" -c 'import numpy; print(numpy.__version__)')"
-    say "installing sentence-transformers + torch into $ST_DIR (numpy pinned at $NUMPY) - a few minutes"
-    "$PY" -m pip install -q --target "$ST_DIR" sentence-transformers "numpy==$NUMPY" \
-        || say "WARNING: sentence-transformers install failed - embedding variants will be skipped"
+    say "installing ${ST_PINS[*]} into $ST_DIR (numpy pinned at $NUMPY) - several minutes"
+    # install beside, move into place only if it imports: an interrupted install never
+    # leaves a half-filled $ST_DIR that pip --target would then refuse to repair
+    rm -rf "$ST_DIR.tmp"
+    if "$PY" -m pip install -q --target "$ST_DIR.tmp" "${ST_PINS[@]}" "numpy==$NUMPY" \
+       && PYTHONPATH="$ST_DIR.tmp" "$PY" -c "from sentence_transformers import SentenceTransformer"; then
+        rm -rf "$ST_DIR"; mv "$ST_DIR.tmp" "$ST_DIR"; st_ok
+    else
+        say "WARNING: embedding environment failed to install or import - embedding variants will be skipped"
+    fi
 }
 
 trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; s="${s%"${s##*[![:space:]]}"}"; printf '%s' "$s"; }

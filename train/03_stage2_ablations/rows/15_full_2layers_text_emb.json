@@ -1,0 +1,1 @@
+{"name": "full_2layers_text_emb", "purpose": "round-4 candidate: two transformer blocks + pretrained text embeddings (no object context)", "overrides": {"model": {"branches": ["B1", "B2", "B3", "B4", "B5", "B6"], "edit_layers": 2, "text_emb": true}}}

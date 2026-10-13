@@ -55,11 +55,13 @@ name | flags | run_pipeline.py arguments
 ```
 
 flags: `fatal` (stop the job if it fails), `install_st` (install torch + sentence-transformers
-into `.pydeps_st`, visible to that step only), `where` (run the WHERE job). Re-running the
-same zip skips finished steps. Plans so far:
+into `.pydeps_st2`, visible to that step only), `where` (run the WHERE job). Re-running the
+same zip skips finished steps. A round can only run once at a time: a second launch
+exits with "already running" (lock with PID + heartbeat in `rounds/<round>/.lock`). Plans so far:
 
 | Plan | What | Time (H100, 1 CPU core) |
 |---|---|---|
-| `r3_v3_explore.txt` | embeddings, smoke, v3 ablations (5 rows × 3 seeds), all six tasks with hybrid variants + stacking | ~2 h |
+| `r3_v3_explore.txt` | embeddings, smoke, v3 ablations (5 rows × 3 seeds), all six tasks with hybrid variants + stacking | ~2 h (ran 2026-10-12) |
+| `r4_seeds.txt` | embeddings (fixed env), smoke, ablations 4 rows × 3 seeds, all six tasks × 3 seeds, temporal | ~4.5–5 h |
 
 Training results are packed into the results zip **before** WHERE starts, and again at the end.

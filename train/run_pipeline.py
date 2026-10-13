@@ -141,6 +141,17 @@ class Pipeline:
         print(f"[{'OK' if ok else 'FAILED'}] {name} in {entry['minutes']} min", flush=True)
         return ok
 
+    def mine(self, stage: str, exclude: str | None = None) -> Path | None:
+        """Newest run of `stage` created by THIS invocation, or None. Stage 07 used to take the
+        globally newest run, which paired runs across two concurrent copies in round 3."""
+        for e in reversed(index_entries()[self.index_start:]):
+            d = Path(e["run_dir"])
+            d = d if d.is_absolute() else REPO / d
+            if (e.get("stage") == stage and e.get("task") == self.args.task and e.get("split") == "R1b"
+                    and (exclude is None or exclude not in d.name) and d.exists()):
+                return d
+        return None
+
     def finish(self) -> int:
         self.summary["runs_created"] = [e["run_dir"] for e in index_entries()[self.index_start:]]
         self.summary["all_ok"] = all(s["ok"] for s in self.summary["stages"])
@@ -249,8 +260,12 @@ def main() -> int:
                           *p.common(), "--set", f"pretrained_encoder={json.dumps(str(encoder))}", *q)):
                 break
         elif s == "07":
+            pair = []
+            deep, hyb = p.mine("stage2_supervised", exclude="ovid_repro"), p.mine("baselines")
+            if deep is not None and hyb is not None:
+                pair = ["--deep", str(deep), "--hybrid", str(hyb)]
             if stop(p.run("07 ensemble (deep + hybrid, weight chosen on validation)",
-                          "07_ensemble/ensemble.py", "--task", t,
+                          "07_ensemble/ensemble.py", "--task", t, *pair,
                           "--feature-store", str(args.feature_store),
                           *(["--quick"] if args.quick else []))):
                 break

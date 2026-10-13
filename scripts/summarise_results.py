@@ -17,6 +17,12 @@ from pathlib import Path
 OVID = {"precision": 0.8035, "recall": 0.8302, "f1": 0.8166, "accuracy": 0.8137}
 
 
+
+def _vs_base(v: dict) -> str:
+    """'+0.0123', or 'n/a' when the ablation set has no base row."""
+    d = v.get("pr_auc_change_vs_base")
+    return "n/a" if d is None else format(d, "+.4f")
+
 def load(p: Path) -> dict:
     return json.loads(p.read_text(encoding="utf-8"))
 
@@ -127,7 +133,7 @@ def main() -> int:
     if S["ablations"]:
         L += ["## Ablations (ovid, 2 seeds)", "", "| Row | Branches | PR-AUC mean ± std | vs base |", "|---|---|---|---|"]
         for k, v in S["ablations"].items():
-            L.append(f"| {k} | {'+'.join(v['branches'])} | {v['test_pr_auc_mean']:.4f} ± {v['test_pr_auc_std']:.4f} | {v['pr_auc_change_vs_base']:+.4f} |")
+            L.append(f"| {k} | {'+'.join(v['branches'])} | {v['test_pr_auc_mean']:.4f} ± {v['test_pr_auc_std']:.4f} | {_vs_base(v)} |")
         L.append("")
     if S.get("label_efficiency"):
         L += ["## Label efficiency (ovid, 2 seeds)", "", "| Labels | Scratch | Pretrained | Diff |", "|---|---|---|---|"]
