@@ -1,0 +1,443 @@
+
+================================================================================
+[08:25:32] 00 wiring_check
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/00_wiring_check/wiring_check.py --device auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+PASS  stage2 train B5  (16.0s)
+PASS  stage2 train B1+B5  (16.1s)
+PASS  stage2 train B2+B5  (9.1s)
+2026-10-12 08:26:37.186123: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+PASS  stage2 train B3+B4+B5  (17.0s)
+WARNING:tensorflow:5 out of the last 9 calls to <function Model.make_test_function.<locals>.test_function at 0x7f1678e489d0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B5+B6  (8.3s)
+WARNING:tensorflow:6 out of the last 11 calls to <function Model.make_test_function.<locals>.test_function at 0x7f16ac6a9bd0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B1+B2+B3+B4+B5+B6  (22.1s)
+PASS  stage2 full model with round-1 mean pooling  (19.6s)
+PASS  v3: text embeddings + 2 transformer blocks + fold scoring  (29.3s)
+PASS  weights save -> rebuild -> load  (8.4s)
+PASS  stage1 corruptions + encoder pretrain  (1.3s)
+PASS  stage1 encoder -> stage2 edit_encoder transfer  (20.5s)
+PASS  stage2 full model under mixed precision  (23.8s)
+PASS  encoder from a different split is refused  (0.0s)
+
+{
+  "verdict": "PASS",
+  "tensorflow": "2.12.0",
+  "keras": "2.12.0",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ]
+}
+
+================================================================================
+[08:28:59] 01 baselines
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/01_baselines/baselines_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+B0 tripwire  ROC-AUC 0.6617  -> PASS - weak prior, not leakage
+LogReg       PR-AUC [0.8081, 0.788, 0.8282]
+XGBoost      PR-AUC [0.8602, 0.846, 0.8743]
+hybrid                   PR-AUC [0.8986, 0.8867, 0.9101]  one-per-author 0.8324
+hybrid_ctx               PR-AUC [0.8976, 0.8858, 0.9089]  one-per-author 0.8282
+hybrid_emb               skipped (no side table)
+hybrid_ctx_emb           skipped (no side table)
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/baselines/20261012-082909_ovid_R1b
+
+================================================================================
+[08:29:57] 02 stage2 R1b
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/02_stage2_supervised/stage2_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/40
+2026-10-12 08:30:25.855489: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+50/50 - 35s - loss: 0.0946 - pr_auc: 0.6083 - roc_auc: 0.6359 - val_loss: 0.0621 - val_pr_auc: 0.8545 - val_roc_auc: 0.8613 - 35s/epoch - 708ms/step
+Epoch 2/40
+50/50 - 16s - loss: 0.0594 - pr_auc: 0.7880 - roc_auc: 0.7920 - val_loss: 0.0625 - val_pr_auc: 0.8565 - val_roc_auc: 0.8675 - 16s/epoch - 322ms/step
+Epoch 3/40
+50/50 - 16s - loss: 0.0564 - pr_auc: 0.8158 - roc_auc: 0.8251 - val_loss: 0.0628 - val_pr_auc: 0.8708 - val_roc_auc: 0.8781 - 16s/epoch - 311ms/step
+Epoch 4/40
+50/50 - 9s - loss: 0.0525 - pr_auc: 0.8455 - roc_auc: 0.8513 - val_loss: 0.0659 - val_pr_auc: 0.8813 - val_roc_auc: 0.8821 - 9s/epoch - 186ms/step
+Epoch 5/40
+50/50 - 12s - loss: 0.0504 - pr_auc: 0.8614 - roc_auc: 0.8661 - val_loss: 0.0585 - val_pr_auc: 0.8845 - val_roc_auc: 0.8845 - 12s/epoch - 248ms/step
+Epoch 6/40
+50/50 - 9s - loss: 0.0495 - pr_auc: 0.8679 - roc_auc: 0.8734 - val_loss: 0.0658 - val_pr_auc: 0.8910 - val_roc_auc: 0.8878 - 9s/epoch - 175ms/step
+Epoch 7/40
+50/50 - 18s - loss: 0.0467 - pr_auc: 0.8890 - roc_auc: 0.8936 - val_loss: 0.0613 - val_pr_auc: 0.8946 - val_roc_auc: 0.8912 - 18s/epoch - 360ms/step
+Epoch 8/40
+50/50 - 8s - loss: 0.0438 - pr_auc: 0.9079 - roc_auc: 0.9073 - val_loss: 0.0585 - val_pr_auc: 0.8972 - val_roc_auc: 0.8950 - 8s/epoch - 161ms/step
+Epoch 9/40
+50/50 - 8s - loss: 0.0426 - pr_auc: 0.9183 - roc_auc: 0.9162 - val_loss: 0.0621 - val_pr_auc: 0.8999 - val_roc_auc: 0.8968 - 8s/epoch - 156ms/step
+Epoch 10/40
+50/50 - 9s - loss: 0.0408 - pr_auc: 0.9263 - roc_auc: 0.9249 - val_loss: 0.0638 - val_pr_auc: 0.8992 - val_roc_auc: 0.8990 - 9s/epoch - 184ms/step
+Epoch 11/40
+50/50 - 8s - loss: 0.0383 - pr_auc: 0.9362 - roc_auc: 0.9331 - val_loss: 0.0661 - val_pr_auc: 0.9002 - val_roc_auc: 0.8981 - 8s/epoch - 157ms/step
+Epoch 12/40
+50/50 - 7s - loss: 0.0369 - pr_auc: 0.9421 - roc_auc: 0.9394 - val_loss: 0.0668 - val_pr_auc: 0.8966 - val_roc_auc: 0.8983 - 7s/epoch - 148ms/step
+Epoch 13/40
+50/50 - 7s - loss: 0.0346 - pr_auc: 0.9505 - roc_auc: 0.9482 - val_loss: 0.0660 - val_pr_auc: 0.8993 - val_roc_auc: 0.9025 - 7s/epoch - 137ms/step
+Epoch 14/40
+50/50 - 7s - loss: 0.0329 - pr_auc: 0.9554 - roc_auc: 0.9528 - val_loss: 0.0638 - val_pr_auc: 0.8928 - val_roc_auc: 0.8961 - 7s/epoch - 137ms/step
+Epoch 15/40
+50/50 - 7s - loss: 0.0311 - pr_auc: 0.9604 - roc_auc: 0.9580 - val_loss: 0.0688 - val_pr_auc: 0.8940 - val_roc_auc: 0.9008 - 7s/epoch - 145ms/step
+Epoch 16/40
+50/50 - 7s - loss: 0.0289 - pr_auc: 0.9669 - roc_auc: 0.9641 - val_loss: 0.0710 - val_pr_auc: 0.8910 - val_roc_auc: 0.8961 - 7s/epoch - 143ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_supervised/20261012-083007_ovid_R1b
+
+ovid / R1b
+  test PR-AUC  0.8808  95% CI [0.8673, 0.8955]
+  test ROC-AUC 0.8851
+  PR-AUC at 1% prevalence 0.1283
+  ECE 0.09635
+
+================================================================================
+[08:33:31] 02 Ovid reproduction (R1b, Ovid's features and architecture)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/02_stage2_supervised/stage2_train.py --config /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/02_stage2_supervised/ovid_repro.json --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim" --set device=auto --set tag=ovid_repro
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/40
+50/50 - 6s - loss: 0.5594 - pr_auc: 0.7811 - roc_auc: 0.7869 - val_loss: 0.5916 - val_pr_auc: 0.7819 - val_roc_auc: 0.8194 - 6s/epoch - 123ms/step
+Epoch 2/40
+50/50 - 1s - loss: 0.4731 - pr_auc: 0.8417 - roc_auc: 0.8555 - val_loss: 0.5728 - val_pr_auc: 0.7748 - val_roc_auc: 0.8190 - 1s/epoch - 25ms/step
+Epoch 3/40
+50/50 - 1s - loss: 0.4440 - pr_auc: 0.8613 - roc_auc: 0.8744 - val_loss: 0.5496 - val_pr_auc: 0.8076 - val_roc_auc: 0.8369 - 1s/epoch - 24ms/step
+Epoch 4/40
+50/50 - 1s - loss: 0.4284 - pr_auc: 0.8754 - roc_auc: 0.8836 - val_loss: 0.5581 - val_pr_auc: 0.7998 - val_roc_auc: 0.8310 - 1s/epoch - 24ms/step
+Epoch 5/40
+50/50 - 1s - loss: 0.4145 - pr_auc: 0.8820 - roc_auc: 0.8913 - val_loss: 0.5998 - val_pr_auc: 0.7907 - val_roc_auc: 0.8270 - 1s/epoch - 25ms/step
+Epoch 6/40
+50/50 - 1s - loss: 0.4070 - pr_auc: 0.8853 - roc_auc: 0.8953 - val_loss: 0.5622 - val_pr_auc: 0.8023 - val_roc_auc: 0.8302 - 1s/epoch - 24ms/step
+Epoch 7/40
+50/50 - 1s - loss: 0.3976 - pr_auc: 0.8929 - roc_auc: 0.9003 - val_loss: 0.5805 - val_pr_auc: 0.7907 - val_roc_auc: 0.8255 - 1s/epoch - 24ms/step
+Epoch 8/40
+50/50 - 1s - loss: 0.3915 - pr_auc: 0.8981 - roc_auc: 0.9040 - val_loss: 0.5595 - val_pr_auc: 0.8079 - val_roc_auc: 0.8357 - 1s/epoch - 22ms/step
+Epoch 9/40
+50/50 - 1s - loss: 0.3861 - pr_auc: 0.8999 - roc_auc: 0.9066 - val_loss: 0.5462 - val_pr_auc: 0.8049 - val_roc_auc: 0.8327 - 1s/epoch - 25ms/step
+Epoch 10/40
+50/50 - 1s - loss: 0.3784 - pr_auc: 0.9049 - roc_auc: 0.9106 - val_loss: 0.5351 - val_pr_auc: 0.7943 - val_roc_auc: 0.8334 - 1s/epoch - 24ms/step
+Epoch 11/40
+50/50 - 1s - loss: 0.3748 - pr_auc: 0.9048 - roc_auc: 0.9121 - val_loss: 0.5385 - val_pr_auc: 0.8102 - val_roc_auc: 0.8374 - 1s/epoch - 26ms/step
+Epoch 12/40
+50/50 - 1s - loss: 0.3719 - pr_auc: 0.9098 - roc_auc: 0.9138 - val_loss: 0.5329 - val_pr_auc: 0.8036 - val_roc_auc: 0.8367 - 1s/epoch - 24ms/step
+Epoch 13/40
+50/50 - 1s - loss: 0.3617 - pr_auc: 0.9125 - roc_auc: 0.9184 - val_loss: 0.5310 - val_pr_auc: 0.8205 - val_roc_auc: 0.8417 - 1s/epoch - 26ms/step
+Epoch 14/40
+50/50 - 1s - loss: 0.3585 - pr_auc: 0.9154 - roc_auc: 0.9199 - val_loss: 0.5409 - val_pr_auc: 0.8001 - val_roc_auc: 0.8363 - 1s/epoch - 25ms/step
+Epoch 15/40
+50/50 - 1s - loss: 0.3531 - pr_auc: 0.9200 - roc_auc: 0.9226 - val_loss: 0.5421 - val_pr_auc: 0.8158 - val_roc_auc: 0.8432 - 1s/epoch - 24ms/step
+Epoch 16/40
+50/50 - 1s - loss: 0.3527 - pr_auc: 0.9184 - roc_auc: 0.9223 - val_loss: 0.5403 - val_pr_auc: 0.8165 - val_roc_auc: 0.8429 - 1s/epoch - 25ms/step
+Epoch 17/40
+50/50 - 1s - loss: 0.3466 - pr_auc: 0.9217 - roc_auc: 0.9252 - val_loss: 0.5467 - val_pr_auc: 0.8103 - val_roc_auc: 0.8376 - 1s/epoch - 24ms/step
+Epoch 18/40
+50/50 - 1s - loss: 0.3408 - pr_auc: 0.9259 - roc_auc: 0.9280 - val_loss: 0.5268 - val_pr_auc: 0.8064 - val_roc_auc: 0.8387 - 1s/epoch - 25ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_supervised/20261012-083341_ovid_R1b_ovid_repro
+
+ovid / R1b
+  test PR-AUC  0.823  95% CI [0.803, 0.8434]
+  test ROC-AUC 0.8411
+  PR-AUC at 1% prevalence 0.0583
+  ECE 0.10363
+
+================================================================================
+[08:34:15] 07 ensemble (deep + hybrid, weight chosen on validation)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/07_ensemble/ensemble.py --task ovid --feature-store /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim
+================================================================================
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/ensemble/20261012-083421_ovid_R1b
+{
+ "deep_weight": 0.443,
+ "ensemble": {
+  "test_pr_auc": [
+   0.8989,
+   0.8869,
+   0.911
+  ],
+  "test_roc_auc": [
+   0.8979,
+   0.8879,
+   0.9076
+  ],
+  "test_pr_auc_at_1pct_prevalence": 0.1816,
+  "test_f1_at_val_threshold": 0.8207,
+  "test_ovid_table": {
+   "precision": 0.7911,
+   "recall": 0.8506,
+   "f1": 0.8198,
+   "accuracy": 0.814
+  },
+  "test_author_robust": {
+   "authors": 2562,
+   "one_per_author_n": 2593,
+   "one_per_author_pr_auc": 0.8298,
+   "author_weighted_pr_auc": 0.8236
+  },
+  "test_ece": 0.05716
+ },
+ "deep": [
+  0.8808,
+  0.8673,
+  0.8955
+ ],
+ "hybrid": [
+  0.8986,
+  0.8867,
+  0.9101
+ ]
+}
+
+================================================================================
+[08:34:21] 09 stack (deep out-of-fold score inside the trees)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/09_stack/stack_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim" --set device=auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/40
+2026-10-12 08:34:58.394088: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+40/40 - 50s - loss: 0.1033 - pr_auc: 0.6001 - roc_auc: 0.6179 - val_loss: 0.0665 - val_pr_auc: 0.8404 - val_roc_auc: 0.8412 - 50s/epoch - 1s/step
+Epoch 2/40
+40/40 - 12s - loss: 0.0632 - pr_auc: 0.7518 - roc_auc: 0.7669 - val_loss: 0.0626 - val_pr_auc: 0.8689 - val_roc_auc: 0.8729 - 12s/epoch - 291ms/step
+Epoch 3/40
+40/40 - 10s - loss: 0.0571 - pr_auc: 0.8005 - roc_auc: 0.8138 - val_loss: 0.0619 - val_pr_auc: 0.8708 - val_roc_auc: 0.8721 - 10s/epoch - 251ms/step
+Epoch 4/40
+40/40 - 8s - loss: 0.0532 - pr_auc: 0.8314 - roc_auc: 0.8428 - val_loss: 0.0662 - val_pr_auc: 0.8817 - val_roc_auc: 0.8835 - 8s/epoch - 203ms/step
+Epoch 5/40
+40/40 - 7s - loss: 0.0518 - pr_auc: 0.8426 - roc_auc: 0.8541 - val_loss: 0.0654 - val_pr_auc: 0.8815 - val_roc_auc: 0.8797 - 7s/epoch - 174ms/step
+Epoch 6/40
+40/40 - 7s - loss: 0.0499 - pr_auc: 0.8603 - roc_auc: 0.8696 - val_loss: 0.0628 - val_pr_auc: 0.8870 - val_roc_auc: 0.8838 - 7s/epoch - 166ms/step
+Epoch 7/40
+40/40 - 8s - loss: 0.0478 - pr_auc: 0.8735 - roc_auc: 0.8841 - val_loss: 0.0664 - val_pr_auc: 0.8864 - val_roc_auc: 0.8847 - 8s/epoch - 189ms/step
+Epoch 8/40
+40/40 - 7s - loss: 0.0468 - pr_auc: 0.8817 - roc_auc: 0.8914 - val_loss: 0.0620 - val_pr_auc: 0.8914 - val_roc_auc: 0.8904 - 7s/epoch - 173ms/step
+Epoch 9/40
+40/40 - 7s - loss: 0.0448 - pr_auc: 0.8972 - roc_auc: 0.9037 - val_loss: 0.0733 - val_pr_auc: 0.8968 - val_roc_auc: 0.8948 - 7s/epoch - 170ms/step
+Epoch 10/40
+40/40 - 7s - loss: 0.0419 - pr_auc: 0.9154 - roc_auc: 0.9181 - val_loss: 0.0596 - val_pr_auc: 0.8961 - val_roc_auc: 0.8940 - 7s/epoch - 168ms/step
+Epoch 11/40
+40/40 - 6s - loss: 0.0404 - pr_auc: 0.9235 - roc_auc: 0.9269 - val_loss: 0.0605 - val_pr_auc: 0.9005 - val_roc_auc: 0.8980 - 6s/epoch - 146ms/step
+Epoch 12/40
+40/40 - 6s - loss: 0.0379 - pr_auc: 0.9361 - roc_auc: 0.9363 - val_loss: 0.0616 - val_pr_auc: 0.8972 - val_roc_auc: 0.8960 - 6s/epoch - 140ms/step
+Epoch 13/40
+40/40 - 8s - loss: 0.0365 - pr_auc: 0.9423 - roc_auc: 0.9413 - val_loss: 0.0616 - val_pr_auc: 0.8931 - val_roc_auc: 0.8950 - 8s/epoch - 188ms/step
+Epoch 14/40
+40/40 - 9s - loss: 0.0348 - pr_auc: 0.9491 - roc_auc: 0.9487 - val_loss: 0.0865 - val_pr_auc: 0.8977 - val_roc_auc: 0.8995 - 9s/epoch - 214ms/step
+Epoch 15/40
+40/40 - 14s - loss: 0.0333 - pr_auc: 0.9540 - roc_auc: 0.9528 - val_loss: 0.0676 - val_pr_auc: 0.8848 - val_roc_auc: 0.8936 - 14s/epoch - 355ms/step
+Epoch 16/40
+40/40 - 6s - loss: 0.0301 - pr_auc: 0.9622 - roc_auc: 0.9612 - val_loss: 0.0669 - val_pr_auc: 0.8800 - val_roc_auc: 0.8868 - 6s/epoch - 140ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stack/20261012-083430_ovid_R1b_stack/folds/stack_fold/20261012-083431_ovid_R1b_fold0
+fold 0: trained on 10100, scored 2526 held-out rows
+Epoch 1/40
+40/40 - 29s - loss: 0.0950 - pr_auc: 0.6286 - roc_auc: 0.6472 - val_loss: 0.0838 - val_pr_auc: 0.8218 - val_roc_auc: 0.8350 - 29s/epoch - 726ms/step
+Epoch 2/40
+40/40 - 9s - loss: 0.0606 - pr_auc: 0.7769 - roc_auc: 0.7887 - val_loss: 0.0727 - val_pr_auc: 0.8552 - val_roc_auc: 0.8567 - 9s/epoch - 230ms/step
+Epoch 3/40
+40/40 - 8s - loss: 0.0557 - pr_auc: 0.8168 - roc_auc: 0.8195 - val_loss: 0.0658 - val_pr_auc: 0.8656 - val_roc_auc: 0.8650 - 8s/epoch - 204ms/step
+Epoch 4/40
+40/40 - 8s - loss: 0.0525 - pr_auc: 0.8407 - roc_auc: 0.8470 - val_loss: 0.0639 - val_pr_auc: 0.8786 - val_roc_auc: 0.8751 - 8s/epoch - 206ms/step
+Epoch 5/40
+40/40 - 7s - loss: 0.0512 - pr_auc: 0.8568 - roc_auc: 0.8603 - val_loss: 0.0625 - val_pr_auc: 0.8812 - val_roc_auc: 0.8778 - 7s/epoch - 167ms/step
+Epoch 6/40
+40/40 - 7s - loss: 0.0500 - pr_auc: 0.8648 - roc_auc: 0.8721 - val_loss: 0.0576 - val_pr_auc: 0.8889 - val_roc_auc: 0.8869 - 7s/epoch - 170ms/step
+Epoch 7/40
+40/40 - 6s - loss: 0.0479 - pr_auc: 0.8804 - roc_auc: 0.8808 - val_loss: 0.0695 - val_pr_auc: 0.8883 - val_roc_auc: 0.8838 - 6s/epoch - 144ms/step
+Epoch 8/40
+40/40 - 6s - loss: 0.0466 - pr_auc: 0.8889 - roc_auc: 0.8928 - val_loss: 0.0729 - val_pr_auc: 0.8860 - val_roc_auc: 0.8814 - 6s/epoch - 152ms/step
+Epoch 9/40
+40/40 - 6s - loss: 0.0454 - pr_auc: 0.9016 - roc_auc: 0.9032 - val_loss: 0.0620 - val_pr_auc: 0.8909 - val_roc_auc: 0.8848 - 6s/epoch - 155ms/step
+Epoch 10/40
+40/40 - 8s - loss: 0.0423 - pr_auc: 0.9149 - roc_auc: 0.9162 - val_loss: 0.0639 - val_pr_auc: 0.8975 - val_roc_auc: 0.8938 - 8s/epoch - 189ms/step
+Epoch 11/40
+40/40 - 8s - loss: 0.0409 - pr_auc: 0.9256 - roc_auc: 0.9237 - val_loss: 0.0652 - val_pr_auc: 0.9020 - val_roc_auc: 0.8983 - 8s/epoch - 210ms/step
+Epoch 12/40
+40/40 - 9s - loss: 0.0375 - pr_auc: 0.9375 - roc_auc: 0.9351 - val_loss: 0.0601 - val_pr_auc: 0.8977 - val_roc_auc: 0.8948 - 9s/epoch - 234ms/step
+Epoch 13/40
+40/40 - 6s - loss: 0.0353 - pr_auc: 0.9481 - roc_auc: 0.9450 - val_loss: 0.0710 - val_pr_auc: 0.8980 - val_roc_auc: 0.8943 - 6s/epoch - 154ms/step
+Epoch 14/40
+40/40 - 5s - loss: 0.0333 - pr_auc: 0.9536 - roc_auc: 0.9508 - val_loss: 0.0746 - val_pr_auc: 0.8948 - val_roc_auc: 0.8952 - 5s/epoch - 130ms/step
+Epoch 15/40
+40/40 - 7s - loss: 0.0319 - pr_auc: 0.9583 - roc_auc: 0.9562 - val_loss: 0.0753 - val_pr_auc: 0.8934 - val_roc_auc: 0.8943 - 7s/epoch - 170ms/step
+Epoch 16/40
+40/40 - 5s - loss: 0.0287 - pr_auc: 0.9657 - roc_auc: 0.9631 - val_loss: 0.0758 - val_pr_auc: 0.8898 - val_roc_auc: 0.8913 - 5s/epoch - 132ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stack/20261012-083430_ovid_R1b_stack/folds/stack_fold/20261012-083741_ovid_R1b_fold1
+fold 1: trained on 10101, scored 2525 held-out rows
+Epoch 1/40
+40/40 - 31s - loss: 0.0876 - pr_auc: 0.6144 - roc_auc: 0.6358 - val_loss: 0.0782 - val_pr_auc: 0.8154 - val_roc_auc: 0.8306 - 31s/epoch - 773ms/step
+Epoch 2/40
+40/40 - 9s - loss: 0.0611 - pr_auc: 0.7674 - roc_auc: 0.7832 - val_loss: 0.0633 - val_pr_auc: 0.8477 - val_roc_auc: 0.8609 - 9s/epoch - 230ms/step
+Epoch 3/40
+40/40 - 8s - loss: 0.0559 - pr_auc: 0.8068 - roc_auc: 0.8206 - val_loss: 0.0646 - val_pr_auc: 0.8645 - val_roc_auc: 0.8731 - 8s/epoch - 199ms/step
+Epoch 4/40
+40/40 - 8s - loss: 0.0530 - pr_auc: 0.8338 - roc_auc: 0.8483 - val_loss: 0.0669 - val_pr_auc: 0.8780 - val_roc_auc: 0.8805 - 8s/epoch - 195ms/step
+Epoch 5/40
+40/40 - 8s - loss: 0.0500 - pr_auc: 0.8570 - roc_auc: 0.8690 - val_loss: 0.0624 - val_pr_auc: 0.8815 - val_roc_auc: 0.8812 - 8s/epoch - 191ms/step
+Epoch 6/40
+40/40 - 6s - loss: 0.0482 - pr_auc: 0.8732 - roc_auc: 0.8811 - val_loss: 0.0629 - val_pr_auc: 0.8878 - val_roc_auc: 0.8858 - 6s/epoch - 162ms/step
+Epoch 7/40
+40/40 - 7s - loss: 0.0459 - pr_auc: 0.8932 - roc_auc: 0.8982 - val_loss: 0.0667 - val_pr_auc: 0.8977 - val_roc_auc: 0.8931 - 7s/epoch - 165ms/step
+Epoch 8/40
+40/40 - 7s - loss: 0.0432 - pr_auc: 0.9127 - roc_auc: 0.9145 - val_loss: 0.0542 - val_pr_auc: 0.9021 - val_roc_auc: 0.8993 - 7s/epoch - 181ms/step
+Epoch 9/40
+40/40 - 11s - loss: 0.0414 - pr_auc: 0.9227 - roc_auc: 0.9211 - val_loss: 0.0630 - val_pr_auc: 0.8967 - val_roc_auc: 0.8950 - 11s/epoch - 271ms/step
+Epoch 10/40
+40/40 - 9s - loss: 0.0395 - pr_auc: 0.9316 - roc_auc: 0.9298 - val_loss: 0.0601 - val_pr_auc: 0.8931 - val_roc_auc: 0.8911 - 9s/epoch - 213ms/step
+Epoch 11/40
+40/40 - 7s - loss: 0.0382 - pr_auc: 0.9378 - roc_auc: 0.9352 - val_loss: 0.0695 - val_pr_auc: 0.8943 - val_roc_auc: 0.8948 - 7s/epoch - 185ms/step
+Epoch 12/40
+40/40 - 6s - loss: 0.0367 - pr_auc: 0.9451 - roc_auc: 0.9420 - val_loss: 0.0749 - val_pr_auc: 0.8891 - val_roc_auc: 0.8931 - 6s/epoch - 140ms/step
+Epoch 13/40
+40/40 - 6s - loss: 0.0337 - pr_auc: 0.9543 - roc_auc: 0.9520 - val_loss: 0.0685 - val_pr_auc: 0.8887 - val_roc_auc: 0.8919 - 6s/epoch - 142ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stack/20261012-083430_ovid_R1b_stack/folds/stack_fold/20261012-084011_ovid_R1b_fold2
+fold 2: trained on 10101, scored 2525 held-out rows
+Epoch 1/40
+40/40 - 26s - loss: 0.0945 - pr_auc: 0.5919 - roc_auc: 0.6089 - val_loss: 0.0678 - val_pr_auc: 0.8375 - val_roc_auc: 0.8434 - 26s/epoch - 645ms/step
+Epoch 2/40
+40/40 - 5s - loss: 0.0616 - pr_auc: 0.7761 - roc_auc: 0.7811 - val_loss: 0.0642 - val_pr_auc: 0.8674 - val_roc_auc: 0.8732 - 5s/epoch - 115ms/step
+Epoch 3/40
+40/40 - 5s - loss: 0.0558 - pr_auc: 0.8182 - roc_auc: 0.8238 - val_loss: 0.0626 - val_pr_auc: 0.8769 - val_roc_auc: 0.8803 - 5s/epoch - 123ms/step
+Epoch 4/40
+40/40 - 4s - loss: 0.0541 - pr_auc: 0.8332 - roc_auc: 0.8429 - val_loss: 0.0590 - val_pr_auc: 0.8811 - val_roc_auc: 0.8822 - 4s/epoch - 93ms/step
+Epoch 5/40
+40/40 - 4s - loss: 0.0525 - pr_auc: 0.8462 - roc_auc: 0.8555 - val_loss: 0.0600 - val_pr_auc: 0.8881 - val_roc_auc: 0.8875 - 4s/epoch - 97ms/step
+Epoch 6/40
+40/40 - 3s - loss: 0.0499 - pr_auc: 0.8640 - roc_auc: 0.8701 - val_loss: 0.0601 - val_pr_auc: 0.8922 - val_roc_auc: 0.8907 - 3s/epoch - 86ms/step
+Epoch 7/40
+40/40 - 4s - loss: 0.0476 - pr_auc: 0.8814 - roc_auc: 0.8838 - val_loss: 0.0576 - val_pr_auc: 0.8979 - val_roc_auc: 0.8927 - 4s/epoch - 90ms/step
+Epoch 8/40
+40/40 - 3s - loss: 0.0457 - pr_auc: 0.8955 - roc_auc: 0.8937 - val_loss: 0.0562 - val_pr_auc: 0.8968 - val_roc_auc: 0.8919 - 3s/epoch - 81ms/step
+Epoch 9/40
+40/40 - 3s - loss: 0.0440 - pr_auc: 0.9088 - roc_auc: 0.9059 - val_loss: 0.0573 - val_pr_auc: 0.8990 - val_roc_auc: 0.8937 - 3s/epoch - 80ms/step
+Epoch 10/40
+40/40 - 3s - loss: 0.0414 - pr_auc: 0.9218 - roc_auc: 0.9184 - val_loss: 0.0636 - val_pr_auc: 0.9020 - val_roc_auc: 0.8997 - 3s/epoch - 75ms/step
+Epoch 11/40
+40/40 - 3s - loss: 0.0401 - pr_auc: 0.9294 - roc_auc: 0.9252 - val_loss: 0.0618 - val_pr_auc: 0.9008 - val_roc_auc: 0.8996 - 3s/epoch - 79ms/step
+Epoch 12/40
+40/40 - 3s - loss: 0.0386 - pr_auc: 0.9362 - roc_auc: 0.9332 - val_loss: 0.0569 - val_pr_auc: 0.8949 - val_roc_auc: 0.8938 - 3s/epoch - 77ms/step
+Epoch 13/40
+40/40 - 3s - loss: 0.0363 - pr_auc: 0.9450 - roc_auc: 0.9413 - val_loss: 0.0638 - val_pr_auc: 0.8986 - val_roc_auc: 0.8983 - 3s/epoch - 75ms/step
+Epoch 14/40
+40/40 - 3s - loss: 0.0341 - pr_auc: 0.9525 - roc_auc: 0.9502 - val_loss: 0.0722 - val_pr_auc: 0.8968 - val_roc_auc: 0.8988 - 3s/epoch - 70ms/step
+Epoch 15/40
+40/40 - 3s - loss: 0.0322 - pr_auc: 0.9576 - roc_auc: 0.9543 - val_loss: 0.0713 - val_pr_auc: 0.8885 - val_roc_auc: 0.8928 - 3s/epoch - 73ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stack/20261012-083430_ovid_R1b_stack/folds/stack_fold/20261012-084259_ovid_R1b_fold3
+fold 3: trained on 10101, scored 2525 held-out rows
+Epoch 1/40
+40/40 - 47s - loss: 0.0863 - pr_auc: 0.6315 - roc_auc: 0.6550 - val_loss: 0.0635 - val_pr_auc: 0.8479 - val_roc_auc: 0.8570 - 47s/epoch - 1s/step
+Epoch 2/40
+40/40 - 5s - loss: 0.0595 - pr_auc: 0.7845 - roc_auc: 0.7984 - val_loss: 0.0606 - val_pr_auc: 0.8725 - val_roc_auc: 0.8730 - 5s/epoch - 130ms/step
+Epoch 3/40
+40/40 - 8s - loss: 0.0557 - pr_auc: 0.8172 - roc_auc: 0.8275 - val_loss: 0.0601 - val_pr_auc: 0.8797 - val_roc_auc: 0.8773 - 8s/epoch - 194ms/step
+Epoch 4/40
+40/40 - 8s - loss: 0.0528 - pr_auc: 0.8414 - roc_auc: 0.8524 - val_loss: 0.0643 - val_pr_auc: 0.8754 - val_roc_auc: 0.8751 - 8s/epoch - 212ms/step
+Epoch 5/40
+40/40 - 10s - loss: 0.0504 - pr_auc: 0.8627 - roc_auc: 0.8706 - val_loss: 0.0619 - val_pr_auc: 0.8873 - val_roc_auc: 0.8849 - 10s/epoch - 253ms/step
+Epoch 6/40
+40/40 - 11s - loss: 0.0498 - pr_auc: 0.8695 - roc_auc: 0.8776 - val_loss: 0.0599 - val_pr_auc: 0.8944 - val_roc_auc: 0.8918 - 11s/epoch - 274ms/step
+Epoch 7/40
+40/40 - 15s - loss: 0.0457 - pr_auc: 0.9007 - roc_auc: 0.9043 - val_loss: 0.0627 - val_pr_auc: 0.9024 - val_roc_auc: 0.8979 - 15s/epoch - 367ms/step
+Epoch 8/40
+40/40 - 8s - loss: 0.0438 - pr_auc: 0.9125 - roc_auc: 0.9103 - val_loss: 0.0570 - val_pr_auc: 0.9012 - val_roc_auc: 0.8977 - 8s/epoch - 191ms/step
+Epoch 9/40
+40/40 - 11s - loss: 0.0426 - pr_auc: 0.9195 - roc_auc: 0.9161 - val_loss: 0.0612 - val_pr_auc: 0.9032 - val_roc_auc: 0.9005 - 11s/epoch - 263ms/step
+Epoch 10/40
+40/40 - 11s - loss: 0.0395 - pr_auc: 0.9352 - roc_auc: 0.9325 - val_loss: 0.0658 - val_pr_auc: 0.9021 - val_roc_auc: 0.9009 - 11s/epoch - 274ms/step
+Epoch 11/40
+40/40 - 9s - loss: 0.0382 - pr_auc: 0.9400 - roc_auc: 0.9359 - val_loss: 0.0611 - val_pr_auc: 0.8974 - val_roc_auc: 0.8961 - 9s/epoch - 220ms/step
+Epoch 12/40
+40/40 - 4s - loss: 0.0365 - pr_auc: 0.9472 - roc_auc: 0.9428 - val_loss: 0.0574 - val_pr_auc: 0.8975 - val_roc_auc: 0.8989 - 4s/epoch - 111ms/step
+Epoch 13/40
+40/40 - 8s - loss: 0.0340 - pr_auc: 0.9559 - roc_auc: 0.9524 - val_loss: 0.0634 - val_pr_auc: 0.8978 - val_roc_auc: 0.9020 - 8s/epoch - 199ms/step
+Epoch 14/40
+40/40 - 9s - loss: 0.0312 - pr_auc: 0.9618 - roc_auc: 0.9577 - val_loss: 0.0645 - val_pr_auc: 0.8973 - val_roc_auc: 0.9011 - 9s/epoch - 216ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stack/20261012-083430_ovid_R1b_stack/folds/stack_fold/20261012-084427_ovid_R1b_fold4
+fold 4: trained on 10101, scored 2525 held-out rows
+hybrid_base_same_split         PR-AUC [0.8986, 0.8867, 0.9101]  one-per-author 0.8324  F1 0.8109
+stack_base                     PR-AUC [0.902, 0.8901, 0.9131]  one-per-author 0.8335  F1 0.8217
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stack/20261012-083430_ovid_R1b_stack

@@ -1,0 +1,44 @@
+{
+  "started": "20261012-093831",
+  "task": "revert_vandalism",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 4.0
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "09 stack (deep out-of-fold score inside the trees)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 9.5
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261012-093844_revert_vandalism_R1b",
+    "experiments/runs/stack/20261012-093059_T2_R1b_stack",
+    "experiments/runs/baselines/20261012-094016_revert_vandalism_R1b",
+    "experiments/runs/stage2_supervised/20261012-094047_revert_vandalism_R1b",
+    "experiments/runs/ensemble/20261012-094245_revert_vandalism_R1b",
+    "experiments/runs/stage2_supervised/20261012-093920_revert_vandalism_R1b",
+    "experiments/runs/ensemble/20261012-094314_revert_vandalism_R1b",
+    "experiments/runs/stack/20261012-094249_revert_vandalism_R1b_stack",
+    "experiments/runs/stack/20261012-094325_revert_vandalism_R1b_stack"
+  ],
+  "all_ok": true
+}

@@ -1,0 +1,44 @@
+{
+  "stage": "baselines",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "device": "auto",
+  "resplit": false,
+  "data": {
+    "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5"
+    ],
+    "max_edits": 256,
+    "user_steps": 200
+  },
+  "baselines": {
+    "b0_tripwire": true,
+    "logistic_regression": true,
+    "xgboost": true,
+    "xgboost_params": {
+      "n_estimators": 400,
+      "max_depth": 6,
+      "learning_rate": 0.08,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8
+    },
+    "b0_leak_auc": 0.85,
+    "hybrid": true,
+    "author_weighting": "sqrt",
+    "hybrid_variants": [
+      "base",
+      "ctx",
+      "emb",
+      "ctx_emb"
+    ]
+  },
+  "_config_path": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/01_baselines/config.json"
+}

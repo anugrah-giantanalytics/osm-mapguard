@@ -1,0 +1,19 @@
+{
+  "started": "20261012-074657",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim",
+  "stages": [
+    {
+      "stage": "08 text embeddings",
+      "ok": true,
+      "returncode": 1,
+      "minutes": 0.8,
+      "optional_failed": true
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_supervised/20261012-074702_ovid_R1b_quick"
+  ],
+  "all_ok": true
+}

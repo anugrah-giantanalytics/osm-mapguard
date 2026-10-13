@@ -1,0 +1,21 @@
+
+================================================================================
+[07:43:36] 08 text embeddings
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/08_text_embeddings/embed_text.py --feature-store /data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim
+================================================================================
+Traceback (most recent call last):
+  File "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/08_text_embeddings/embed_text.py", line 100, in <module>
+    sys.exit(main())
+  File "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/08_text_embeddings/embed_text.py", line 63, in main
+    from sentence_transformers import SentenceTransformer
+  File "/data/mpstme-tanay/deepLearning_osm/.pydeps_st/sentence_transformers/__init__.py", line 10, in <module>
+    from sentence_transformers.backend import (
+  File "/data/mpstme-tanay/deepLearning_osm/.pydeps_st/sentence_transformers/backend/__init__.py", line 3, in <module>
+    from .load import load_onnx_model, load_openvino_model
+  File "/data/mpstme-tanay/deepLearning_osm/.pydeps_st/sentence_transformers/backend/load.py", line 7, in <module>
+    from transformers.configuration_utils import PretrainedConfig
+  File "/data/mpstme-tanay/deepLearning_osm/.pydeps_st/transformers/__init__.py", line 30, in <module>
+    from . import dependency_versions_check
+  File "/data/mpstme-tanay/deepLearning_osm/.pydeps_st/transformers/dependency_versions_check.py", line 15, in <module>
+    from .dependency_versions_table import deps
+ModuleNotFoundError: No module named 'transformers.dependency_versions_table'

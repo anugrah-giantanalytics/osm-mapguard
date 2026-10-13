@@ -1,0 +1,44 @@
+{
+  "started": "20261012-084527",
+  "task": "ovid_modern",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.6
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 6.3
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.2
+    },
+    {
+      "stage": "09 stack (deep out-of-fold score inside the trees)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 18.3
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261012-084543_ovid_modern_R1b",
+    "experiments/runs/stack/20261012-083430_ovid_R1b_stack",
+    "experiments/runs/baselines/20261012-084830_ovid_modern_R1b",
+    "experiments/runs/stage2_supervised/20261012-084717_ovid_modern_R1b",
+    "experiments/runs/stage2_supervised/20261012-084951_ovid_modern_R1b",
+    "experiments/runs/ensemble/20261012-085334_ovid_modern_R1b",
+    "experiments/runs/ensemble/20261012-085341_ovid_modern_R1b",
+    "experiments/runs/stack/20261012-085404_ovid_modern_R1b_stack",
+    "experiments/runs/stack/20261012-085351_ovid_modern_R1b_stack"
+  ],
+  "all_ok": true
+}

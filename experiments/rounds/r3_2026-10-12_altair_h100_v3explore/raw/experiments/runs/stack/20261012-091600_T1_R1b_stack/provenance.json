@@ -1,0 +1,71 @@
+{
+  "started_utc": "2026-10-12T09:16:00+00:00",
+  "git_sha": "80dc678261ba17bd1e1dedcf4e61cc45d1aab558 (bundle)",
+  "git_dirty_src_or_train": null,
+  "command": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/train/09_stack/stack_train.py --set task=T1 --set data.feature_store=\"/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim\" --set device=auto",
+  "platform": "Linux-4.18.0-553.40.1.el8_10.x86_64-x86_64-with-glibc2.35",
+  "machine": "x86_64",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ],
+  "libraries": {
+    "python": "3.10.6",
+    "numpy": "1.22.2",
+    "tensorflow": "2.12.0",
+    "keras": "2.12.0",
+    "sklearn": "1.2.0",
+    "xgboost": "1.7.5",
+    "pandas": "1.5.2",
+    "pyarrow": "11.0.0"
+  },
+  "data": {
+    "changesets": {
+      "bytes": 10265168,
+      "mtime": 1791790846,
+      "sha256_16mb": "2ff8fc42d320bb57"
+    },
+    "edits": {
+      "bytes": 44471070,
+      "mtime": 1791790846,
+      "sha256_16mb": "019afb27fc4bae6a"
+    },
+    "user_seq": {
+      "bytes": 22251369,
+      "mtime": 1791790847,
+      "sha256_16mb": "b49fe6a34fc00fcd"
+    }
+  },
+  "split_file": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/splits/T1_R1b_seed20260904.json",
+  "split_fingerprint": {
+    "bytes": 87205,
+    "mtime": 1791790846,
+    "sha256_16mb": "e18726cf106399c1"
+  },
+  "data_summary": {
+    "root": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim",
+    "task": "T1",
+    "n_changesets": 7892,
+    "n_positive": 3947,
+    "n_negative": 3945,
+    "n_edit_rows": 332813,
+    "n_user_seq_rows": 539191,
+    "missing_optional_columns": [],
+    "by_corpus": {
+      "M": 7892
+    }
+  },
+  "split_summary": {
+    "kind": "R1b",
+    "leaky": false,
+    "seed": 20260904,
+    "cutoff": null,
+    "n_train": 5524,
+    "n_val": 789,
+    "n_test": 1579,
+    "pos_rate_train": 0.4993,
+    "pos_rate_val": 0.4981,
+    "pos_rate_test": 0.5041
+  }
+}

@@ -483,7 +483,13 @@ Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured 
   found 5 problem groups (incl. ovid_modern stacking columns, silent ablation fallback, split
   seed in 4 stages, job-script parsing); pass 2 confirmed the fixes and found 1 exit-code bug.
   All fixed and retested; zip `r3_v3_explore` built from commit 80dc678.
-- [ ] Round 3 on the H100 (`altair/plans/r3_v3_explore.txt`, ~2 h).
+- [x] Round 3 on the H100 (2026-10-12, `experiments/rounds/r3_2026-10-12_altair_h100_v3explore/`).
+  Stack lifts ovid above the hybrid (0.903 vs 0.899, F1 0.821 vs 0.811; Ovid 0.817) - to be
+  confirmed with seeds + author bootstrap. edit_layers=2: +0.0034 (~2x seed sd). Object context
+  in the deep model: −0.004. Ran twice concurrently (double launch); embeddings failed (numpy).
+- [ ] Fix round-3 problems: launch lock, embedding env without the numpy pin, explicit run
+  pairing in stage 07, summarise_results without a base row.
+- [ ] Embeddings run (hybrid emb, full_text_emb, full_v3) - untested so far.
 - [ ] Decide the final setup from round 3 (adopt only gains beyond seed spread and with an
   author-bootstrap interval excluding zero).
 - [ ] Final round: adopted setup × 5 seeds on all six tasks + temporal.

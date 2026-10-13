@@ -1,0 +1,12 @@
+# Round 3 (2026-10-12): v3 exploration. Every new idea measured against v2.1 on the same split.
+# name             | flags              | run_pipeline.py arguments
+embed              | install_st         | --task ovid --stages 08
+smoke              | fatal              | --task ovid --stages 00,01,02,07,09 --quick
+v3_ablations       |                    | --task ovid --stages 03 --ablation-rows full,full_text_emb,full_context,full_2layers,full_v3 --ablation-seeds 20260904,20260905,20260906
+main               |                    | --task ovid --stages 00,01,02,07,09
+modern             |                    | --task ovid_modern --stages 01,02,07,09
+T1                 |                    | --task T1 --stages 01,02,07,09
+T2                 |                    | --task T2 --stages 01,02,07,09
+revert_vandalism   |                    | --task revert_vandalism --stages 01,02,07,09
+revert             |                    | --task revert --stages 01,02,07,09
+

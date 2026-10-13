@@ -1,0 +1,530 @@
+{
+  "stage": "stack",
+  "task": "T2",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-10-12T09:40:04+00:00",
+  "folds": [
+    {
+      "fold": 0,
+      "train_rows": 4411,
+      "held_out": 1103,
+      "test_pr_auc": [
+        0.8829,
+        0.8611,
+        0.9008
+      ]
+    },
+    {
+      "fold": 1,
+      "train_rows": 4411,
+      "held_out": 1103,
+      "test_pr_auc": [
+        0.8804,
+        0.8565,
+        0.8997
+      ]
+    },
+    {
+      "fold": 2,
+      "train_rows": 4411,
+      "held_out": 1103,
+      "test_pr_auc": [
+        0.8774,
+        0.8546,
+        0.8966
+      ]
+    },
+    {
+      "fold": 3,
+      "train_rows": 4411,
+      "held_out": 1103,
+      "test_pr_auc": [
+        0.8743,
+        0.8523,
+        0.8939
+      ]
+    },
+    {
+      "fold": 4,
+      "train_rows": 4412,
+      "held_out": 1102,
+      "test_pr_auc": [
+        0.8815,
+        0.8591,
+        0.9005
+      ]
+    }
+  ],
+  "deep_oof_rows": 5514,
+  "models": {
+    "hybrid_base_same_split": {
+      "author_weighting": "1/sqrt(n)",
+      "most_damaging_tokens": [
+        "+description",
+        "+name",
+        "-name",
+        "~wikipedia",
+        "~highway",
+        "+payment",
+        "+golf",
+        "-highway",
+        "+layer",
+        "+leisure",
+        "+surveillance",
+        "-service",
+        "+hear_aed",
+        "+tourism=attraction",
+        "~name",
+        "+bicycle",
+        "+highway=secondary",
+        "+highway=motorway",
+        "+website",
+        "-building"
+      ],
+      "most_benign_tokens": [
+        "+highway=service",
+        "+check_date",
+        "+backrest",
+        "+lit",
+        "+parking",
+        "+tactile_paving",
+        "~highway:unclassified>residential",
+        "~check_date",
+        "+natural=tree",
+        "+source",
+        "+fire_hydrant",
+        "+disused",
+        "+leaf_type",
+        "+lane_markings",
+        "+handrail",
+        "+bin",
+        "+shelter",
+        "+maxheight",
+        "+crossing",
+        "+surface"
+      ],
+      "stack_importance": {
+        "tokens_score": 0.0173,
+        "text_score": 0.03
+      },
+      "tree_params": {
+        "n_estimators": 400,
+        "max_depth": 6,
+        "learning_rate": 0.08,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8
+      },
+      "tuning": null,
+      "variant": "base",
+      "deep_column": false,
+      "headline": {
+        "test_pr_auc": [
+          0.8949,
+          0.8756,
+          0.9123
+        ],
+        "test_roc_auc": [
+          0.8851,
+          0.8679,
+          0.9013
+        ],
+        "test_pr_auc_at_1pct_prevalence": 0.243,
+        "test_f1_at_val_threshold": 0.8018,
+        "test_ovid_table": {
+          "precision": 0.7288,
+          "recall": 0.9101,
+          "f1": 0.8094,
+          "accuracy": 0.7792
+        },
+        "test_author_robust": {
+          "authors": 1576,
+          "one_per_author_n": 1576,
+          "one_per_author_pr_auc": 0.8949,
+          "author_weighted_pr_auc": 0.8949
+        },
+        "test_ece": 0.07481
+      },
+      "evaluation": {
+        "threshold": {
+          "value": 0.283059,
+          "chosen_on": "validation",
+          "validation_f1": 0.8083
+        },
+        "validation": {
+          "pr_auc": 0.8777,
+          "roc_auc": 0.8742,
+          "n": 788
+        },
+        "test": {
+          "n": 1576,
+          "n_pos": 812,
+          "observed_prevalence": 0.515228,
+          "threshold": 0.28305937647819523,
+          "roc_auc": 0.8851343073788461,
+          "precision_at_k": {
+            "10": 1.0,
+            "50": 1.0,
+            "100": 1.0
+          },
+          "by_prevalence": {
+            "0.5": {
+              "precision": 0.7166,
+              "recall": 0.9101,
+              "f1": 0.8018,
+              "pr_auc": 0.8897
+            },
+            "0.01": {
+              "precision": 0.0249,
+              "recall": 0.9101,
+              "f1": 0.0485,
+              "pr_auc": 0.243
+            },
+            "0.001": {
+              "precision": 0.0025,
+              "recall": 0.9101,
+              "f1": 0.005,
+              "pr_auc": 0.1488
+            }
+          }
+        },
+        "test_intervals_95": {
+          "pr_auc": [
+            0.8949,
+            0.8756,
+            0.9123
+          ],
+          "roc_auc": [
+            0.8851,
+            0.8679,
+            0.9013
+          ]
+        },
+        "test_calibration": {
+          "brier": 0.14351,
+          "ece": 0.07481,
+          "reliability": [
+            {
+              "bin": 0,
+              "n": 388,
+              "mean_score": 0.0313,
+              "observed_rate": 0.0876
+            },
+            {
+              "bin": 1,
+              "n": 109,
+              "mean_score": 0.1422,
+              "observed_rate": 0.2477
+            },
+            {
+              "bin": 2,
+              "n": 70,
+              "mean_score": 0.2432,
+              "observed_rate": 0.2
+            },
+            {
+              "bin": 3,
+              "n": 70,
+              "mean_score": 0.3444,
+              "observed_rate": 0.2857
+            },
+            {
+              "bin": 4,
+              "n": 63,
+              "mean_score": 0.4479,
+              "observed_rate": 0.4921
+            },
+            {
+              "bin": 5,
+              "n": 65,
+              "mean_score": 0.5477,
+              "observed_rate": 0.5077
+            },
+            {
+              "bin": 6,
+              "n": 77,
+              "mean_score": 0.653,
+              "observed_rate": 0.5325
+            },
+            {
+              "bin": 7,
+              "n": 97,
+              "mean_score": 0.752,
+              "observed_rate": 0.567
+            },
+            {
+              "bin": 8,
+              "n": 128,
+              "mean_score": 0.8565,
+              "observed_rate": 0.7266
+            },
+            {
+              "bin": 9,
+              "n": 509,
+              "mean_score": 0.967,
+              "observed_rate": 0.9116
+            }
+          ]
+        },
+        "ovid_table": {
+          "precision": 0.7288,
+          "recall": 0.9101,
+          "f1": 0.8094,
+          "accuracy": 0.7792,
+          "positive_rate": 0.5152,
+          "threshold": 0.283059,
+          "reference_ovid_2021": {
+            "precision": 0.8035,
+            "recall": 0.8302,
+            "f1": 0.8166,
+            "accuracy": 0.8137
+          }
+        },
+        "author_robust": {
+          "authors": 1576,
+          "one_per_author_n": 1576,
+          "one_per_author_pr_auc": 0.8949,
+          "author_weighted_pr_auc": 0.8949
+        }
+      }
+    },
+    "stack_base": {
+      "author_weighting": "1/sqrt(n)",
+      "most_damaging_tokens": [
+        "+description",
+        "+name",
+        "-name",
+        "~wikipedia",
+        "~highway",
+        "+payment",
+        "+golf",
+        "-highway",
+        "+layer",
+        "+leisure",
+        "+surveillance",
+        "-service",
+        "+hear_aed",
+        "+tourism=attraction",
+        "~name",
+        "+bicycle",
+        "+highway=secondary",
+        "+highway=motorway",
+        "+website",
+        "-building"
+      ],
+      "most_benign_tokens": [
+        "+highway=service",
+        "+check_date",
+        "+backrest",
+        "+lit",
+        "+parking",
+        "+tactile_paving",
+        "~highway:unclassified>residential",
+        "~check_date",
+        "+natural=tree",
+        "+source",
+        "+fire_hydrant",
+        "+disused",
+        "+leaf_type",
+        "+lane_markings",
+        "+handrail",
+        "+bin",
+        "+shelter",
+        "+maxheight",
+        "+crossing",
+        "+surface"
+      ],
+      "stack_importance": {
+        "tokens_score": 0.0235,
+        "text_score": 0.0341,
+        "deep_oof": 0.1164
+      },
+      "tree_params": {
+        "n_estimators": 400,
+        "max_depth": 6,
+        "learning_rate": 0.08,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8
+      },
+      "tuning": null,
+      "variant": "base",
+      "deep_column": true,
+      "headline": {
+        "test_pr_auc": [
+          0.8948,
+          0.8756,
+          0.9117
+        ],
+        "test_roc_auc": [
+          0.8866,
+          0.8699,
+          0.9021
+        ],
+        "test_pr_auc_at_1pct_prevalence": 0.2412,
+        "test_f1_at_val_threshold": 0.8078,
+        "test_ovid_table": {
+          "precision": 0.7404,
+          "recall": 0.9064,
+          "f1": 0.8151,
+          "accuracy": 0.7881
+        },
+        "test_author_robust": {
+          "authors": 1576,
+          "one_per_author_n": 1576,
+          "one_per_author_pr_auc": 0.8948,
+          "author_weighted_pr_auc": 0.8948
+        },
+        "test_ece": 0.07061
+      },
+      "evaluation": {
+        "threshold": {
+          "value": 0.286601,
+          "chosen_on": "validation",
+          "validation_f1": 0.8176
+        },
+        "validation": {
+          "pr_auc": 0.8822,
+          "roc_auc": 0.8836,
+          "n": 788
+        },
+        "test": {
+          "n": 1576,
+          "n_pos": 812,
+          "observed_prevalence": 0.515228,
+          "threshold": 0.2866010582447053,
+          "roc_auc": 0.8866479251025198,
+          "precision_at_k": {
+            "10": 1.0,
+            "50": 1.0,
+            "100": 1.0
+          },
+          "by_prevalence": {
+            "0.5": {
+              "precision": 0.7286,
+              "recall": 0.9064,
+              "f1": 0.8078,
+              "pr_auc": 0.8896
+            },
+            "0.01": {
+              "precision": 0.0264,
+              "recall": 0.9064,
+              "f1": 0.0513,
+              "pr_auc": 0.2412
+            },
+            "0.001": {
+              "precision": 0.0027,
+              "recall": 0.9064,
+              "f1": 0.0053,
+              "pr_auc": 0.1496
+            }
+          }
+        },
+        "test_intervals_95": {
+          "pr_auc": [
+            0.8948,
+            0.8756,
+            0.9117
+          ],
+          "roc_auc": [
+            0.8866,
+            0.8699,
+            0.9021
+          ]
+        },
+        "test_calibration": {
+          "brier": 0.14202,
+          "ece": 0.07061,
+          "reliability": [
+            {
+              "bin": 0,
+              "n": 397,
+              "mean_score": 0.0287,
+              "observed_rate": 0.0882
+            },
+            {
+              "bin": 1,
+              "n": 122,
+              "mean_score": 0.1455,
+              "observed_rate": 0.1967
+            },
+            {
+              "bin": 2,
+              "n": 70,
+              "mean_score": 0.2491,
+              "observed_rate": 0.2714
+            },
+            {
+              "bin": 3,
+              "n": 66,
+              "mean_score": 0.3534,
+              "observed_rate": 0.4242
+            },
+            {
+              "bin": 4,
+              "n": 58,
+              "mean_score": 0.4511,
+              "observed_rate": 0.431
+            },
+            {
+              "bin": 5,
+              "n": 64,
+              "mean_score": 0.55,
+              "observed_rate": 0.375
+            },
+            {
+              "bin": 6,
+              "n": 64,
+              "mean_score": 0.652,
+              "observed_rate": 0.5781
+            },
+            {
+              "bin": 7,
+              "n": 90,
+              "mean_score": 0.7514,
+              "observed_rate": 0.7
+            },
+            {
+              "bin": 8,
+              "n": 130,
+              "mean_score": 0.8557,
+              "observed_rate": 0.7077
+            },
+            {
+              "bin": 9,
+              "n": 515,
+              "mean_score": 0.9694,
+              "observed_rate": 0.9029
+            }
+          ]
+        },
+        "ovid_table": {
+          "precision": 0.7404,
+          "recall": 0.9064,
+          "f1": 0.8151,
+          "accuracy": 0.7881,
+          "positive_rate": 0.5152,
+          "threshold": 0.286601,
+          "reference_ovid_2021": {
+            "precision": 0.8035,
+            "recall": 0.8302,
+            "f1": 0.8166,
+            "accuracy": 0.8137
+          }
+        },
+        "author_robust": {
+          "authors": 1576,
+          "one_per_author_n": 1576,
+          "one_per_author_pr_auc": 0.8948,
+          "author_weighted_pr_auc": 0.8948
+        }
+      }
+    },
+    "emb": {
+      "skipped": "side table missing"
+    }
+  },
+  "headline": {
+    "highest_test_pr_auc_model": "hybrid_base_same_split",
+    "test_pr_auc": 0.8949
+  }
+}

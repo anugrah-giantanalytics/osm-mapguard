@@ -1,0 +1,432 @@
+{
+  "stage": "stage2_ablations_grid",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-10-12T08:25:08+00:00",
+  "headline": {
+    "n_seeds": 3,
+    "test_pr_auc_mean": 0.8832,
+    "test_pr_auc_std": 0.0014,
+    "test_roc_auc_mean": 0.884,
+    "test_pr_auc_at_1pct_mean": 0.1629,
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ]
+  },
+  "table": {
+    "full": {
+      "n_seeds": 3,
+      "test_pr_auc_mean": 0.8832,
+      "test_pr_auc_std": 0.0014,
+      "test_roc_auc_mean": 0.884,
+      "test_pr_auc_at_1pct_mean": 0.1629,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ]
+    },
+    "full_context": {
+      "n_seeds": 3,
+      "test_pr_auc_mean": 0.8795,
+      "test_pr_auc_std": 0.0021,
+      "test_roc_auc_mean": 0.881,
+      "test_pr_auc_at_1pct_mean": 0.139,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ]
+    },
+    "full_2layers": {
+      "n_seeds": 3,
+      "test_pr_auc_mean": 0.8864,
+      "test_pr_auc_std": 0.001,
+      "test_roc_auc_mean": 0.8882,
+      "test_pr_auc_at_1pct_mean": 0.1419,
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "row": "full",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-075711_ovid_R1b_full_s20260904",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8819,
+        0.8684,
+        0.8965
+      ],
+      "test_roc_auc": [
+        0.8847,
+        0.8746,
+        0.8952
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1412,
+      "test_f1_at_val_threshold": 0.813,
+      "test_ovid_table": {
+        "precision": 0.7695,
+        "recall": 0.8595,
+        "f1": 0.812,
+        "accuracy": 0.8021
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8034,
+        "author_weighted_pr_auc": 0.7978
+      },
+      "test_ece": 0.101
+    },
+    {
+      "row": "full",
+      "seed": 20260905,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-080027_ovid_R1b_full_s20260905",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8846,
+        0.8697,
+        0.8978
+      ],
+      "test_roc_auc": [
+        0.8836,
+        0.8716,
+        0.8936
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1696,
+      "test_f1_at_val_threshold": 0.8078,
+      "test_ovid_table": {
+        "precision": 0.7654,
+        "recall": 0.8528,
+        "f1": 0.8067,
+        "accuracy": 0.7968
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8083,
+        "author_weighted_pr_auc": 0.8009
+      },
+      "test_ece": 0.10771
+    },
+    {
+      "row": "full",
+      "seed": 20260906,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-080304_ovid_R1b_full_s20260906",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8832,
+        0.8701,
+        0.8965
+      ],
+      "test_roc_auc": [
+        0.8837,
+        0.8726,
+        0.8945
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1778,
+      "test_f1_at_val_threshold": 0.8138,
+      "test_ovid_table": {
+        "precision": 0.7512,
+        "recall": 0.8852,
+        "f1": 0.8127,
+        "accuracy": 0.7971
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8049,
+        "author_weighted_pr_auc": 0.7987
+      },
+      "test_ece": 0.04809
+    },
+    {
+      "row": "full_context",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-080604_ovid_R1b_full_context_s20260904",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8785,
+        0.8649,
+        0.8931
+      ],
+      "test_roc_auc": [
+        0.881,
+        0.8702,
+        0.8913
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1268,
+      "test_f1_at_val_threshold": 0.8087,
+      "test_ovid_table": {
+        "precision": 0.7883,
+        "recall": 0.8283,
+        "f1": 0.8078,
+        "accuracy": 0.804
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8008,
+        "author_weighted_pr_auc": 0.7915
+      },
+      "test_ece": 0.09627
+    },
+    {
+      "row": "full_context",
+      "seed": 20260905,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-080857_ovid_R1b_full_context_s20260905",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8819,
+        0.8666,
+        0.8953
+      ],
+      "test_roc_auc": [
+        0.8814,
+        0.8687,
+        0.8917
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1579,
+      "test_f1_at_val_threshold": 0.8061,
+      "test_ovid_table": {
+        "precision": 0.7493,
+        "recall": 0.8696,
+        "f1": 0.805,
+        "accuracy": 0.7904
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8002,
+        "author_weighted_pr_auc": 0.7943
+      },
+      "test_ece": 0.10587
+    },
+    {
+      "row": "full_context",
+      "seed": 20260906,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-081141_ovid_R1b_full_context_s20260906",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8782,
+        0.8629,
+        0.8931
+      ],
+      "test_roc_auc": [
+        0.8806,
+        0.8688,
+        0.892
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1324,
+      "test_f1_at_val_threshold": 0.8044,
+      "test_ovid_table": {
+        "precision": 0.7456,
+        "recall": 0.8707,
+        "f1": 0.8033,
+        "accuracy": 0.7879
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.7928,
+        "author_weighted_pr_auc": 0.7876
+      },
+      "test_ece": 0.07693
+    },
+    {
+      "row": "full_2layers",
+      "seed": 20260904,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-081445_ovid_R1b_full_2layers_s20260904",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8853,
+        0.8713,
+        0.9002
+      ],
+      "test_roc_auc": [
+        0.8901,
+        0.8802,
+        0.9008
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1245,
+      "test_f1_at_val_threshold": 0.8124,
+      "test_ovid_table": {
+        "precision": 0.7969,
+        "recall": 0.8266,
+        "f1": 0.8115,
+        "accuracy": 0.809
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.805,
+        "author_weighted_pr_auc": 0.7995
+      },
+      "test_ece": 0.08592
+    },
+    {
+      "row": "full_2layers",
+      "seed": 20260905,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-081818_ovid_R1b_full_2layers_s20260905",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8872,
+        0.8717,
+        0.9005
+      ],
+      "test_roc_auc": [
+        0.8883,
+        0.8769,
+        0.8983
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1538,
+      "test_f1_at_val_threshold": 0.812,
+      "test_ovid_table": {
+        "precision": 0.7648,
+        "recall": 0.8629,
+        "f1": 0.8109,
+        "accuracy": 0.7998
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8104,
+        "author_weighted_pr_auc": 0.8036
+      },
+      "test_ece": 0.11436
+    },
+    {
+      "row": "full_2layers",
+      "seed": 20260906,
+      "run_dir": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/experiments/runs/stage2_ablations/20261012-082116_ovid_R1b_full_2layers_s20260906",
+      "branches": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6"
+      ],
+      "loss": "focal",
+      "test_pr_auc": [
+        0.8867,
+        0.8722,
+        0.9
+      ],
+      "test_roc_auc": [
+        0.8863,
+        0.8754,
+        0.897
+      ],
+      "test_pr_auc_at_1pct_prevalence": 0.1474,
+      "test_f1_at_val_threshold": 0.8133,
+      "test_ovid_table": {
+        "precision": 0.7796,
+        "recall": 0.8478,
+        "f1": 0.8123,
+        "accuracy": 0.8051
+      },
+      "test_author_robust": {
+        "authors": 2562,
+        "one_per_author_n": 2593,
+        "one_per_author_pr_auc": 0.8108,
+        "author_weighted_pr_auc": 0.8044
+      },
+      "test_ece": 0.05381
+    }
+  ],
+  "skipped": [
+    {
+      "row": "full_text_emb",
+      "reason": "side table missing: ['text_embeddings.npz']"
+    },
+    {
+      "row": "full_v3",
+      "reason": "side table missing: ['text_embeddings.npz']"
+    }
+  ]
+}

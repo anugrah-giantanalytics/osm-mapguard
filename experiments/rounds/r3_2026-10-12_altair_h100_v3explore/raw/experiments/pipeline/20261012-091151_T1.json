@@ -1,0 +1,42 @@
+{
+  "started": "20261012-091151",
+  "task": "T1",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r3_v3_explore/app/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 3.2
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "09 stack (deep out-of-fold score inside the trees)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 11.5
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261012-091158_T1_R1b",
+    "experiments/runs/baselines/20261012-091200_T1_R1b",
+    "experiments/runs/stage2_supervised/20261012-091251_T1_R1b",
+    "experiments/runs/ensemble/20261012-091521_T1_R1b",
+    "experiments/runs/stage2_supervised/20261012-091248_T1_R1b",
+    "experiments/runs/ensemble/20261012-091551_T1_R1b",
+    "experiments/runs/stack/20261012-091600_T1_R1b_stack"
+  ],
+  "all_ok": true
+}
