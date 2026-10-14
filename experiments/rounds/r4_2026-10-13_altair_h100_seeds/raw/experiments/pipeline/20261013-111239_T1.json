@@ -1,0 +1,18 @@
+{
+  "started": "20261013-111239",
+  "task": "T1",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim",
+  "stages": [
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.8
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_temporal/20261013-111244_T1_temporal_past_to_future_s20260904"
+  ],
+  "all_ok": true
+}

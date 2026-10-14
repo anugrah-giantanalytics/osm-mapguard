@@ -1,0 +1,229 @@
+{
+  "stage": "stack_fold",
+  "task": "T1",
+  "split": "R1b",
+  "seed": 20260904,
+  "finished_utc": "2026-10-13T10:49:08+00:00",
+  "headline": {
+    "test_pr_auc": [
+      0.8344,
+      0.81,
+      0.8578
+    ],
+    "test_roc_auc": [
+      0.8268,
+      0.8058,
+      0.847
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.1542,
+    "test_f1_at_val_threshold": 0.7507,
+    "test_ovid_table": {
+      "precision": 0.7162,
+      "recall": 0.7927,
+      "f1": 0.7525,
+      "accuracy": 0.7372
+    },
+    "test_author_robust": {
+      "authors": 1415,
+      "one_per_author_n": 1424,
+      "one_per_author_pr_auc": 0.8506,
+      "author_weighted_pr_auc": 0.8525
+    },
+    "test_ece": 0.03371
+  },
+  "evaluation": {
+    "threshold": {
+      "value": 0.472468,
+      "chosen_on": "validation",
+      "validation_f1": 0.7663
+    },
+    "validation": {
+      "pr_auc": 0.8289,
+      "roc_auc": 0.8265,
+      "n": 789
+    },
+    "test": {
+      "n": 1579,
+      "n_pos": 796,
+      "observed_prevalence": 0.504117,
+      "threshold": 0.47246813893318174,
+      "roc_auc": 0.8267775659908739,
+      "precision_at_k": {
+        "10": 1.0,
+        "50": 1.0,
+        "100": 0.96
+      },
+      "by_prevalence": {
+        "0.5": {
+          "precision": 0.7129,
+          "recall": 0.7927,
+          "f1": 0.7507,
+          "pr_auc": 0.8324
+        },
+        "0.01": {
+          "precision": 0.0245,
+          "recall": 0.7927,
+          "f1": 0.0475,
+          "pr_auc": 0.1542
+        },
+        "0.001": {
+          "precision": 0.0025,
+          "recall": 0.7927,
+          "f1": 0.0049,
+          "pr_auc": 0.0827
+        }
+      }
+    },
+    "test_intervals_95": {
+      "pr_auc": [
+        0.8344,
+        0.81,
+        0.8578
+      ],
+      "roc_auc": [
+        0.8268,
+        0.8058,
+        0.847
+      ]
+    },
+    "test_calibration": {
+      "brier": 0.17065,
+      "ece": 0.03371,
+      "reliability": [
+        {
+          "bin": 0,
+          "n": 123,
+          "mean_score": 0.0631,
+          "observed_rate": 0.0325
+        },
+        {
+          "bin": 1,
+          "n": 160,
+          "mean_score": 0.149,
+          "observed_rate": 0.1625
+        },
+        {
+          "bin": 2,
+          "n": 157,
+          "mean_score": 0.2489,
+          "observed_rate": 0.2548
+        },
+        {
+          "bin": 3,
+          "n": 138,
+          "mean_score": 0.3495,
+          "observed_rate": 0.3696
+        },
+        {
+          "bin": 4,
+          "n": 153,
+          "mean_score": 0.4467,
+          "observed_rate": 0.3922
+        },
+        {
+          "bin": 5,
+          "n": 156,
+          "mean_score": 0.5512,
+          "observed_rate": 0.5064
+        },
+        {
+          "bin": 6,
+          "n": 174,
+          "mean_score": 0.6528,
+          "observed_rate": 0.5977
+        },
+        {
+          "bin": 7,
+          "n": 203,
+          "mean_score": 0.7496,
+          "observed_rate": 0.7094
+        },
+        {
+          "bin": 8,
+          "n": 194,
+          "mean_score": 0.8509,
+          "observed_rate": 0.8866
+        },
+        {
+          "bin": 9,
+          "n": 121,
+          "mean_score": 0.9288,
+          "observed_rate": 0.9587
+        }
+      ]
+    },
+    "ovid_table": {
+      "precision": 0.7162,
+      "recall": 0.7927,
+      "f1": 0.7525,
+      "accuracy": 0.7372,
+      "positive_rate": 0.5041,
+      "threshold": 0.472468,
+      "reference_ovid_2021": {
+        "precision": 0.8035,
+        "recall": 0.8302,
+        "f1": 0.8166,
+        "accuracy": 0.8137
+      }
+    },
+    "author_robust": {
+      "authors": 1415,
+      "one_per_author_n": 1424,
+      "one_per_author_pr_auc": 0.8506,
+      "author_weighted_pr_auc": 0.8525
+    }
+  },
+  "attribution": null,
+  "top_test_examples": null,
+  "masking_checks": {
+    "before_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "noise_scale": 3.0,
+      "note": "padded edits perturbed with noise; a correct model does not move"
+    },
+    "after_training": {
+      "max_delta": 0.0,
+      "masking_holds": true,
+      "rows_checked": 64,
+      "noise_scale": 3.0,
+      "note": "padded edits perturbed with noise; a correct model does not move"
+    }
+  },
+  "training": {
+    "epochs_run": 28,
+    "best_epoch": 23,
+    "best_val_pr_auc": 0.8284,
+    "n_train": 4419,
+    "n_val": 789,
+    "n_test": 1579,
+    "class_weight": null,
+    "loss": "focal",
+    "author_weighting": "sqrt",
+    "weight_decay": 0.0001,
+    "pooling": "mil",
+    "residual": true,
+    "edit_layers": 2,
+    "text_emb_dim": 768,
+    "tabular_columns": 45,
+    "params": 704642,
+    "tensorflow": "2.12.0",
+    "keras": "2.12.0",
+    "precision": "mixed_float16",
+    "batch_size": 256
+  },
+  "branches": [
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6"
+  ],
+  "pretrained_encoder": null,
+  "notes": [
+    "665 changesets had no user history; a null history step was inserted"
+  ],
+  "fold": 3
+}

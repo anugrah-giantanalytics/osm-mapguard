@@ -1,0 +1,18 @@
+{
+  "started": "20261013-110917",
+  "task": "ovid_modern",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim",
+  "stages": [
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 3.4
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_temporal/20261013-110926_ovid_modern_temporal_past_to_future_s20260904"
+  ],
+  "all_ok": true
+}

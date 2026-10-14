@@ -1,0 +1,28 @@
+# Round 4 (2026-10-13): embeddings + 3-seed run of the round-3 candidates. Split frozen (split_seed 20260904).
+# Deep model = v3 default: edit_layers 2, text_emb auto (used when stage 08 succeeded). One launch only (lock).
+# name                | flags      | run_pipeline.py arguments
+embed                 | install_st | --task ovid --stages 08
+smoke                 | fatal      | --task ovid --stages 00,01,02,07,09 --quick
+ablations             |            | --task ovid --stages 03 --ablation-rows full,full_2layers,full_text_emb,full_2layers_text_emb --ablation-seeds 20260904,20260905,20260906
+ovid_s1               |            | --task ovid --stages 01,02,07,09 --seed 20260904
+ovid_s2               |            | --task ovid --stages 01,02,07,09 --seed 20260905
+ovid_s3               |            | --task ovid --stages 01,02,07,09 --seed 20260906
+modern_s1             |            | --task ovid_modern --stages 01,02,07,09 --seed 20260904
+modern_s2             |            | --task ovid_modern --stages 01,02,07,09 --seed 20260905
+modern_s3             |            | --task ovid_modern --stages 01,02,07,09 --seed 20260906
+T2_s1                 |            | --task T2 --stages 01,02,07,09 --seed 20260904
+T2_s2                 |            | --task T2 --stages 01,02,07,09 --seed 20260905
+T2_s3                 |            | --task T2 --stages 01,02,07,09 --seed 20260906
+rv_s1                 |            | --task revert_vandalism --stages 01,02,07,09 --seed 20260904
+rv_s2                 |            | --task revert_vandalism --stages 01,02,07,09 --seed 20260905
+rv_s3                 |            | --task revert_vandalism --stages 01,02,07,09 --seed 20260906
+revert_s1             |            | --task revert --stages 01,02,07,09 --seed 20260904
+revert_s2             |            | --task revert --stages 01,02,07,09 --seed 20260905
+revert_s3             |            | --task revert --stages 01,02,07,09 --seed 20260906
+T1_s1                 |            | --task T1 --stages 01,02,07,09 --seed 20260904
+T1_s2                 |            | --task T1 --stages 01,02,07,09 --seed 20260905
+T1_s3                 |            | --task T1 --stages 01,02,07,09 --seed 20260906
+temporal_ovid_modern  |            | --task ovid_modern --stages 06 --seed 20260904
+temporal_T1           |            | --task T1 --stages 06 --seed 20260904
+temporal_T2           |            | --task T2 --stages 06 --seed 20260904
+

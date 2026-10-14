@@ -1,0 +1,8 @@
+{
+  "stage": "ensemble",
+  "task": "T1",
+  "split": "R1b",
+  "seed": 0,
+  "deep_run": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_supervised/20261013-104158_T1_R1b_s20260904",
+  "hybrid_run": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/baselines/20261013-104133_T1_R1b_s20260904"
+}

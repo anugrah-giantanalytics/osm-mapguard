@@ -1,0 +1,65 @@
+{
+  "stage": "stage2_supervised",
+  "task": "revert",
+  "split": "R1b",
+  "seed": 20260906,
+  "device": "auto",
+  "deterministic": false,
+  "resplit": false,
+  "data": {
+    "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim"
+  },
+  "model": {
+    "branches": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6"
+    ],
+    "max_edits": 256,
+    "user_steps": 200,
+    "embed": 64,
+    "heads": 4,
+    "dropout": 0.3,
+    "raster": null,
+    "pooling": "mil",
+    "residual": true,
+    "edit_layers": 2,
+    "text_emb": "auto"
+  },
+  "train": {
+    "epochs": 40,
+    "batch_size": "auto",
+    "lr": 0.001,
+    "clipnorm": 1.0,
+    "loss": "focal",
+    "focal_gamma": 2.0,
+    "focal_alpha": 0.5,
+    "class_weight": null,
+    "patience": 5,
+    "verbose": 2,
+    "mixed_precision": "auto",
+    "author_weighting": "sqrt",
+    "weight_decay": 0.0001
+  },
+  "init": {
+    "pretrained_encoder": null,
+    "freeze_encoder": false
+  },
+  "evaluate": {
+    "attribution": true,
+    "top_k": 20
+  },
+  "stack": {
+    "folds": 5,
+    "hybrid_variants": [
+      "base",
+      "emb"
+    ]
+  },
+  "split_seed": 20260904,
+  "tag": "s20260906",
+  "_config_path": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/02_stage2_supervised/config.json"
+}

@@ -1,0 +1,30 @@
+{
+  "started": "20261013-074416",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim",
+  "stages": [
+    {
+      "stage": "03 stage2 ablations",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 20.5
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_ablations/20261013-074423_ovid_R1b_full_s20260904",
+    "experiments/runs/stage2_ablations/20261013-074607_ovid_R1b_full_s20260905",
+    "experiments/runs/stage2_ablations/20261013-074734_ovid_R1b_full_s20260906",
+    "experiments/runs/stage2_ablations/20261013-074916_ovid_R1b_full_text_emb_s20260904",
+    "experiments/runs/stage2_ablations/20261013-075043_ovid_R1b_full_text_emb_s20260905",
+    "experiments/runs/stage2_ablations/20261013-075208_ovid_R1b_full_text_emb_s20260906",
+    "experiments/runs/stage2_ablations/20261013-075340_ovid_R1b_full_2layers_s20260904",
+    "experiments/runs/stage2_ablations/20261013-075532_ovid_R1b_full_2layers_s20260905",
+    "experiments/runs/stage2_ablations/20261013-075711_ovid_R1b_full_2layers_s20260906",
+    "experiments/runs/stage2_ablations/20261013-075908_ovid_R1b_full_2layers_text_emb_s20260904",
+    "experiments/runs/stage2_ablations/20261013-080044_ovid_R1b_full_2layers_text_emb_s20260905",
+    "experiments/runs/stage2_ablations/20261013-080241_ovid_R1b_full_2layers_text_emb_s20260906",
+    "experiments/runs/stage2_ablations_grid/20261013-080443_ovid_R1b_grid"
+  ],
+  "all_ok": true
+}

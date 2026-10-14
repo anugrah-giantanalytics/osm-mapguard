@@ -491,9 +491,15 @@ Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured 
   refused, lock released at the end); embedding env pinned to numpy-1.22-compatible versions in a
   fresh folder; stage 07 pairs this invocation's own runs; summary works without a base row.
 - [x] Adopted from round 3: edit_layers=2 as deep default; object context dropped.
-- [ ] Round 4 (`altair/plans/r4_seeds.txt`): embeddings + 3 seeds × 6 tasks + temporal.
-- [ ] Embeddings run (hybrid emb, full_text_emb, full_v3) - untested so far.
-- [ ] Decide the final setup from round 3 (adopt only gains beyond seed spread and with an
-  author-bootstrap interval excluding zero).
-- [ ] Final round: adopted setup × 5 seeds on all six tasks + temporal.
+- [x] Round 4 (2026-10-13, `experiments/rounds/r4_2026-10-13_altair_h100_seeds/`): one launch,
+  all 24 steps ok, 3 h 43 m; embeddings worked (CUDA, 37 s); 3 seeds × 6 tasks + temporal.
+- [x] Embeddings measured: help the trees (ovid +0.0037, T1 +0.0067, revert_vandalism +0.0038,
+  significant) and the stack; alone in the deep model −0.002; with 2 layers +0.004.
+- [x] Final setup decided on round 4 (3 seeds + author bootstrap): stack + emb for ovid
+  (+0.0097 vs hybrid, F1 0.828 vs Ovid 0.817), ensemble for ovid_modern / revert tasks; on T1/T2
+  nothing beats the hybrid significantly.
+- [x] Final multi-seed round = round 4 (3 seeds). 5 seeds not needed: seed sd ≤ 0.007 vs
+  test-set interval ≈ ±0.012.
+- [ ] Open: v3 deep model transfers worse over 7 years (ovid_modern temporal 0.874 vs 0.908 in
+  v2.1; one seed) - report as an observation.
 - [ ] Report, README, dataset release v1.2.0 (side tables), visual (after the model is final).

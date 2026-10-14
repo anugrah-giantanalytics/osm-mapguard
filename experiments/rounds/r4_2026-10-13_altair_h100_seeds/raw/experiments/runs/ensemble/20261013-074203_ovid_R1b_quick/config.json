@@ -1,0 +1,9 @@
+{
+  "stage": "ensemble",
+  "task": "ovid",
+  "split": "R1b",
+  "seed": 0,
+  "tag": "quick",
+  "deep_run": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_supervised/20261013-074104_ovid_R1b_quick",
+  "hybrid_run": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/baselines/20261013-074016_ovid_R1b_quick"
+}

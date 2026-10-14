@@ -1,0 +1,46 @@
+{
+  "started": "20261013-081703",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim",
+  "stages": [
+    {
+      "stage": "01 baselines",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.8
+    },
+    {
+      "stage": "02 stage2 R1b",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 2.0
+    },
+    {
+      "stage": "02 Ovid reproduction (R1b, Ovid's features and architecture)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.3
+    },
+    {
+      "stage": "07 ensemble (deep + hybrid, weight chosen on validation)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.1
+    },
+    {
+      "stage": "09 stack (deep out-of-fold score inside the trees)",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 9.1
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/baselines/20261013-081710_ovid_R1b_s20260905",
+    "experiments/runs/stage2_supervised/20261013-081759_ovid_R1b_s20260905",
+    "experiments/runs/stage2_supervised/20261013-082001_ovid_R1b_ovid_repro",
+    "experiments/runs/ensemble/20261013-082020_ovid_R1b",
+    "experiments/runs/stack/20261013-082027_ovid_R1b_stack_s20260905"
+  ],
+  "all_ok": true
+}

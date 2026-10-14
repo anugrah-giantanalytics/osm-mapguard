@@ -1,0 +1,44 @@
+
+================================================================================
+[07:37:11] 08 text embeddings
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/08_text_embeddings/embed_text.py --feature-store /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim
+================================================================================
+46,578 changesets | model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 | device cuda
+/data/mpstme-tanay/deepLearning_osm/.pydeps_st2/huggingface_hub/file_download.py:1142: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+/data/mpstme-tanay/deepLearning_osm/.pydeps_st2/huggingface_hub/file_download.py:1142: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+comments embedded in 27s
+{
+ "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+ "dim": 384,
+ "rows": 46578,
+ "device": "cuda",
+ "seconds": 36.8,
+ "empty_comments": 2730,
+ "empty_tags": 19223,
+ "torch": "2.5.1+cu124",
+ "sentence_transformers": "2.7.0",
+ "limit": null
+}
+[OK] 08 text embeddings in 0.7 min
+
+{
+  "started": "20261013-073711",
+  "task": "ovid",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim",
+  "stages": [
+    {
+      "stage": "08 text embeddings",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 0.7
+    }
+  ],
+  "runs_created": [],
+  "all_ok": true
+}
+
+log: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/pipeline/20261013-073711_ovid.log
+summary: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/pipeline/20261013-073711_ovid.json

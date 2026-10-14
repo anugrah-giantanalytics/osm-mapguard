@@ -1,0 +1,228 @@
+
+================================================================================
+[07:37:52] 00 wiring_check
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/00_wiring_check/wiring_check.py --device auto
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+PASS  stage2 train B5  (5.8s)
+PASS  stage2 train B1+B5  (4.5s)
+PASS  stage2 train B2+B5  (6.1s)
+2026-10-13 07:38:19.871326: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_FLOAT
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+PASS  stage2 train B3+B4+B5  (14.3s)
+WARNING:tensorflow:5 out of the last 9 calls to <function Model.make_test_function.<locals>.test_function at 0x7f80a9db7e20> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B5+B6  (6.0s)
+WARNING:tensorflow:6 out of the last 11 calls to <function Model.make_test_function.<locals>.test_function at 0x7f80cf938700> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has reduce_retracing=True option that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+PASS  stage2 train B1+B2+B3+B4+B5+B6  (16.8s)
+PASS  stage2 full model with round-1 mean pooling  (16.0s)
+PASS  v3: text embeddings + 2 transformer blocks + fold scoring  (22.9s)
+PASS  weights save -> rebuild -> load  (7.0s)
+PASS  stage1 corruptions + encoder pretrain  (0.9s)
+PASS  stage1 encoder -> stage2 edit_encoder transfer  (16.3s)
+PASS  stage2 full model under mixed precision  (18.2s)
+PASS  encoder from a different split is refused  (0.0s)
+
+{
+  "verdict": "PASS",
+  "tensorflow": "2.12.0",
+  "keras": "2.12.0",
+  "devices": [
+    "/physical_device:CPU:0",
+    "/physical_device:GPU:0",
+    "gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)"
+  ]
+}
+
+================================================================================
+[07:40:10] 01 baselines
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/01_baselines/baselines_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+B0 tripwire  ROC-AUC 0.6617  -> PASS - weak prior, not leakage
+LogReg       PR-AUC [0.8081, 0.788, 0.8282]
+XGBoost      PR-AUC [0.8602, 0.846, 0.8743]
+hybrid                   PR-AUC [0.8986, 0.8867, 0.9101]  one-per-author 0.8324
+hybrid_emb               PR-AUC [0.9016, 0.8903, 0.9125]  one-per-author 0.8404
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/baselines/20261013-074016_ovid_R1b_quick
+
+================================================================================
+[07:40:59] 02 stage2 R1b
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/02_stage2_supervised/stage2_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set train.epochs=2
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/2
+2026-10-13 07:41:19.637112: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+50/50 - 24s - loss: 0.0872 - pr_auc: 0.6288 - roc_auc: 0.6514 - val_loss: 0.0681 - val_pr_auc: 0.8514 - val_roc_auc: 0.8515 - 24s/epoch - 486ms/step
+Epoch 2/2
+50/50 - 5s - loss: 0.0579 - pr_auc: 0.7926 - roc_auc: 0.8007 - val_loss: 0.0673 - val_pr_auc: 0.8698 - val_roc_auc: 0.8672 - 5s/epoch - 102ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_supervised/20261013-074104_ovid_R1b_quick
+
+ovid / R1b
+  test PR-AUC  0.8372  95% CI [0.8206, 0.8536]
+  test ROC-AUC 0.8481
+  PR-AUC at 1% prevalence 0.0829
+  ECE 0.12804
+
+================================================================================
+[07:41:46] 02 Ovid reproduction (R1b, Ovid's features and architecture)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/02_stage2_supervised/stage2_train.py --config /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/02_stage2_supervised/ovid_repro.json --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set train.epochs=2 --set tag=ovid_repro_quick
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+Epoch 1/2
+50/50 - 4s - loss: 0.5592 - pr_auc: 0.7808 - roc_auc: 0.7873 - val_loss: 0.5952 - val_pr_auc: 0.7790 - val_roc_auc: 0.8185 - 4s/epoch - 73ms/step
+Epoch 2/2
+50/50 - 0s - loss: 0.4737 - pr_auc: 0.8415 - roc_auc: 0.8550 - val_loss: 0.5726 - val_pr_auc: 0.7753 - val_roc_auc: 0.8197 - 252ms/epoch - 5ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_supervised/20261013-074151_ovid_R1b_ovid_repro_quick
+
+ovid / R1b
+  test PR-AUC  0.7909  95% CI [0.7693, 0.8128]
+  test ROC-AUC 0.8174
+  PR-AUC at 1% prevalence 0.0452
+  ECE 0.12674
+
+================================================================================
+[07:41:58] 07 ensemble (deep + hybrid, weight chosen on validation)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/07_ensemble/ensemble.py --task ovid --deep /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_supervised/20261013-074104_ovid_R1b_quick --hybrid /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/baselines/20261013-074016_ovid_R1b_quick --feature-store /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim --quick
+================================================================================
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/ensemble/20261013-074203_ovid_R1b_quick
+{
+ "deep_weight": 0.286,
+ "ensemble": {
+  "test_pr_auc": [
+   0.898,
+   0.8865,
+   0.9093
+  ],
+  "test_roc_auc": [
+   0.8945,
+   0.8842,
+   0.9047
+  ],
+  "test_pr_auc_at_1pct_prevalence": 0.1967,
+  "test_f1_at_val_threshold": 0.8161,
+  "test_ovid_table": {
+   "precision": 0.8101,
+   "recall": 0.8205,
+   "f1": 0.8153,
+   "accuracy": 0.8151
+  },
+  "test_author_robust": {
+   "authors": 2562,
+   "one_per_author_n": 2593,
+   "one_per_author_pr_auc": 0.8387,
+   "author_weighted_pr_auc": 0.8266
+  },
+  "test_ece": 0.05311
+ },
+ "deep": [
+  0.8372,
+  0.8206,
+  0.8536
+ ],
+ "hybrid": [
+  0.8986,
+  0.8867,
+  0.9101
+ ]
+}
+
+================================================================================
+[07:42:04] 09 stack (deep out-of-fold score inside the trees)
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/09_stack/stack_train.py --set task=ovid --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim" --set device=auto --set tag=quick --set model.max_edits=64 --set model.user_steps=50 --set train.epochs=1 --set stack.folds=2
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim', 'task': 'ovid', 'n_changesets': 18037, 'n_positive': 9131, 'n_negative': 8906, 'n_edit_rows': 825311, 'n_user_seq_rows': 1187051, 'missing_optional_columns': [], 'by_corpus': {'A': 18037}}
+split: {'kind': 'R1b', 'leaky': False, 'seed': 20260904, 'cutoff': None, 'n_train': 12626, 'n_val': 1804, 'n_test': 3607, 'pos_rate_train': 0.5103, 'pos_rate_val': 0.4956, 'pos_rate_test': 0.4974}
+2026-10-13 07:42:23.978795: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+25/25 - 22s - loss: 0.1101 - pr_auc: 0.5677 - roc_auc: 0.5929 - val_loss: 0.0737 - val_pr_auc: 0.7893 - val_roc_auc: 0.8109 - 22s/epoch - 872ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stack/20261013-074209_ovid_R1b_stack_quick/folds/stack_fold/20261013-074209_ovid_R1b_fold0_quick
+fold 0: trained on 6313, scored 6313 held-out rows
+25/25 - 20s - loss: 0.1130 - pr_auc: 0.5773 - roc_auc: 0.5834 - val_loss: 0.0983 - val_pr_auc: 0.7927 - val_roc_auc: 0.8004 - 20s/epoch - 787ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stack/20261013-074209_ovid_R1b_stack_quick/folds/stack_fold/20261013-074240_ovid_R1b_fold1_quick
+fold 1: trained on 6313, scored 6313 held-out rows
+hybrid_base_same_split         PR-AUC [0.8986, 0.8867, 0.9101]  one-per-author 0.8324  F1 0.8109
+stack_base                     PR-AUC [0.8979, 0.8863, 0.9093]  one-per-author 0.8346  F1 0.8094
+hybrid_emb_same_split          PR-AUC [0.9016, 0.8903, 0.9125]  one-per-author 0.8404  F1 0.8202
+stack_emb                      PR-AUC [0.9015, 0.8901, 0.9127]  one-per-author 0.8366  F1 0.8215
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stack/20261013-074209_ovid_R1b_stack_quick

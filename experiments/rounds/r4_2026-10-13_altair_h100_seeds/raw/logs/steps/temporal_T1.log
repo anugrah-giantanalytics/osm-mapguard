@@ -1,0 +1,165 @@
+
+================================================================================
+[11:12:39] 06 temporal
+$ /bin/python3 -u /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/train/06_temporal_evaluation/temporal_train_eval.py --set task=T1 --set data.feature_store="/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim" --set device=auto --set seed=20260904 --set split_seed=20260904 --set tag=s20260904 --set temporal.cutoff=2025-07-01T00:00:00Z --set reference_run="/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_supervised/20261013-110025_T1_R1b_s20260906"
+================================================================================
+device: /physical_device:CPU:0 | /physical_device:GPU:0 | gpu=NVIDIA H100 PCIe MIG 3g.40gb cc=(9, 0)
+data: {'root': '/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim', 'task': 'T1', 'n_changesets': 7892, 'n_positive': 3947, 'n_negative': 3945, 'n_edit_rows': 332813, 'n_user_seq_rows': 539191, 'missing_optional_columns': [], 'by_corpus': {'M': 7892}}
+split: {'kind': 'temporal', 'leaky': False, 'seed': 20260904, 'cutoff': '2025-07-01T00:00:00Z', 'n_train': 4037, 'n_val': 441, 'n_test': 2634, 'pos_rate_train': 0.5521, 'pos_rate_val': 0.5442, 'pos_rate_test': 0.5015}
+Epoch 1/40
+2026-10-13 11:12:59.495303: W tensorflow/core/common_runtime/type_inference.cc:339] Type inference failed. This indicates an invalid graph that escaped type checking. Error message: INVALID_ARGUMENT: expected compatible input types, but input 1:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_INT32
+    }
+  }
+}
+ is neither a subtype nor a supertype of the combined inputs preceding it:
+type_id: TFT_OPTIONAL
+args {
+  type_id: TFT_PRODUCT
+  args {
+    type_id: TFT_TENSOR
+    args {
+      type_id: TFT_HALF
+    }
+  }
+}
+
+	while inferring type of node 'cond_42/output/_24'
+16/16 - 21s - loss: 0.1424 - pr_auc: 0.6000 - roc_auc: 0.5717 - val_loss: 0.0815 - val_pr_auc: 0.6904 - val_roc_auc: 0.6634 - 21s/epoch - 1s/step
+Epoch 2/40
+16/16 - 3s - loss: 0.0867 - pr_auc: 0.6803 - roc_auc: 0.6321 - val_loss: 0.0783 - val_pr_auc: 0.7311 - val_roc_auc: 0.6944 - 3s/epoch - 192ms/step
+Epoch 3/40
+16/16 - 3s - loss: 0.0806 - pr_auc: 0.7015 - roc_auc: 0.6819 - val_loss: 0.0763 - val_pr_auc: 0.7629 - val_roc_auc: 0.7230 - 3s/epoch - 191ms/step
+Epoch 4/40
+16/16 - 3s - loss: 0.0757 - pr_auc: 0.7688 - roc_auc: 0.7379 - val_loss: 0.0736 - val_pr_auc: 0.7815 - val_roc_auc: 0.7474 - 3s/epoch - 178ms/step
+Epoch 5/40
+16/16 - 2s - loss: 0.0736 - pr_auc: 0.7843 - roc_auc: 0.7621 - val_loss: 0.0724 - val_pr_auc: 0.7947 - val_roc_auc: 0.7645 - 2s/epoch - 149ms/step
+Epoch 6/40
+16/16 - 3s - loss: 0.0725 - pr_auc: 0.7993 - roc_auc: 0.7703 - val_loss: 0.0712 - val_pr_auc: 0.7977 - val_roc_auc: 0.7727 - 3s/epoch - 170ms/step
+Epoch 7/40
+16/16 - 3s - loss: 0.0714 - pr_auc: 0.8070 - roc_auc: 0.7811 - val_loss: 0.0701 - val_pr_auc: 0.8098 - val_roc_auc: 0.7838 - 3s/epoch - 163ms/step
+Epoch 8/40
+16/16 - 3s - loss: 0.0685 - pr_auc: 0.8309 - roc_auc: 0.8036 - val_loss: 0.0700 - val_pr_auc: 0.8141 - val_roc_auc: 0.7936 - 3s/epoch - 163ms/step
+Epoch 9/40
+16/16 - 3s - loss: 0.0676 - pr_auc: 0.8353 - roc_auc: 0.8145 - val_loss: 0.0697 - val_pr_auc: 0.8158 - val_roc_auc: 0.7960 - 3s/epoch - 163ms/step
+Epoch 10/40
+16/16 - 2s - loss: 0.0648 - pr_auc: 0.8515 - roc_auc: 0.8340 - val_loss: 0.0686 - val_pr_auc: 0.8210 - val_roc_auc: 0.8070 - 2s/epoch - 119ms/step
+Epoch 11/40
+16/16 - 2s - loss: 0.0629 - pr_auc: 0.8645 - roc_auc: 0.8416 - val_loss: 0.0713 - val_pr_auc: 0.8243 - val_roc_auc: 0.8103 - 2s/epoch - 134ms/step
+Epoch 12/40
+16/16 - 2s - loss: 0.0621 - pr_auc: 0.8694 - roc_auc: 0.8511 - val_loss: 0.0695 - val_pr_auc: 0.8302 - val_roc_auc: 0.8168 - 2s/epoch - 120ms/step
+Epoch 13/40
+16/16 - 2s - loss: 0.0608 - pr_auc: 0.8818 - roc_auc: 0.8580 - val_loss: 0.0684 - val_pr_auc: 0.8328 - val_roc_auc: 0.8187 - 2s/epoch - 121ms/step
+Epoch 14/40
+16/16 - 2s - loss: 0.0589 - pr_auc: 0.8865 - roc_auc: 0.8671 - val_loss: 0.0669 - val_pr_auc: 0.8438 - val_roc_auc: 0.8277 - 2s/epoch - 135ms/step
+Epoch 15/40
+16/16 - 2s - loss: 0.0575 - pr_auc: 0.8917 - roc_auc: 0.8743 - val_loss: 0.0691 - val_pr_auc: 0.8457 - val_roc_auc: 0.8311 - 2s/epoch - 128ms/step
+Epoch 16/40
+16/16 - 2s - loss: 0.0553 - pr_auc: 0.9022 - roc_auc: 0.8863 - val_loss: 0.0680 - val_pr_auc: 0.8476 - val_roc_auc: 0.8313 - 2s/epoch - 114ms/step
+Epoch 17/40
+16/16 - 2s - loss: 0.0545 - pr_auc: 0.9056 - roc_auc: 0.8910 - val_loss: 0.0673 - val_pr_auc: 0.8532 - val_roc_auc: 0.8362 - 2s/epoch - 120ms/step
+Epoch 18/40
+16/16 - 1s - loss: 0.0522 - pr_auc: 0.9165 - roc_auc: 0.9014 - val_loss: 0.0701 - val_pr_auc: 0.8545 - val_roc_auc: 0.8372 - 1s/epoch - 91ms/step
+Epoch 19/40
+16/16 - 2s - loss: 0.0500 - pr_auc: 0.9224 - roc_auc: 0.9074 - val_loss: 0.0689 - val_pr_auc: 0.8528 - val_roc_auc: 0.8328 - 2s/epoch - 103ms/step
+Epoch 20/40
+16/16 - 2s - loss: 0.0490 - pr_auc: 0.9269 - roc_auc: 0.9151 - val_loss: 0.0720 - val_pr_auc: 0.8560 - val_roc_auc: 0.8375 - 2s/epoch - 112ms/step
+Epoch 21/40
+16/16 - 2s - loss: 0.0442 - pr_auc: 0.9400 - roc_auc: 0.9296 - val_loss: 0.0786 - val_pr_auc: 0.8565 - val_roc_auc: 0.8321 - 2s/epoch - 98ms/step
+Epoch 22/40
+16/16 - 2s - loss: 0.0397 - pr_auc: 0.9536 - roc_auc: 0.9433 - val_loss: 0.0839 - val_pr_auc: 0.8553 - val_roc_auc: 0.8293 - 2s/epoch - 110ms/step
+Epoch 23/40
+16/16 - 2s - loss: 0.0373 - pr_auc: 0.9570 - roc_auc: 0.9484 - val_loss: 0.0997 - val_pr_auc: 0.8523 - val_roc_auc: 0.8302 - 2s/epoch - 103ms/step
+Epoch 24/40
+16/16 - 2s - loss: 0.0356 - pr_auc: 0.9641 - roc_auc: 0.9554 - val_loss: 0.0893 - val_pr_auc: 0.8564 - val_roc_auc: 0.8354 - 2s/epoch - 103ms/step
+Epoch 25/40
+16/16 - 2s - loss: 0.0320 - pr_auc: 0.9696 - roc_auc: 0.9628 - val_loss: 0.0986 - val_pr_auc: 0.8591 - val_roc_auc: 0.8316 - 2s/epoch - 105ms/step
+Epoch 26/40
+16/16 - 1s - loss: 0.0322 - pr_auc: 0.9684 - roc_auc: 0.9620 - val_loss: 0.1061 - val_pr_auc: 0.8623 - val_roc_auc: 0.8358 - 1s/epoch - 84ms/step
+Epoch 27/40
+16/16 - 2s - loss: 0.0296 - pr_auc: 0.9741 - roc_auc: 0.9679 - val_loss: 0.0908 - val_pr_auc: 0.8514 - val_roc_auc: 0.8252 - 2s/epoch - 117ms/step
+Epoch 28/40
+16/16 - 1s - loss: 0.0251 - pr_auc: 0.9811 - roc_auc: 0.9761 - val_loss: 0.1369 - val_pr_auc: 0.8504 - val_roc_auc: 0.8259 - 1s/epoch - 82ms/step
+Epoch 29/40
+16/16 - 2s - loss: 0.0231 - pr_auc: 0.9838 - roc_auc: 0.9794 - val_loss: 0.1312 - val_pr_auc: 0.8513 - val_roc_auc: 0.8269 - 2s/epoch - 103ms/step
+Epoch 30/40
+16/16 - 2s - loss: 0.0256 - pr_auc: 0.9821 - roc_auc: 0.9768 - val_loss: 0.0956 - val_pr_auc: 0.8628 - val_roc_auc: 0.8350 - 2s/epoch - 120ms/step
+Epoch 31/40
+16/16 - 2s - loss: 0.0212 - pr_auc: 0.9868 - roc_auc: 0.9840 - val_loss: 0.1547 - val_pr_auc: 0.8457 - val_roc_auc: 0.8232 - 2s/epoch - 103ms/step
+Epoch 32/40
+16/16 - 2s - loss: 0.0182 - pr_auc: 0.9899 - roc_auc: 0.9872 - val_loss: 0.1711 - val_pr_auc: 0.8598 - val_roc_auc: 0.8300 - 2s/epoch - 110ms/step
+Epoch 33/40
+16/16 - 1s - loss: 0.0181 - pr_auc: 0.9894 - roc_auc: 0.9873 - val_loss: 0.1906 - val_pr_auc: 0.8495 - val_roc_auc: 0.8268 - 1s/epoch - 89ms/step
+Epoch 34/40
+16/16 - 1s - loss: 0.0191 - pr_auc: 0.9881 - roc_auc: 0.9859 - val_loss: 0.1571 - val_pr_auc: 0.8456 - val_roc_auc: 0.8202 - 1s/epoch - 74ms/step
+Epoch 35/40
+16/16 - 1s - loss: 0.0184 - pr_auc: 0.9905 - roc_auc: 0.9878 - val_loss: 0.1805 - val_pr_auc: 0.8619 - val_roc_auc: 0.8338 - 1s/epoch - 76ms/step
+
+run directory: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/runs/stage2_temporal/20261013-111244_T1_temporal_past_to_future_s20260904
+{
+  "cutoff": "2025-07-01T00:00:00Z",
+  "train_window": [
+    "2023-01-01T12:19:08Z",
+    "2025-06-30T13:44:22Z"
+  ],
+  "test_window": [
+    "2025-07-01T09:40:35Z",
+    "2026-09-16T18:25:50Z"
+  ],
+  "headline": {
+    "test_pr_auc": [
+      0.8061,
+      0.7851,
+      0.826
+    ],
+    "test_roc_auc": [
+      0.7975,
+      0.7794,
+      0.8139
+    ],
+    "test_pr_auc_at_1pct_prevalence": 0.0882,
+    "test_f1_at_val_threshold": 0.7331,
+    "test_ovid_table": {
+      "precision": 0.6973,
+      "recall": 0.7744,
+      "f1": 0.7339,
+      "accuracy": 0.7183
+    },
+    "test_author_robust": {
+      "authors": 1633,
+      "one_per_author_n": 1684,
+      "one_per_author_pr_auc": 0.8178,
+      "author_weighted_pr_auc": 0.8248
+    },
+    "test_ece": 0.05268
+  }
+}
+[OK] 06 temporal in 1.8 min
+
+{
+  "started": "20261013-111239",
+  "task": "T1",
+  "quick": false,
+  "feature_store": "/data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/data/interim",
+  "stages": [
+    {
+      "stage": "06 temporal",
+      "ok": true,
+      "returncode": 0,
+      "minutes": 1.8
+    }
+  ],
+  "runs_created": [
+    "experiments/runs/stage2_temporal/20261013-111244_T1_temporal_past_to_future_s20260904"
+  ],
+  "all_ok": true
+}
+
+log: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/pipeline/20261013-111239_T1.log
+summary: /data/mpstme-tanay/deepLearning_osm/rounds/r4_seeds/app/experiments/pipeline/20261013-111239_T1.json
