@@ -1,7 +1,7 @@
 """adiff query construction, parsing, and the guard that keeps us off a shared service.
 
 The fixture below is trimmed from a real 2026-09-04 response for way 202342236 and
-changeset 52850166 - the two probes that overturned the v1 plan (docs/PLAN_REVIEW.md F1).
+changeset 52850166 - the two probes that overturned the v1 plan (docs/planning/PLAN_REVIEW.md F1).
 """
 
 from __future__ import annotations

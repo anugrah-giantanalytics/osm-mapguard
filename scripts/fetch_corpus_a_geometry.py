@@ -102,7 +102,7 @@ def main() -> int:
     ap.add_argument("--all", action="store_true",
                     help="ignore the id-hash subset and enrich everything. Gate 1b "
                          "measured 96 hours for the full corpus, so this is not the "
-                         "default; see docs/GATE1B_DECISION.md")
+                         "default; see docs/planning/GATE1B_DECISION.md")
     ap.add_argument("--rate", type=float, default=OVERPASS_RATE)
     ap.add_argument("--stats", action="store_true")
     args = ap.parse_args()

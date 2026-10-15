@@ -117,7 +117,7 @@ def load(root: str | Path | None = None, task: str = "all") -> FeatureStore:
     if absent:
         raise ContractError(
             "feature store is incomplete - missing:\n  " + "\n  ".join(absent) +
-            "\n\nThe dataset is configured separately (docs/DATA_FOUNDATION.md). Build the "
+            "\n\nThe dataset is configured separately (docs/data/DATA_FOUNDATION.md). Build the "
             "feature store first, or point data.feature_store at a directory that has it."
         )
 

@@ -14,7 +14,7 @@ Scope cuts and their justification are in [`PROJECT_PLAN.md`](PROJECT_PLAN.md) Â
 
 ## Already done (2026-09-04)
 
-- [x] Plan reviewed, two false premises corrected, `docs/PLAN_REVIEW.md`
+- [x] Plan reviewed, two false premises corrected, `docs/planning/PLAN_REVIEW.md`
 - [x] Repo restored onto a clean `main`; `.claude/` gitignored; conventions in `CONTRIBUTING.md`
 - [x] `MAPGUARD_DATA` = `C:\osm-data`, outside OneDrive, wired through every module
 - [x] pytest harness, **38 tests**, no network

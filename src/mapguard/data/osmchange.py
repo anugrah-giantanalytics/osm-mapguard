@@ -28,7 +28,7 @@ Both are supplied separately, and neither is expensive:
 
 PROJECT_PLAN v1 claimed the previous state cost one request per object and concluded
 that Corpus A geometry was node-only. That was wrong, and it mattered - it would have
-left the geometry branch testable only on an unlabelled corpus. See docs/PLAN_REVIEW.md
+left the geometry branch testable only on an unlabelled corpus. See docs/planning/PLAN_REVIEW.md
 finding F1.
 
 Parsing streams. Some vandalism changesets hold tens of thousands of objects, and the

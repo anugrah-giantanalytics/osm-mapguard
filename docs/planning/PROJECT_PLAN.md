@@ -263,7 +263,7 @@ Every unit genuinely used. Nothing name-dropped.
 
 ## 7. Data plan — three corpora
 
-Gate 0 killed the original single-corpus plan; the plan review (`docs/PLAN_REVIEW.md`)
+Gate 0 killed the original single-corpus plan; the plan review (`docs/planning/PLAN_REVIEW.md`)
 then killed the *replacement's* central assumption, that historical geometry is out of
 reach. Both routes to it were verified on 2026-09-04. What follows is the corrected plan.
 

@@ -68,7 +68,7 @@ def code_files() -> list[Path]:
                 out.append(f)
     out += sorted((REPO / "cluster").glob("*/*.ipynb"))
     out += sorted((REPO / "cluster").glob("*/README.md"))
-    for extra in ("requirements-train.txt", "RUNBOOK.md", "RUN_ALTAIR.md", "pyproject.toml"):
+    for extra in ("requirements-train.txt", "docs/running/RUNBOOK.md", "docs/running/RUN_ALTAIR.md", "pyproject.toml"):
         if (REPO / extra).exists():
             out.append(REPO / extra)
     return out

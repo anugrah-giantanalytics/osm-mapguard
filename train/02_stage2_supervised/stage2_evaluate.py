@@ -10,7 +10,7 @@ Run order 2 of 6 (companion to stage2_train.py). Plan stage: Stage 2.
 
 The gap between T1 and T2 is a result, not a nuisance: it measures how much of a score is
 carried by OSMCha's flagging heuristic - both T1 classes come from the flagged tail -
-rather than by the model. See docs/DATA_FOUNDATION.md section 1.
+rather than by the model. See docs/data/DATA_FOUNDATION.md section 1.
 
 The **threshold is not re-chosen** on the target task. It comes from the source run's
 validation fold. Re-picking it on the target test set would flatter the transfer.

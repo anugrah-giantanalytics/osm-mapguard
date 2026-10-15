@@ -89,7 +89,7 @@ def test_truncated_document_reports_rather_than_raises():
 
 
 def test_large_document_does_not_retain_elements():
-    """Guards the streaming fix from docs/PLAN_REVIEW.md: clearing an element is not
+    """Guards the streaming fix from docs/planning/PLAN_REVIEW.md: clearing an element is not
     enough, it has to be detached, or a 50k-object changeset holds 50k husks."""
     n = 5000
     body = "".join(

@@ -1,6 +1,6 @@
 # Running MapGuard on the SVKM AI/ML cluster
 
-Everything GPU-bound lives in [`cluster/`](cluster/), one folder per task, each with a
+Everything GPU-bound lives in [`cluster/`](../../cluster/), one folder per task, each with a
 single notebook and a `README.md` saying what it needs and what it produces. Nothing in
 `cluster/` invents data — every notebook reads artefacts produced by the local fetchers
 under `src/mapguard/` and `scripts/`.

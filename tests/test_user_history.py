@@ -2,7 +2,7 @@
 
 If `test_future_changesets_never_reach_the_features` fails, stop everything. It means the
 model can see what happened to an account after the changeset it is scoring, and every
-number produced downstream is meaningless. See docs/PLAN_REVIEW.md finding F6.
+number produced downstream is meaningless. See docs/planning/PLAN_REVIEW.md finding F6.
 """
 
 from __future__ import annotations

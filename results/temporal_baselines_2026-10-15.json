@@ -1,0 +1,260 @@
+{
+ "note": "tree models on the frozen temporal splits (laptop CPU, 2026-10-15, train/01_baselines with split=temporal); compare with deep temporal runs in experiments/rounds/r2c_*/ and r4_*/",
+ "deep_reference_pr_auc": {
+  "ovid_modern": {
+   "v3_r4": 0.874,
+   "v2.1_r2c": 0.908
+  },
+  "T1": {
+   "v3_r4": 0.806,
+   "v2.1_r2c": 0.793
+  },
+  "T2": {
+   "v3_r4": 0.835,
+   "v2.1_r2c": 0.849
+  },
+  "ovid": {
+   "v1_r1": 0.768
+  }
+ },
+ "ovid_modern": {
+  "run": "20261015-151613_ovid_modern_temporal_temporal_baseline",
+  "cutoff": "2020-01-01T00:00:00Z",
+  "b0_tripwire": {
+   "pr_auc": [
+    0.7953,
+    0.7807,
+    0.8104
+   ],
+   "one_per_author": 0.687,
+   "f1": 0.7608,
+   "roc_auc": [
+    0.8269,
+    0.8176,
+    0.8368
+   ]
+  },
+  "logistic_regression": {
+   "pr_auc": [
+    0.8582,
+    0.8462,
+    0.8691
+   ],
+   "one_per_author": 0.8043,
+   "f1": 0.7834,
+   "roc_auc": [
+    0.8483,
+    0.839,
+    0.8573
+   ]
+  },
+  "xgboost": {
+   "pr_auc": [
+    0.8997,
+    0.8907,
+    0.9081
+   ],
+   "one_per_author": 0.8601,
+   "f1": 0.7832,
+   "roc_auc": [
+    0.8921,
+    0.8845,
+    0.8991
+   ]
+  },
+  "hybrid": {
+   "pr_auc": [
+    0.9047,
+    0.8966,
+    0.9128
+   ],
+   "one_per_author": 0.8611,
+   "f1": 0.7978,
+   "roc_auc": [
+    0.898,
+    0.8909,
+    0.9051
+   ]
+  }
+ },
+ "T1": {
+  "run": "20261015-151700_T1_temporal_temporal_baseline",
+  "cutoff": "2025-07-01T00:00:00Z",
+  "b0_tripwire": {
+   "pr_auc": [
+    0.6645,
+    0.6363,
+    0.6902
+   ],
+   "one_per_author": 0.6981,
+   "f1": 0.7009,
+   "roc_auc": [
+    0.6811,
+    0.6593,
+    0.7007
+   ]
+  },
+  "logistic_regression": {
+   "pr_auc": [
+    0.7301,
+    0.7015,
+    0.7582
+   ],
+   "one_per_author": 0.7512,
+   "f1": 0.7152,
+   "roc_auc": [
+    0.7531,
+    0.7349,
+    0.7715
+   ]
+  },
+  "xgboost": {
+   "pr_auc": [
+    0.7828,
+    0.7592,
+    0.8048
+   ],
+   "one_per_author": 0.8022,
+   "f1": 0.7082,
+   "roc_auc": [
+    0.7901,
+    0.7725,
+    0.8059
+   ]
+  },
+  "hybrid": {
+   "pr_auc": [
+    0.8133,
+    0.792,
+    0.8331
+   ],
+   "one_per_author": 0.8294,
+   "f1": 0.7077,
+   "roc_auc": [
+    0.8107,
+    0.7944,
+    0.8271
+   ]
+  }
+ },
+ "T2": {
+  "run": "20261015-151725_T2_temporal_temporal_baseline",
+  "cutoff": "2025-07-01T00:00:00Z",
+  "b0_tripwire": {
+   "pr_auc": [
+    0.6707,
+    0.645,
+    0.6968
+   ],
+   "one_per_author": 0.6838,
+   "f1": 0.721,
+   "roc_auc": [
+    0.6825,
+    0.6637,
+    0.7032
+   ]
+  },
+  "logistic_regression": {
+   "pr_auc": [
+    0.8357,
+    0.8148,
+    0.855
+   ],
+   "one_per_author": 0.8497,
+   "f1": 0.7376,
+   "roc_auc": [
+    0.8263,
+    0.8102,
+    0.8418
+   ]
+  },
+  "xgboost": {
+   "pr_auc": [
+    0.8449,
+    0.8272,
+    0.8626
+   ],
+   "one_per_author": 0.8552,
+   "f1": 0.7569,
+   "roc_auc": [
+    0.8411,
+    0.8264,
+    0.8559
+   ]
+  },
+  "hybrid": {
+   "pr_auc": [
+    0.8517,
+    0.8342,
+    0.8678
+   ],
+   "one_per_author": 0.8592,
+   "f1": 0.7657,
+   "roc_auc": [
+    0.8446,
+    0.8306,
+    0.8589
+   ]
+  }
+ },
+ "ovid": {
+  "run": "20261015-151756_ovid_temporal_temporal_baseline",
+  "cutoff": "2019-01-01T00:00:00Z",
+  "b0_tripwire": {
+   "pr_auc": [
+    0.679,
+    0.6534,
+    0.7062
+   ],
+   "one_per_author": 0.472,
+   "f1": 0.7026,
+   "roc_auc": [
+    0.7894,
+    0.7743,
+    0.8042
+   ]
+  },
+  "logistic_regression": {
+   "pr_auc": [
+    0.7889,
+    0.7665,
+    0.8106
+   ],
+   "one_per_author": 0.7319,
+   "f1": 0.6962,
+   "roc_auc": [
+    0.8334,
+    0.8192,
+    0.8466
+   ]
+  },
+  "xgboost": {
+   "pr_auc": [
+    0.7934,
+    0.7728,
+    0.8125
+   ],
+   "one_per_author": 0.7416,
+   "f1": 0.69,
+   "roc_auc": [
+    0.8138,
+    0.7981,
+    0.8291
+   ]
+  },
+  "hybrid": {
+   "pr_auc": [
+    0.8242,
+    0.8066,
+    0.8415
+   ],
+   "one_per_author": 0.8018,
+   "f1": 0.7256,
+   "roc_auc": [
+    0.8428,
+    0.8288,
+    0.8569
+   ]
+  }
+ }
+}

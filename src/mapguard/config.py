@@ -72,7 +72,7 @@ REAL_CHANGESETS = "https://real-changesets.s3.us-west-2.amazonaws.com"
 MULTIFETCH_MAX = 725
 
 # Gate 1b measured public Overpass at 3.17 queries/minute, projecting to 96 hours for the
-# full corpus. See docs/GATE1B_DECISION.md. Geometry is therefore enriched on a fixed
+# full corpus. See docs/planning/GATE1B_DECISION.md. Geometry is therefore enriched on a fixed
 # subset chosen by a hash of the changeset id - independent of size, author and content,
 # because sampling by any of those would correlate "has geometry" with "is damaging".
 GEOMETRY_SUBSET_PERMILLE = 328          # ~32.8%, about 6,000 of 18,276

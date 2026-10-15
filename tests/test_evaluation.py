@@ -2,7 +2,7 @@
 
 Two of these guard results rather than code. `test_user_disjoint_never_leaks` protects the
 honest number in R1b, and the prevalence-correction tests protect R2, which the v1 plan
-had specified as an arithmetic impossibility (docs/PLAN_REVIEW.md F3).
+had specified as an arithmetic impossibility (docs/planning/PLAN_REVIEW.md F3).
 """
 
 from __future__ import annotations

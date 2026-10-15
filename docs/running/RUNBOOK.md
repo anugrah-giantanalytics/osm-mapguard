@@ -33,7 +33,7 @@ Steps 1–3 are only for rebuilding the data from scratch.
 ## Step 1 — fetch (laptop)
 
 Which source gives what, and why Geofabrik/OSMnx/QuickOSM are not used:
-[docs/DATA_SOURCES.md](docs/DATA_SOURCES.md).
+[docs/data/DATA_SOURCES.md](../data/DATA_SOURCES.md).
 
 ### Order at a glance
 
@@ -194,7 +194,7 @@ splits and a manifest. The same zip goes to the cluster and to the M4.
 
 ---
 
-## Training plan — round 2 (model v2, see docs/MODEL_V2.md)
+## Training plan — round 2 (model v2, see docs/model/MODEL_V2.md)
 
 Every command is `python train/run_pipeline.py --feature-store data/interim` plus:
 
@@ -209,7 +209,7 @@ Every command is `python train/run_pipeline.py --feature-store data/interim` plu
 | 6 | `--task ovid --stages 04,05` | Stage 1 again (round 1: no gain) | only if time |
 
 - Lead with `test_author_robust.one_per_author_pr_auc`, not only PR-AUC: Ovid's labels are
-  concentrated in a few bulk-reverted accounts (docs/MODEL_V2.md §3).
+  concentrated in a few bulk-reverted accounts (docs/model/MODEL_V2.md §3).
 - Stage 07 needs the same task's 01 and 02 runs; the pipeline orders it after them.
 - Never report a directory ending in `_quick`.
 - Hardware is used automatically (see train/setup_env.sh). If the Apple GPU does not attach,

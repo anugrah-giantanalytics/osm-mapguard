@@ -7,7 +7,7 @@ here. Library code (feature extraction, the model definition, metrics, splits) l
 Every stage reads the feature store through one contract,
 [`common/data_contract.py`](common/data_contract.py), which
 `python -m mapguard.features.build_store` writes to. Default task is `ovid` (Corpus A, the
-only corpus complete today); `T1`/`T2` need corpora M and N - see [RUNBOOK.md](../RUNBOOK.md).
+only corpus complete today); `T1`/`T2` need corpora M and N - see [RUNBOOK.md](../docs/running/RUNBOOK.md).
 
 ## One command
 

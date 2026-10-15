@@ -4,7 +4,7 @@ The v1 plan asked for evaluation at 1:100 and 1:1000 prevalence by "upsampling n
 The corpus has 9,138 negatives. Against 9,138 positives, 1:100 needs 913,800 of them and
 1:1000 needs 9,138,000 - and duplicating the ones we have changes nothing about PR-AUC
 except to inflate the denominator with copies. You cannot upsample your way to a lower
-positive rate. (docs/PLAN_REVIEW.md finding F3.)
+positive rate. (docs/planning/PLAN_REVIEW.md finding F3.)
 
 The fix is importance weighting. Score the balanced test set once, then reweight the
 negatives to what they would be at the target prevalence:

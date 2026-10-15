@@ -166,7 +166,7 @@ Rates are **measured**; totals are *estimated* from them.
 | Finish Corpus A contents | 10,021 | 3/s | ~0.9 h |
 
 Everything except geometry fits in a day. Geometry remains the binding constraint and the
-id-sampling rule in `docs/GATE1B_DECISION.md` still applies — sampled by hash of the
+id-sampling rule in `docs/planning/GATE1B_DECISION.md` still applies — sampled by hash of the
 changeset id, never by size or user, because size correlates with the label.
 
 ---

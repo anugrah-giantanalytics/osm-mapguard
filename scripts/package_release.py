@@ -398,7 +398,7 @@ def main() -> int:
 
     card = build_card(manifest, args.version)
     (stage / "DATASET_CARD.md").write_text(card, encoding="utf-8")
-    (REPO / "docs" / "DATASET_CARD.md").write_text(card, encoding="utf-8")
+    (REPO / "docs" / "data" / "DATASET_CARD.md").write_text(card, encoding="utf-8")
 
     zip_path = OUT / f"mapguard-dataset-{args.version}.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:

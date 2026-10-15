@@ -1,184 +1,199 @@
 # MapGuard
 
-Self-supervised, geometry-aware detection of damaging edits in OpenStreetMap.
+**Detecting damaging edits to OpenStreetMap.**
 
-Deep Learning (702AI0C008) mini project · team of 4 · four-week build to 2026-10-02.
-
-| | |
-|---|---|
-| Plan | [PROJECT_PLAN.md](PROJECT_PLAN.md) |
-| What the plan got wrong | [docs/PLAN_REVIEW.md](docs/PLAN_REVIEW.md) |
-| Build checklist | [CHECKLIST_v2.md](CHECKLIST_v2.md) |
-| Fetch -> build -> bundle -> train | [RUNBOOK.md](RUNBOOK.md) |
-| Model v2: why round 1 plateaued | [docs/MODEL_V2.md](docs/MODEL_V2.md) |
-| Training rounds | `experiments/rounds/` |
-| GPU cluster | [RUN_ALTAIR.md](RUN_ALTAIR.md) |
+OpenStreetMap is edited by millions of volunteers. A small share of edits is damaging: fake parks
+drawn to spawn game items, invented roads, deleted landmarks, abuse written into names.
+Volunteer reviewers catch these by hand, using rule-based flags. MapGuard learns from edits
+that were reverted or rejected, and scores every *changeset* (one upload of edits) for how
+likely it is to be damaging, with an explanation of why.
 
 ---
 
-## Where things stand
+## Results
 
-Every row below is backed by a committed file in [`results/`](results/). Nothing is
-claimed that has no artefact.
+All numbers are measured on a **user-disjoint test set**: no author in the test set appears in
+training. Each is the mean of 3 seeds, and the intervals are 95% author-cluster bootstrap
+intervals. Every number traces back to a file in [`experiments/rounds/`](experiments/rounds/).
 
-| Gate | Verdict | Evidence |
-|---|---|---|
-| **0a** bucket coverage of Ovid labels | FAIL — 0/140, all 404 | `gate0_coverage.json` |
-| **0b/0c** OSM API fallback, bucket bounds | PASS | `gate0b_fallback.json`, `gate0c_bounds.json` |
-| **0d** plan-review probes | PASS — overturned two v1 conclusions | `gate0d_review_probes.json` |
-| **1a** adiff geometry yield | **PASS** — 93/100, 2,109/2,109 ways with coordinates | `gate1a_adiff_batch.json` |
-| **1b** Overpass capacity | **SUBSET** — 3.17 q/min, 96 h for full corpus | `gate1b_overpass_capacity.json`, [decision](docs/GATE1B_DECISION.md) |
-| **1c** label-leakage tripwire | **PASS** — AUC 0.656, weak prior not a leak | `gate1c_b0_tripwire.json` |
-| **1d** framework spike | **PASS** — masking delta 0.0 (Keras 3, local) | `gate1d_framework_spike.json` |
-| **1d** re-verify on cluster Keras 2 | not yet run | `cluster/00_env_check` |
+### Against Ovid (the published model for this task, 2021)
 
-### Data (final, 2026-09-19)
+Same benchmark labels (changesets later reverted, 2014–2019) and the same protocol
+(user-disjoint split, threshold chosen on validation):
 
-Sources and why: [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). Coverage by label:
-`results/feature_store_build_report.json`. Every column: `results/feature_schema.json`.
-
-**Feature store: 46,578 changesets · 2.05 M sampled edits · 3.15 M point-in-time history
-steps · 100% history coverage.** All raw sources fetched; nothing partial.
-
-| Corpus | Years | Label | Changesets (neg / pos) |
-|---|---|---|---|
-| **A** Ovid benchmark | 2014–2019 | reverted | 8,906 / 9,131 |
-| **R** revert-mined from the planet changeset dump (78.4 M changesets scanned) | 2021-09 → 2026-06 | reverted by another account ≤ 90 days; Ovid's "mentions vandalism" flag | 8,514 / 8,204 |
-| **M** OSMCha | 2023 → 2026 | human review (harmful vs flagged-and-cleared) | 3,945 / 3,947 |
-| **N** random | 2023 → 2026 | presumed clean | 3,931 / — |
-
-Leaks found in the real data and removed before any training: `comments_count`, account age
-(deleted accounts), empty changesets, and edits whose previous version was hidden by
-moderators (R positives 4.0% vs negatives 1.9%).
-
-### Baselines (user-disjoint R1b = Ovid's protocol; `results/baselines_*.json`)
-
-| Task | Rows | B0 tripwire ROC-AUC | LogReg PR-AUC | XGBoost PR-AUC |
+| | Precision | Recall | **F1** | **Accuracy** |
 |---|---|---|---|---|
-| `ovid` (A) | 18,037 | 0.661 | 0.808 | 0.860 |
-| `revert` (R) | 11,280 | 0.731 | 0.895 | 0.901 |
-| `revert_vandalism` (R, Ovid rule) | 7,080 | 0.839 ⚠ | 0.949 | 0.954 |
-| `ovid_modern` (A + R vandalism) | 25,117 | 0.734 | 0.863 | 0.910 |
-| `T1` triage (M) | 7,892 | 0.693 | 0.771 | 0.802 |
-| `T2` detection (M + N) | 7,878 | 0.667 | 0.860 | 0.877 |
+| Ovid (published) | 0.804 | 0.830 | 0.817 | 0.814 |
+| **MapGuard (stack + embeddings)** | 0.801 | 0.856 | **0.828** [0.814, 0.840] | **0.823** [0.810, 0.835] |
 
-⚠ On `revert_vandalism`, metadata alone (new account, short comment, editor) nearly separates
-the classes. That is a property of Ovid's label, not a pipeline leak - report it beside every
-number on that task. On `ovid`, XGBoost reaches F1 77.7 / accuracy 76.2 against Ovid's published
-81.66 / 81.37 on the same protocol; the neural model has to beat 81.66.
+MapGuard is **+1.1 F1 and +0.9 accuracy points above Ovid**. Ovid's figure falls just inside our
+interval (P(ours higher) = 0.95), so this is a gain on the same protocol, not proof on an
+identical test set: the changesets were re-fetched, and edits that OSM has since hidden were
+dropped.
 
-TensorFlow is verified on Keras 3.15 and Keras 2.13 (the cluster's version): wiring check PASS,
-and the full pipeline runs end to end on the real store.
+### Every task (PR-AUC, the area under the precision–recall curve; 1.0 is perfect)
 
-### Two things the original plan had wrong
+| Task | Labels | Best model | **MapGuard** | Tree baseline | Gain [95% CI] |
+|---|---|---|---|---|---|
+| **ovid** | reverted, 2014–19 (Ovid's benchmark) | stack + emb | **0.906** | 0.898 | **+0.010** [0.006, 0.014] |
+| ovid_modern | Ovid's rule (revert mentions vandalism) on 2014–19 + 2021–26 together | ensemble | **0.944** | 0.936 | **+0.009** [0.005, 0.012] |
+| revert_vandalism | reverted with "vandalism" in the revert, 2021–26 | ensemble | **0.970** | 0.963 | **+0.007** [0.003, 0.012] |
+| revert | reverted by another account, 2021–26 | ensemble | **0.925** | 0.913 | **+0.012** [0.004, 0.020] |
+| T1 | OSMCha human review, harmful vs flagged-and-cleared | ensemble | 0.859 | 0.852 | +0.008 [−0.002, 0.019] |
+| T2 | OSMCha harmful vs random edits | hybrid + emb | 0.898 | 0.895 | +0.003 [−0.002, 0.008] |
 
-Both measured, both recorded in `results/gate0d_review_probes.json`:
+The tree baseline is XGBoost on account, count and text features, plus out-of-fold token and
+text scores, which is already stronger than Ovid. A gain in **bold** has a 95% interval that
+excludes zero.
 
-- **Corpus A geometry is reachable.** Overpass `adiff` returns before/after way geometry
-  with resolved coordinates back to 2012, and `/api/0.6/ways?ways=<id>v<ver>` batches
-  previous versions 725 at a time. The geometry branch runs on the published benchmark,
-  not only on an unlabelled modern corpus.
-- **Latest OSM data is bulk-reachable.** The minute and changeset replication streams are
-  live to the current minute, free and account-free — so the temporal test is a real 2026
-  evaluation rather than a demo.
+**The stricter score.** In Ovid's labels, 56 accounts supply 37% of the damaging changesets, so
+a model can score well by recognising a few accounts. Counting **one changeset per author**, a
+plain XGBoost drops from 0.86 to 0.77. MapGuard's best ovid model keeps **0.844**. Every result
+in this repository reports this score alongside the standard one.
 
 ---
 
-## Layout
+## How it works
+
+A changeset is judged on three kinds of evidence, which are complementary: each alone scores
+0.60–0.63 under the one-per-author measure.
+
+| | Question | Signals |
+|---|---|---|
+| **Who** | Does this account know the map? | account history, edit rate, editor |
+| **What** | What did each edit actually do? | edit tokens: `+leisure=park`, `-historic`, `~highway:track>motorway` |
+| **Text** | What did they write? | comment and tag text, plus pretrained multilingual sentence embeddings |
+
+The edit tokens are the single most useful signal. Ranked by a linear model, the most damaging
+are `+leisure=park`, `+highway=footway`, `+tourism`, `+highway=motorway` and `-historic`: the
+documented Pokémon-Go vandalism and fake roads. The most benign are `+source`, `+access=private`
+and `+highway=track`, the habits of careful mappers.
+
+**Models**
 
 ```
-src/mapguard/          library - everything real lives here
-  config.py            paths from MAPGUARD_DATA, endpoints, rate defaults, subset rule
-  data/                http (global token bucket), osm_api, overpass (adiff),
-                       replication, osmcha, osmchange parser, users, store
-  features/            geometry, user_history (point-in-time), build_store
-  evaluation/          splits (R1a/R1b), metrics (prevalence-corrected)
-  models/              stage2 - five branches, masked attention, Keras 2/3 compatible
-  training/            dataset assembly (padding + masking)
-scripts/               local CLI - fetchers, gates, fixtures. Network-bound, no GPU.
-train/                 every training and evaluation entry point, one folder per stage,
-                       named by run order and tagged with plan stage - see train/README.md
-  run_pipeline.py      one command for every stage, on any machine
-  setup_env.sh         M4 / Linux training environment + wiring check
-cluster/               one generated notebook per train/ stage, plus 99_full_pipeline
-  make_notebooks.py    generates them
-  bundle.py            code + feature store + splits -> one zip for cluster or M4
-tests/                 111 tests, no network
-data/labels/           ovid_labels.tsv - 18,276 changesets (tracked)
-data/fixtures/         real changesets selected as awkward cases (tracked, small)
-results/               gate output and metrics (tracked)
-experiments/           checkpoints and run outputs (gitignored)
-docs/                  plan review, Gate 1b decision, schema
+                 ┌─ hybrid: gradient-boosted trees on account/count features
+changeset ───────┤          + out-of-fold logistic scores of edit tokens, text, embeddings
+                 │
+                 └─ deep: six-branch neural network
+                      edits ──► per-edit encoder (numbers + tokens + old→new text)
+                            ──► 2 transformer blocks over edits
+                            ──► gated-attention multiple-instance pooling + max
+                      comment/tags ──► character CNN + sentence embeddings
+                      account history ──► GRU        account/counts ──► MLP
+                                                │
+              stack: the deep model's out-of-fold score becomes a feature of the trees
+              ensemble: blend of deep + hybrid, weight chosen on validation
 ```
 
-Bulk data lives under `MAPGUARD_DATA` (default `C:\osm-data`), never in the repository.
+- **Multiple-instance pooling.** One bad edit among 200 good ones makes a changeset bad, so the
+  model learns attention over edits rather than averaging them. With the residual connection,
+  the attention concentrates on one edit (2.6× uniform, sharper on damaging changesets). That
+  edit is the "which edit" explanation.
+- **Author-balanced training.** Each changeset is weighted 1/√(changesets by its author). This
+  added +0.05 to the one-per-author score of the deep model.
+- **Stacking without leakage.** The deep model is trained on 5 author folds. Every training
+  changeset gets a score from a model that never saw it, and validation and test get the mean
+  of the fold models.
 
-## Setup
+### What did *not* help (measured, kept as negative results)
 
-**Supported interpreter: Python 3.11 or 3.12.** TensorFlow does not support 3.13+, and the
-development machine's 3.14 can run everything except model code. There is no checked-in
-venv — create your own:
+| Idea | Result |
+|---|---|
+| Edit geometry (shape and area change) | ≈ +0.001 in every ablation (within seed noise) |
+| Where the author usually maps (distance to past edits, from the full planet changeset history) | −0.0005 [−0.006, +0.004] |
+| What the edited object was (Wikidata link, name, historic, …) | within ±0.007 on every task: real signal, but redundant with the edit tokens |
+| Tuning the trees | +0.0007 |
+| Self-supervised pretraining of the edit encoder | ±0.003 |
+
+### Limits, measured
+
+- **Revert labels are noisy.** In an [error analysis](experiments/rounds/r4_2026-10-13_altair_h100_seeds/analysis/error_analysis.md)
+  of the 60 most confident mistakes:
+  - the missed "damaging" changesets are mostly good-faith work reverted for other reasons
+    (mapathon imports, bulk buildings, edit wars, technical tag disputes);
+  - the false alarms are mostly newcomers adding real parks and footpaths, plus at least two
+    that look like unreverted vandalism.
+- **Over time.** Trained on 2014–19 and tested on 2021–26, the tree model holds (0.905). The
+  deepest neural variant drops more (0.874, one seed), so the combined models are the robust
+  choice.
+- **Prevalence.** Real vandalism is well under 1% of edits. Every score above is on balanced
+  data; the reports also give precision at realistic prevalence.
+
+---
+
+## Data
+
+**46,578 changesets** from four sources:
+
+| Corpus | Period | Label | Rows |
+|---|---|---|---|
+| A | 2014–2019 | Ovid's benchmark: later reverted | 18,037 |
+| R | 2021-09 → 2026-06 | reverted by another account within 90 days, mined from the planet changeset dump | 16,718 |
+| M | 2023 → 2026 | OSMCha human review (harmful vs flagged-and-cleared) | 7,892 |
+| N | 2023 → 2026 | random changesets, presumed clean | 3,931 |
+
+Each changeset carries its edits, with previous versions recovered for 99%+ of modified
+objects, and the author's history *before* that changeset only. User ids are pseudonymised
+(salted hash) in every released file, and usernames are removed.
+
+- **Download:** [GitHub releases](../../releases) (feature store, frozen splits, dataset card).
+- **Sources and coverage:** [docs/data/DATA_SOURCES.md](docs/data/DATA_SOURCES.md),
+  [dataset card](docs/data/DATASET_CARD.md).
+- **Licence:** data is a derivative of OpenStreetMap, **ODbL-1.0, © OpenStreetMap contributors**.
+
+---
+
+## Quick start
+
+Python 3.11/3.12 (TensorFlow has no Python 3.13+ wheels).
 
 ```bash
-py -3.12 -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt && pip install -e .
-```
-
-```bash
-cp .env.example .env
-```
-
-The fetchers, gates and tests need only `requests`, `numpy`, `scikit-learn` and `pyarrow`,
-so they run on 3.14 too. Model code runs on the cluster.
-
-## Running things
-
-Data collection (local, network-bound):
-
-```bash
-python scripts/fetch_corpus_a_meta.py --rate 3 --workers 3
-```
-
-```bash
-python -m mapguard.data.fetch_corpus_a --rate 3 --workers 3
-```
-
-```bash
-python scripts/fetch_corpus_a_geometry.py
-```
-
-```bash
-python -m mapguard.features.build_store
-```
-
-Tests:
-
-```bash
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -r requirements.txt && pip install -e .
 python -m pytest -q
 ```
 
-Cluster work — see [RUN_ALTAIR.md](RUN_ALTAIR.md):
+Train and evaluate everything for one task on the released feature store:
 
 ```bash
-python cluster/bundle.py --task 00_env_check
+python train/run_pipeline.py --feature-store <path-to>/feature_store --task ovid
 ```
 
-## Rules
+`--task` is one of `ovid`, `ovid_modern`, `revert`, `revert_vandalism`, `T1`, `T2`. Add `--quick`
+for a smoke test, and `--seed N` for another seed: the test split stays frozen. Stages:
 
-Full version in [CONTRIBUTING.md](CONTRIBUTING.md). The short one:
+| Stage | What |
+|---|---|
+| 00 | wiring check: the model builds, masks padding and trains on this machine |
+| 08 | pretrained multilingual sentence embeddings |
+| 01 | baselines: metadata tripwire, logistic regression, XGBoost, hybrid |
+| 02 | deep model |
+| 07 | ensemble |
+| 09 | stacking |
+| 03 | ablations |
+| 06 | temporal evaluation (train past, test future) |
 
-- **No data and no secrets in this repository.**
-- Notebooks are generated by `cluster/make_notebooks.py`, not hand-written.
-- Metrics go to `results/*.json` with config, split, seed, checkpoint id and git SHA.
-- Be polite to OSM: one shared token bucket, real User-Agent, back off on 509, resume from
-  cache. Never send Overpass a planet-sized bbox. **Never fetch from the cluster.**
-- Three rules that are correctness, not style: user features are point-in-time, splits are
-  user-disjoint *and* class-stratified, pretraining excludes the evaluation set by id and uid.
+To rebuild the data from OpenStreetMap, or train on a GPU cluster, see
+[docs/running/RUNBOOK.md](docs/running/RUNBOOK.md) and [altair/README.md](altair/README.md).
 
-## Workstreams
+---
 
-| | Owner | Scope |
-|---|---|---|
-| WS1 | | data pipeline — fetchers, adiff enrichment, feature store, user histories |
-| WS2 | | baselines, R1–R4 harness, calibration, label audit |
-| WS3 | | Stage 2 branches, fusion, training loop |
-| WS4 | | Stage 1 pretext task, figures, demo |
+## Repository
+
+```
+src/mapguard/        data fetchers, feature builders, the model (models/stage2.py), metrics
+train/               one folder per stage + run_pipeline.py
+scripts/             data harvesting, packaging, result summaries, probes
+altair/              GPU-cluster job script and per-round step plans
+cluster/             notebook versions of the stages
+experiments/rounds/  every training round: raw outputs, analysis, README with findings
+experiments/splits/  the frozen train/validation/test splits
+results/             data-gate measurements, baselines, probes
+docs/                model / data / running / planning documents (index: docs/README.md)
+tests/               test suite
+```
+
+Each round folder in `experiments/rounds/` documents one training run end to end: what changed,
+what went wrong, every number and its source. Read them in order (r1 → r4) to see how the
+model got here.

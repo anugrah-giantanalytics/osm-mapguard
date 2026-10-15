@@ -1,7 +1,7 @@
 # MapGuard — v2 build checklist
 
 **Purpose:** execution checklist after reviewing `PROJECT_PLAN.md`, `CHECKLIST.md`,
-`docs/PLAN_REVIEW.md`, the current source tree, and the tracked gate artifacts.
+`docs/planning/PLAN_REVIEW.md`, the current source tree, and the tracked gate artifacts.
 
 **Scope:** preserve the research contribution, make the evidence trail truthful, and
 ship a visual, inspectable demo alongside the paper. This file is additive; the v1
@@ -112,7 +112,7 @@ changesets. `01_baselines` ran end to end on that probe, and `--dry-run` passed 
 ### C2. Five years of recent labels — corpus R (added 2026-09-18)
 - [x] Measured: OSMCha has no reviewed changesets before 2023, so human labels cannot cover
   4–5 years. Revert-derived labels can, with the same definition as the Ovid benchmark
-  (`docs/DATA_SOURCES.md`).
+  (`docs/data/DATA_SOURCES.md`).
 - [x] `scripts/mine_changesets.py` reads the 2021-09 onwards byte range of the planet changeset
   dump (multistream bzip2, parallel ranges, nothing stored but the results). A test that splits the
   file 2, 3 and 7 ways counts every changeset exactly once, and it caught a boundary bug before
@@ -383,12 +383,18 @@ Deadline 2026-10-02. Ordered by what the results say matters. Details in
 `experiments/rounds/r1_2026-09-21_m4/README.md`.
 
 ### R2-A. Make the claims defensible — cheap, do first (~1 day)
-- [ ] Temporal baselines: XGBoost and B0 on every temporal split. Without them, "the deep model
+- [x] Temporal baselines (2026-10-15, `results/temporal_baselines_2026-10-15.json`): hybrid on the
+  temporal splits - ovid_modern 0.905, T1 0.813, T2 0.852, ovid 0.824. The 7-year drop is specific
+  to the v3 deep model (0.874). Caveat: B0 metadata tripwire ROC 0.83 on ovid_modern temporal.
+- [x] (was:) Temporal baselines: XGBoost and B0 on every temporal split. Without them, "the deep model
   holds up over time" has no reference, and ovid_modern's 0.891 may just be an easy test set.
 - [ ] Author-robust evaluation on Corpus A: metrics with each author weighted equally, and with
   the 56 mass-revert authors (>20 positives) held out. This measures how much Ovid's label noise
   drives every score, ours and theirs.
-- [ ] Error analysis: 30 highest-confidence false positives and false negatives on ovid,
+- [x] Error analysis (2026-10-15, `experiments/rounds/r4_*/analysis/error_analysis.md`): FPs are
+  newcomers adding parks/footpaths in iD (29/30), 2 likely unreverted vandalism; FNs are reverted
+  good-faith work by experienced JOSM mappers (mapathons, imports, edit wars).
+- [x] (was:) Error analysis: 30 highest-confidence false positives and false negatives on ovid,
   read by hand (mapathons, imports, bots).
 
 ### R2-B. Try once, properly, to beat XGBoost (~1–2 days, M4)
@@ -416,7 +422,7 @@ Deadline 2026-10-02. Ordered by what the results say matters. Details in
 
 ## Round 2 — model v2 (2026-09-22, deadline end of October)
 
-Evidence and reasoning: `docs/MODEL_V2.md`. Round 1 results: `experiments/rounds/r1_2026-09-21_m4/`.
+Evidence and reasoning: `docs/model/MODEL_V2.md`. Round 1 results: `experiments/rounds/r1_2026-09-21_m4/`.
 
 - [x] Diagnosed round 1. Signal families are complementary (WHO / WHAT / TEXT). Round 1 lacked
   WHAT: it saw counts, not which tag changed.
@@ -465,7 +471,7 @@ Evidence: `experiments/rounds/r2_2026-10-07_altair_h100/README.md`,
 
 ## Round 3 — model v3 (built 2026-10-11, demo 2026-10-19..21)
 
-Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured against v2.1.
+Design and evidence: `docs/model/MODEL_V3.md`. Every item is a config switch measured against v2.1.
 
 - [x] Ensemble blend weight: bagged over 200 author bootstraps of validation (stage 07). Tested on
   round-2c predictions: within ±0.0007 everywhere, T2 +0.003; T1 weight spread 0.0–0.7 shows a
@@ -502,4 +508,6 @@ Design and evidence: `docs/MODEL_V3.md`. Every item is a config switch measured 
   test-set interval ≈ ±0.012.
 - [ ] Open: v3 deep model transfers worse over 7 years (ovid_modern temporal 0.874 vs 0.908 in
   v2.1; one seed) - report as an observation.
-- [ ] Report, README, dataset release v1.2.0 (side tables), visual (after the model is final).
+- [x] README rewritten with final results; docs organised into docs/{model,data,running,planning}.
+- [x] Dataset release v1.2.0 (side tables: object context, WHERE, dump source).
+- [ ] Report / presentation; visual (demo).

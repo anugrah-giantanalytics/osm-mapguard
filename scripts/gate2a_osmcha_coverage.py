@@ -18,7 +18,7 @@ Five questions, per year:
   5. how does class balance drift year to year
 
 **The exclusion threshold is deliberately NOT hard-coded.** Per decision 4 in
-docs/DATA_FOUNDATION.md, concentration is measured and reported first, the cut is chosen
+docs/data/DATA_FOUNDATION.md, concentration is measured and reported first, the cut is chosen
 afterwards with the distribution visible, and the paper discloses that it was set that way.
 Hard-coding a guessed threshold here would either exclude everything or nothing, and
 pretending afterwards that it was pre-registered would be misrepresentation.
@@ -159,7 +159,7 @@ def main() -> int:
                     "which is the cheapest available cross-source agreement signal",
         },
         "threshold_policy": (
-            "NOT pre-registered. Per decision 4 in docs/DATA_FOUNDATION.md the exclusion "
+            "NOT pre-registered. Per decision 4 in docs/data/DATA_FOUNDATION.md the exclusion "
             "rule is chosen after inspecting this distribution, and the paper states that "
             "it was set post-hoc. Per-year numbers are published so a reader can apply a "
             "different threshold."
@@ -174,7 +174,7 @@ def main() -> int:
     print(f"corpus A overlap: {overlap}/{checked} sampled ids")
     print(f"\nwritten to {out}")
     print("\nNext: read the per-year table, choose the window, and record it in "
-          "docs/DATA_FOUNDATION.md with the reason.")
+          "docs/data/DATA_FOUNDATION.md with the reason.")
     return 0
 
 
