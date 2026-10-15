@@ -174,8 +174,11 @@ for a smoke test, and `--seed N` for another seed: the test split stays frozen. 
 | 03 | ablations |
 | 06 | temporal evaluation (train past, test future) |
 
-To rebuild the data from OpenStreetMap, or train on a GPU cluster, see
-[docs/running/RUNBOOK.md](docs/running/RUNBOOK.md) and [altair/README.md](altair/README.md).
+To rebuild the data from OpenStreetMap, see [docs/running/RUNBOOK.md](docs/running/RUNBOOK.md).
+
+**Compute.** Training rounds 2–4 ran on an NVIDIA H100 GPU (a 40 GB slice) on the Altair HPC
+cluster; round 1 ran on an Apple M4 CPU. A full round (all six tasks × 3 seeds, ablations, stacking and temporal evaluation)
+takes about 3.7 hours there. Every stage also runs on a CPU, more slowly.
 
 ---
 
@@ -185,7 +188,7 @@ To rebuild the data from OpenStreetMap, or train on a GPU cluster, see
 src/mapguard/        data fetchers, feature builders, the model (models/stage2.py), metrics
 train/               one folder per stage + run_pipeline.py
 scripts/             data harvesting, packaging, result summaries, probes
-altair/              GPU-cluster job script and per-round step plans
+altair/              the job script and step plans used for the training rounds
 cluster/             notebook versions of the stages
 experiments/rounds/  every training round: raw outputs, analysis, README with findings
 experiments/splits/  the frozen train/validation/test splits
@@ -197,3 +200,9 @@ tests/               test suite
 Each round folder in `experiments/rounds/` documents one training run end to end: what changed,
 what went wrong, every number and its source. Read them in order (r1 → r4) to see how the
 model got here.
+
+---
+
+## Licence
+
+Code: [MIT](LICENSE). Data derived from OpenStreetMap: ODbL-1.0, © OpenStreetMap contributors.
